@@ -1,0 +1,28 @@
+---
+title: "s01_preprocess_penguins"
+author: "Eirlys Tysall"
+date: "01/11/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r process_raw_data}
+
+#read in raw data
+penguins_raw <- read.csv("../data/raw/penguins_raw.csv")
+
+#run process on raw data
+penguins_na_omit <- na.omit(penguins_raw)
+                          
+```
+
+```{r save_intermediate_data}
+
+#save intermediate data to appropriate output directory in the intermediate data directory
+write.csv(penguins_na_omit, file = "../data/intermediate/f01_preprocess_penguins/penguins_na_omit.csv", row.names = FALSE)
+
+```

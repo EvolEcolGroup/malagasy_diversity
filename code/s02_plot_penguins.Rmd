@@ -1,0 +1,39 @@
+---
+title: "s02_plot_penguins"
+author: "Eirlys Tysall"
+date: "01/11/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load packages}
+
+#load required packages
+library(ggplot2)
+
+```
+
+```{r read in data}
+
+#read in preprocessed data from intermediate data directory
+penguins_na_omit <- read.csv("../data/intermediate/f01_preprocess_penguins/penguins_na_omit.csv")
+
+```
+
+```{r make plot}
+
+#create plot from intermediate data
+penguins_plot <- ggplot(penguins_na_omit, aes(x = Body.Mass..g., y = Flipper.Length..mm., color= Species)) +
+                        geom_point()
+
+```
+
+```{r save analysis}
+
+#save final result to analysis directory 
+ggsave("../results/f02_plot_penguins/penguins_plot.png")
+
+```
