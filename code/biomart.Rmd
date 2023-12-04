@@ -1,0 +1,380 @@
+---
+title: "Biomart"
+output: html_document
+date: "29-11-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(root.dir = "C:/Users/eviec/Git/malagasy_diversity/")
+library(biomaRt)
+```
+
+# Updating Malagasy data to HG38
+
+```{r}
+bim_file1 <- read.table(resrepo::path_resrepo("data/raw/data_input/Malagasy_full_cleaned_PLINK_HG37.bim")
+           , header = FALSE, col.names = c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2"))
+as.data.frame(bim_file1)
+```
+
+Removing SNPs with VG identifiers from .bim file 
+Creating a data frame to track number of SNPs at each stage
+
+```{r}
+filtered_bim_VG_id <-bim_file1[grepl("VG",bim_file1[,2]),]
+clean_bim=dplyr::anti_join(bim_file1,filtered_bim_VG_id)
+cat("Number of VG entries removed:",sum(nrow(bim_file1)-nrow(clean_bim)),"\n")
+cat("Number of SNPs remaining after removing VG id SNPs:", nrow(clean_bim),"\n")
+
+analysis <- c("Start","Removing VG SNPs")
+num_SNPs <- c(nrow(bim_file1),nrow(clean_bim))
+tracking_SNP_number <- cbind(analysis,num_SNPs)
+```
+Select Ensembl mart - new dbplyr not compatible with biomart, gives ensembl errors, so install old version
+```{r}
+(devtools::install_version("dbplyr", version = "2.3.4"))
+
+#Ensembl Release 110 (July 2023) GRCH38.14
+snpmart = useEnsembl(biomart = "ENSEMBL_MART_SNP", dataset="hsapiens_snp")
+```
+
+Find our SNPs in biomart
+
+```{r}
+#Chunking data to avoid timeout issues with ensembl getBM
+snps=clean_bim[,2]
+chunk=split(snps, ceiling(seq_along(snps)/50000))
+
+#Find biomart entries for all our SNPs
+get_and_combine_data <- function(chunk, mart) {
+  result_df <- data.frame() 
+  
+  for (i in 1:length(chunk)) {
+    data <- chunk[[i]]
+    snp_data <- getBM(attributes = c("refsnp_id", "chr_name", "chrom_start", "allele_1", "allele","minor_allele","chrom_strand"),
+                      filters = "snp_filter", values = data, mart = mart)
+    
+    result_df <- rbind(result_df, snp_data) 
+    
+    cat("Chunk", i, "complete.\n")
+  }
+  
+  return(result_df)
+}
+
+biomart_result=get_and_combine_data(chunk,snpmart)
+colnames(biomart_result)[1] <- "snp_id"
+colnames(biomart_result)[4] <- "ancestral_allele"
+
+```
+
+#Update our data to HG38 using biomart result
+
+```{r}
+
+#Patch entries (all start with H)
+biomart_pos_H=biomart_result[grepl("H", biomart_result[,2]),]
+cat("Number of SNPs affected by patched entries:", nrow(biomart_pos_H))
+cat("Number of unique patches covering SNPs:",length(unique(biomart_pos_H[,2])))
+
+#Removing these patch entries
+biomart_no_patches=dplyr::anti_join(biomart_result,biomart_pos_H)
+cat("Number of SNPs in biomart output after removing patch entries:", nrow(biomart_no_patches))
+tracking_SNP_number <- rbind(tracking_SNP_number,c("Removing patches",nrow(biomart_no_patches)))
+
+#Missing entries
+missing_total=clean_bim[!(clean_bim$snp_id %in% biomart_no_patches$snp_id),]
+cat("Number of SNPs missing in biomart output:",nrow(missing_total))
+which(missing_total[,4]>0)
+missing_non_0=missing_total[874:942,]
+
+#Removing missing entries and writing new .bim
+new_bim=dplyr::left_join(clean_bim,biomart_no_patches, by = "snp_id")
+sum(is.na(new_bim$chrom_start))#942 ^ as above
+new_bim=new_bim[,c(7,2:3,8,5:6)]
+new_bim_no_NA <- na.omit(new_bim)
+
+#Deal with missing later - but removing these for now
+to_remove <- subset(new_bim_no_NA,is.na(new_bim_no_NA[,c(5,6)]) | new_bim_no_NA[,c(5,6)]==0)
+new_bim_no_NA <- dplyr::anti_join(new_bim_no_NA,to_remove)
+
+
+#new_bim_no_NA is our .bim updated to HG38 positions
+base_dir <- file.path("C:/Users/eviec")
+write.table(file=resrepo::path_resrepo("data/intermediate/biomart/Malagasy_full_cleaned_PLINK_HG38.bim"), new_bim_no_NA, sep="\t",row.names = FALSE, quote = FALSE, col.names = FALSE)
+
+
+```
+
+#Create a list of ambiguous SNPs in our data to remove in plink 
+
+```{r}
+
+ambiguous <- subset(new_bim_no_NA, 
+                    new_bim_no_NA$allele1 == "A" & new_bim_no_NA$allele2 == "T" |
+                    new_bim_no_NA$allele1 == "T" & new_bim_no_NA$allele2 == "A" |
+                    new_bim_no_NA$allele1 == "G" & new_bim_no_NA$allele2 == "C" |
+                    new_bim_no_NA$allele1 == "C" & new_bim_no_NA$allele2 == "G")
+cat(nrow(ambiguous), "ambiguous SNPs", "\n")
+ambiguous_list <- ambiguous$snp_id
+write.table(file=resrepo::path_resrepo("data/intermediate/biomart/Malagasy_ambiguous_SNPs"), ambiguous_list, sep="\t",row.names = FALSE, quote = FALSE, col.names = FALSE)
+
+
+```
+#Validate new datasets
+```{r}
+rules <- validate::validator()
+```
+
+
+
+
+
+
+
+
+
+# Updating other data to HG38
+
+```{r}
+
+data_pipeline_bim <- function(x, y) {
+  # where x is new data to convert to HG38 positions
+  # and y is the current dataset e.g., updated Malagasy biomart positions
+  
+  # Read in the data
+  new_data <- read.table(x, col.names = c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2"))
+  comparative_data <- read.table(y, col.names = c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2"))
+  
+  # Later add something to check the cols are in the expected order?
+  
+  # Find overlap between SNPs in each set
+  overlap <- sum(new_data$snp_id %in% comparative_data$snp_id)
+  cat("Supplied .bim contains",nrow(new_data), "SNPs", "\n")
+  cat(overlap,"SNPs overlap with our dataset")
+  
+  # Exit at this point if overlap is less than 200,000
+  if (overlap < 200000) {
+    warning("Less than 200,000 overlapping SNPs found.")
+    return(new_data)
+  }
+  
+  # Find matching SNP IDs
+  match_indices <- match(new_data$snp_id, comparative_data$snp_id)
+  
+  # Identify rows with matches and update physical_pos
+  matching_rows <- !is.na(match_indices)
+  new_data$physical_pos[matching_rows] <- comparative_data$physical_pos[match_indices[matching_rows]]
+  new_data$chromosome[matching_rows] <- comparative_data$chromosome[match_indices[matching_rows]]
+  
+  # Non-overlapping rows are not updated
+  # These remain in the output, will be removed in plink 
+  
+  return(new_data)
+}
+
+# Example
+res_borneo=data_pipeline_bim(resrepo::path_resrepo("data/raw/data_input/Borneo_raw_data.bim"),
+                            resrepo::path_resrepo("data/intermediate/biomart/Malagasy_full_cleaned_PLINK_HG38.bim"))
+
+
+#write.table(file = "HG38_updated_Borneo_raw_data.bim",res_borneo, sep="\t",row.names = FALSE, quote = FALSE, col.names = FALSE)
+
+```
+
+# Deal with our 71 missing cases - Finish this
+```{r}
+
+
+
+
+```
+
+# Flipping strands
+
+Updating other data .bim files so SNPs match our strand
+
+
+```{r}
+flip <- function(x, y) {
+  # where x is new data to convert to our strands
+  # and y is the current dataset e.g., updated Malagasy biomart positions
+  
+  # Find overlap between SNPs in each set
+  overlap <- sum(x$snp_id %in% y$snp_id)
+  cat("Supplied .bim contains",nrow(x), "SNPs", "\n")
+  cat(overlap,"SNPs overlap with our dataset","\n")
+  
+  # Find matching SNP IDs
+  match_indices <- match(x$snp_id, y$snp_id)
+  
+  # Identify matching rows
+  matching_rows <- !is.na(match_indices)
+  
+  # Remove non-matching rows
+  x_overlapping <- x[matching_rows, ]
+  
+  
+  df <- dplyr::left_join(x_overlapping, y, by = "snp_id")
+  
+  # Create list of ambiguous SNPs in our data to remove later in plink
+  ambiguous <- subset(df, df$allele1.y == "A" & df$allele2.y == "T" |
+                        df$allele1.y == "T" & df$allele2.y == "A" |
+                        df$allele1.y == "G" & df$allele2.y == "C" |
+                        df$allele1.y == "C" & df$allele2.y == "G")
+  cat(nrow(ambiguous), ": ambiguous SNPs", "\n")
+  
+  #Remove ambiguous SNPs for now
+  df <- dplyr::anti_join(df,ambiguous)
+  cat(nrow(df),": left after removing ambiguous SNPs", "\n")
+  
+  #Create function to find complementary bases
+  complement_base <- function(base) {
+    switch(base,
+           A = "T",
+           T = "A",
+           C = "G",
+           G = "C",
+           base  
+    )
+  }
+  
+  
+  #Finding same strand (matching) and those to flip (flipped_condition)
+  process_row <- function(row) {
+    
+    # Check for missing values
+    missing_values <- any(is.na(row[c(5, 6, 9, 10)]) | row[c(5, 6, 9, 10)]==0)
+    
+    
+    #Same strand - matching ancestral, minor, allele1, allele2 
+    matching <- (row[5] == row[10] & row[6] == row[11] | row[5] == row[11] & row[6] == row[10])
+    
+    
+    #Opposite strand - matching ancestral, minor, allele1, allele2
+    flipped_condition_5_10 <- (row[5] == complement_base(row[10]) & row[6] == complement_base(row[11]))
+    flipped_condition_5_11 <- (row[5] == complement_base(row[11]) & row[6] == complement_base(row[10]))
+    
+    
+    
+    #Rows with N as allele A - Borneo
+    #N_condition <- (row[5]=="N")
+    N_6_10 <-(row[6] == row[10] & row[5]=="N")
+    N_6_11 <- (row[6] == row[11]& row[5]=="N")
+    N_flip_6_10 <- (row[6] == complement_base(row[10]) & row[5]=="N")
+    N_flip_6_11 <- (row[6] == complement_base(row[11]) & row[5]=="N")
+    
+    if (missing_values) {
+      return(c(row, type = "missing values"))
+      
+    } else if (N_6_10){
+      row[5] <- row[11] 
+      return(c(row, type = "N 6 10"))
+    } else if (N_6_11){
+      row[5] <- row[10]
+      return(c(row, type = "N 6 11"))
+    } else if (N_flip_6_10){
+      row[5] <- complement_base(row[11])
+      return(c(row, type = "N flip 6 10"))
+    } else if (N_flip_6_11){
+      row[5] <- complement_base(row[10])
+      return(c(row, type = "N flip 6 11"))
+      
+    } else if (matching) {
+      return(c(row, type = "matching"))
+    } else if (flipped_condition_5_10) {
+      row[5] <- row[10] 
+      row[6] <- row[11]
+      return(c(row, type = "flipped"))
+    } else if (flipped_condition_5_11){
+      row[5] <- row[11]
+      row[6] <- row[10]
+      return(c(row, type = "flipped"))
+    } else{
+      return(c(row,type = "?"))
+    }
+  }
+  
+  processed_rows <- apply(df, 1, process_row)
+  processed_rows <- t(processed_rows)
+  
+  processed_rows <- as.data.frame(processed_rows,colnames=c("snp_id","chr_name","chrom_start","updated_allele_a","allele","updated_allele_B","chrom_strand","genetic_dist","allele1","allele2","type"))
+  
+  #names(processed_rows)[names(processed_rows) == 'ancestral_allele'] <- 'updated_allele_A'
+  #names(processed_rows)[names(processed_rows) == 'minor_allele'] <- 'updated_allele_B'
+  
+  
+  cat("Processing finished", "\n")
+  
+  #Checking numbers of each case/how many unprocessed rows
+  
+  
+  matching_both_ways <- processed_rows[processed_rows$type == "matching", ]
+  flipped_rows <- processed_rows[processed_rows$type == "flipped", ]
+  missing <- processed_rows[processed_rows$type == "missing values", ]
+  cat(nrow(missing),": SNPs with missing values","\n")
+  to_remove <- processed_rows[processed_rows$type == "?", ]
+  cat(nrow(to_remove),": SNPs to exclude","\n")
+  
+  #Create a list of other SNPs to remove later in plink
+  to_remove_list <- to_remove$snp_id
+  
+  ########### Borneo specific issue 
+  
+  #N_condition <-processed_rows[processed_rows$type == "N condition",]
+  #cat(nrow(N_condition),": SNPs with N as allele A?","\n")
+  N_6_10 <-processed_rows[processed_rows$type == "N 6 10",]
+  N_6_11 <-processed_rows[processed_rows$type == "N 6 11",]
+  N_flip_6_10 <-processed_rows[processed_rows$type == "N flip 6 10",]
+  N_flip_6_11 <-processed_rows[processed_rows$type == "N flip 6 11",]
+  
+  other <- df[!(df[,2] %in% processed_rows[,2]),]
+  cat(nrow(processed_rows),": Processed","\n")
+  cat(nrow(other),": left","\n") 
+  
+  #Add ambiguous SNPs back in to output and trim down
+  ambiguous[setdiff(names(processed_rows),names(ambiguous))] <- NA
+  processed_rows <- rbind(processed_rows, ambiguous)
+  processed_rows <- processed_rows[,1:6]
+  cat(nrow(processed_rows), ": Adding ambiguous SNPs back into set","\n")
+  
+  #Add all other original .bim SNPs back into output 
+  x_non_overlap <- dplyr::anti_join(x,x_overlapping,by="snp_id")
+  colnames(processed_rows)<-c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2")
+  processed_rows <- rbind(processed_rows,x_non_overlap)
+  cat(nrow(processed_rows),": Adding all non-overlapping SNPs back into set","\n")
+  
+  return(list(processed_rows,to_remove,missing))
+}
+
+
+some_flips <- flip(res_borneo, new_bim_no_NA) 
+
+updated_borneo_bim <- some_flips[[1]]
+
+#write.table(file=resrepo::path_resrepo("data/intermediate/biomart/Borneo_raw_data_updated.bim"), updated_borneo_bim, sep="\t",row.names = FALSE, quote = FALSE, col.names = FALSE)
+
+```
+Output [[1]] is an updated .bim file where all SNPs that overlap with our dataset will have positions updated to HG38 and strand consistency with our data. 
+Output [[2]] is a list of SNPs to remove later in plink.
+
+
+
+
+#Testing flips on other data - to finish
+```{r}
+
+#Update Sumba positions
+res_sumba <- data_pipeline_bim(resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR_mind05_noTIMOR_norelatives.bim"),resrepo::path_resrepo("data/intermediate/biomart/Malagasy_full_cleaned_PLINK_HG38.bim"))
+
+#Update Sumba strands
+more_flips <- flip(res_sumba,new_bim_no_NA)
+
+#missing sumba?
+
+```
+
+
+
+
+
