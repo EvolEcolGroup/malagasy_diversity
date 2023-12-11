@@ -1,0 +1,70 @@
+---
+title: "Analysis 1"
+output: html_document
+date: "06-12-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(root.dir = "C:/Users/eviec/Git/malagasy_diversity/")
+```
+
+# Trial PCA
+```{r}
+setwd("C:/Users/eviec/Git/malagasy_diversity")
+data <- pcadapt::read.pcadapt(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_no_relatives.bed"), type = "bed") 
+
+pca1 <- pcadapt::pcadapt(input = data, K=5)
+plot(pca1, option = "screeplot")
+
+fam <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_no_relatives.fam"))
+
+groups <- tidyr::separate(fam, V2, into = c("char_prefix", "numeric_suffix"), sep = "(?<=\\D)(?=\\d)")
+fam <- cbind(fam,groups$char_prefix)
+colnames(fam)[7] <- "group"
+
+  
+plot(pca1, option = "scores", pop = fam$group)
+
+
+unique(fam$group)
+#"BET" "CH"  "IR"  "ANT" "NW"  "SH"  "BJM" "SA" 
+
+fam$Population <- ifelse(fam$group == "BET","Betsimisaraka",
+                         ifelse(fam$group == "CH","Merina",
+                         ifelse(fam$group == "IR", "Diego",
+                         ifelse(fam$group == "ANT","Diego",
+                         ifelse(fam$group == "NW", "Sakalava/Tsimhety",
+                         ifelse(fam$group == "SH", "Betsileo",
+                         ifelse(fam$group == "BJM", "Borneo",
+                         ifelse(fam$group == "SA","Khomani San, South Africa",NA)))))))) 
+
+
+pca1$singular.values
+variance.explained=(pca1$singular.values)^2 
+variance.explained
+sum(variance.explained)
+
+PCA_scores <- as.data.frame(pca1$scores)
+
+ggplot2::ggplot(PCA_scores, ggplot2::aes(x = V1, y= V2, color = fam$Population)) +
+  ggplot2::geom_point() +
+  ggplot2::labs(title = "Madagascar Principle Component Analysis", x = "PC1 7.1%", y = "PC2 2.2%", color = "Population")
+
+#ggplot2::ggplot(PCA_scores, ggplot2::aes(x = V3, y= V4, color = fam$Population)) +
+#  ggplot2::geom_point() +
+#  ggplot2::labs(title = "Madagascar Principle Component Analysis", x = #"PC3", y = "PC4", color = "Population")
+
+```
+
+
+
+# Admixtools
+
+```{r}
+#devtools::install_github("uqrmaie1/admixtools")
+
+
+```
+
+
+
