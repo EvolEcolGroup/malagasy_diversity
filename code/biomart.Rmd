@@ -28,7 +28,8 @@ cat("Number of SNPs remaining after removing VG id SNPs:", nrow(clean_bim),"\n")
 
 analysis <- c("Start","Removing VG SNPs")
 num_SNPs <- c(nrow(bim_file1),nrow(clean_bim))
-tracking_SNP_number <- cbind(analysis,num_SNPs)
+lost <- c(0,nrow(bim_file1)-nrow(clean_bim))
+tracking_SNP_number <- cbind(analysis,num_SNPs,lost)
 ```
 Select Ensembl mart - new dbplyr not compatible with biomart, gives ensembl errors, so install old version
 ```{r}
@@ -70,6 +71,19 @@ colnames(biomart_result)[4] <- "ancestral_allele"
 
 #Update our Malagasy data to HG38 using biomart result
 
+Removes patch entries from the biomart data.
+Removes SNPs in our data that aren't in biomart output/weren't updated by biomart
+
+Merges the biomart and Malagasy data into one dataframe by SNP ID
+
+Selects SNP position and chr from biomart data, and all other columns from the Malagasy data
+Removes NA entries
+Removes entries where Allele A/B is entered as 0
+Tests for completeness of the data
+Saves as Madagascar_full_HG38.bim
+
+
+
 ```{r}
 
 #Patch entries (all start with H)
@@ -77,29 +91,45 @@ biomart_pos_H=biomart_result[grepl("H", biomart_result[,2]),]
 cat("Number of SNPs affected by patched entries:", nrow(biomart_pos_H),"\n")
 cat("Number of unique patches covering SNPs:",length(unique(biomart_pos_H[,2])),"\n")
 
+tracking_SNP_number <- rbind(tracking_SNP_number,c("Biomart output: increase due to patch entries",nrow(biomart_result),NA))
+
 #Removing these patch entries
 biomart_no_patches=dplyr::anti_join(biomart_result,biomart_pos_H)
 cat("Number of SNPs in biomart output after removing patch entries:", nrow(biomart_no_patches),"\n")
-tracking_SNP_number <- rbind(tracking_SNP_number,c("Removing patches",nrow(biomart_no_patches)),"\n")
+tracking_SNP_number <- rbind(tracking_SNP_number,c("Removing patches",nrow(biomart_no_patches),sum(nrow(biomart_result)-nrow(biomart_no_patches))))
 
-#Missing entries
+#Missing entries: removing SNPs without biomart position 
 missing_total=clean_bim[!(clean_bim$snp_id %in% biomart_no_patches$snp_id),]
 cat("Number of SNPs missing in biomart output:",nrow(missing_total),"\n")
-which(missing_total[,4]>0)
-missing_non_0=missing_total[874:942,]
+clean_bim <- dplyr::anti_join(clean_bim,missing_total, by = "snp_id")
 
-#Removing missing entries and writing new .bim
+
+#Merge our 'clean .bim' with the biomart output with updated positions
 new_bim=dplyr::left_join(clean_bim,biomart_no_patches, by = "snp_id")
-sum(is.na(new_bim$chrom_start))#942 ^ as above
+
+#Removing NA entries and writing new .bim
+sum(is.na(new_bim$chrom_start))
 new_bim=new_bim[,c(7,2:3,8,5:6)]
+
 new_bim_no_NA <- na.omit(new_bim)
 
-#Deal with missing later - but removing these for now
-to_remove <- subset(new_bim_no_NA,is.na(new_bim_no_NA[,c(5,6)]) | new_bim_no_NA[,c(5,6)]==0)
+#Remove missing
+to_remove <- subset(new_bim_no_NA, new_bim_no_NA[,5]==0 | new_bim_no_NA[,6]==0)
 new_bim_no_NA <- dplyr::anti_join(new_bim_no_NA,to_remove)
-tracking_SNP_number <- rbind(tracking_SNP_number,c("Removing SNPs missing Allele A in our data",nrow(new_bim_no_NA)),"\n")
+tracking_SNP_number <- rbind(tracking_SNP_number,c("Removing NA entries and SNPs missing an allele in our data",nrow(new_bim_no_NA), nrow(new_bim)-nrow(new_bim_no_NA)))
 
-#new_bim_no_NA is our .bim updated to HG38 positions
+
+testthat::test_that("Check no NA's",
+                    testthat::expect_false(any(is.na(new_bim_no_NA))))
+testthat::test_that("Check no SNP positions = 0",
+                    testthat::expect_false(any(new_bim_no_NA[,4]==0)))
+testthat::test_that("Check no cases where Allele A and Allele B both = 0", 
+                    testthat::expect_false(any(new_bim_no_NA[, 5] == 0 & new_bim_no_NA[, 6] == 0)))
+testthat::test_that("Check no cases where Allele A or Allele B = 0", 
+                    testthat::expect_false(any(new_bim_no_NA[, 5] == 0 | new_bim_no_NA[, 6] == 0)))
+
+
+#new_bim_no_NA: our .bim updated to HG38 positions
 base_dir <- file.path("C:/Users/eviec")
 write.table(file=resrepo::path_resrepo("data/intermediate/biomart/Madagascar_full_HG38.bim"), new_bim_no_NA, sep="\t",row.names = FALSE, quote = FALSE, col.names = FALSE)
 
@@ -126,8 +156,8 @@ write.table(file=resrepo::path_resrepo("data/intermediate/biomart/Madagascar_ful
 Tests to check whether the new .bim files are in the format expected for the pipeline, that they include the right snp ID's (rs format), and that there's no missing data/no irregularities
 
 ```{r}
-#Read the data
-new_data <- read.table(resrepo::path_resrepo("data/raw/data_input/Borneo_raw_data.bim"))
+#Check new data
+new_data <- read.table(resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.bim"))
 
 testthat::test_that("Test .bim dimensions and data types",{
   dims <- dim(new_data)
@@ -143,6 +173,7 @@ testthat::test_that("Test .bim dimensions and data types",{
 
 testthat::test_that("Check NA",{
   testthat::expect_false(all(is.na(new_data)))
+  testthat::expect_false(any(new_data[, 5] == "0" & new_data[, 6] == "0"))
 })
   
 testthat::test_that("Check rs IDs",{
@@ -152,7 +183,6 @@ testthat::test_that("Check rs IDs",{
 
 testthat::test_that("Check allele columns are coded as expected",{
   testthat::expect_true(all(new_data[,c(5,6)] %in% c("A","G","C","T")))
-  #testthat::expect_true(all(new_data[,c(5,6)] %in% c("A","G","C","T","0")))
   testthat::expect_false(any(new_data[,c(5,6)]=="0"))
 })
   
@@ -172,7 +202,6 @@ data_pipeline_bim <- function(x, y) {
   new_data <- read.table(x, col.names = c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2"))
   comparative_data <- read.table(y, col.names = c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2"))
   
-  # Later add something to check the cols are in the expected order?
   
   # Find overlap between SNPs in each set
   overlap <- sum(new_data$snp_id %in% comparative_data$snp_id)
@@ -199,13 +228,8 @@ data_pipeline_bim <- function(x, y) {
   return(new_data)
 }
 
-# Example
-#new_data=data_pipeline_bim(resrepo::path_resrepo("data/raw/data_input/Borneo_raw_data.bim"),
-                            #resrepo::path_resrepo("data/intermediate/biomart/Madagascar_full_HG38.bim"))
 
-
-new_data=data_pipeline_bim(resrepo::path_resrepo("data/raw/data_input/SAN_SA_OmniEx_hg19.bim"),
-                            resrepo::path_resrepo("data/intermediate/biomart/Madagascar_full_HG38.bim"))
+new_data=data_pipeline_bim(resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.bim"),                          resrepo::path_resrepo("data/intermediate/biomart/Madagascar_full_HG38.bim"))
 
 ```
 
@@ -223,6 +247,8 @@ Updating other data .bim files so SNPs match our strand
 
 
 ```{r}
+
+
 flip <- function(x, y) {
   # where x is new data to convert to our strands
   # and y is the current dataset e.g., updated Malagasy biomart positions
@@ -250,8 +276,7 @@ flip <- function(x, y) {
                         df$allele1.y == "G" & df$allele2.y == "C" |
                         df$allele1.y == "C" & df$allele2.y == "G")
   cat(nrow(ambiguous), ": ambiguous SNPs", "\n")
-  
-  
+  cat(overlap - nrow(ambiguous), ": SNPs to process", "\n")
   
   #Remove ambiguous SNPs 
   df <- dplyr::anti_join(df,ambiguous)
@@ -272,10 +297,6 @@ flip <- function(x, y) {
   #Finding same strand (matching) and those to flip (flipped_condition)
   process_row <- function(row) {
     
-    # Check for missing values
-    missing_values <- any(is.na(row[c(5, 6, 9, 10)]) | row[c(5, 6, 9, 10)]==0)
-    
-    
     #Same strand - matching ancestral, minor, allele1, allele2 
     matching <- (row[5] == row[10] & row[6] == row[11] | row[5] == row[11] & row[6] == row[10])
     
@@ -286,16 +307,30 @@ flip <- function(x, y) {
     
     
     
-    #Rows with N as allele A - Borneo
-    #N_condition <- (row[5]=="N")
-    N_6_10 <-(row[6] == row[10] & row[5]=="N")
-    N_6_11 <- (row[6] == row[11] & row[5]=="N")
-    N_flip_6_10 <- (row[6] == complement_base(row[10]) & row[5]=="N")
-    N_flip_6_11 <- (row[6] == complement_base(row[11]) & row[5]=="N")
+    #Rows where allele A is missing/a wrong character
+    N_6_10 <-(row[6] == row[10] & !(row[5] %in% c("A", "T", "C", "G")))
+    N_6_11 <- (row[6] == row[11] & !(row[5] %in% c("A", "T", "C", "G")))
+    N_flip_6_10 <- (row[6] == complement_base(row[10]) & !(row[5] %in% c("A", "T", "C", "G")))
+    N_flip_6_11 <- (row[6] == complement_base(row[11]) & !(row[5] %in% c("A", "T", "C", "G")))
     
-    if (missing_values) {
-      return(c(row, type = "missing values"))
-      
+    #Rows where allele B is missing/a wrong character
+    N_5_10 <-(row[5] == row[10] & !(row[6] %in% c("A", "T", "C", "G")))
+    N_5_11 <- (row[5] == row[11] & !(row[6] %in% c("A", "T", "C", "G")))
+    N_flip_5_10 <- (row[5] == complement_base(row[10]) & !(row[6] %in% c("A", "T", "C", "G")))
+    N_flip_5_11 <- (row[5] == complement_base(row[11]) & !(row[6] %in% c("A", "T", "C", "G")))
+    
+    
+    if(matching) {
+      return(c(row, type = "matching"))
+    } else if (flipped_condition_5_10) {
+      row[5] <- row[10] 
+      row[6] <- row[11]
+      return(c(row, type = "flipped"))
+    } else if (flipped_condition_5_11){
+      row[5] <- row[11]
+      row[6] <- row[10]
+      return(c(row, type = "flipped"))
+   
     } else if (N_6_10){
       row[5] <- row[11] 
       return(c(row, type = "N 6 10"))
@@ -312,17 +347,25 @@ flip <- function(x, y) {
       row[5] <- row[10]
       row[6] <- row[11]
       return(c(row, type = "N flip 6 11"))
-    } else if (matching) {
-      return(c(row, type = "matching"))
-    } else if (flipped_condition_5_10) {
-      row[5] <- row[10] 
-      row[6] <- row[11]
-      return(c(row, type = "flipped"))
-    } else if (flipped_condition_5_11){
-      row[5] <- row[11]
+      
+    } else if(N_5_10){
+      row[6] <- row[11] 
+      return(c(row, type = "N 5 10"))
+    } else if (N_5_11){
       row[6] <- row[10]
-      return(c(row, type = "flipped"))
-    } else{
+      return(c(row, type = "N 5 11"))
+    } else if (N_flip_5_10){
+      row[6] <- complement_base(row[11])
+      row[6] <- row[11]
+      row[5] <- row[10]
+      return(c(row, type = "N flip 5 10"))
+    } else if (N_flip_5_11){
+      row[6] <- complement_base(row[10])
+      row[6] <- row[10]
+      row[5] <- row[11]
+      return(c(row, type = "N flip 5 11"))
+      
+    } else {
       return(c(row,type = "?"))
     }
   }
@@ -332,37 +375,20 @@ flip <- function(x, y) {
   
   processed_rows <- as.data.frame(processed_rows,colnames=c("snp_id","chr_name","chrom_start","updated_allele_a","allele","updated_allele_B","chrom_strand","genetic_dist","allele1","allele2","type"))
   
-  #names(processed_rows)[names(processed_rows) == 'ancestral_allele'] <- 'updated_allele_A'
-  #names(processed_rows)[names(processed_rows) == 'minor_allele'] <- 'updated_allele_B'
-  
-  
   cat("Processing finished", "\n")
   
   #Checking numbers of each case/how many unprocessed rows
   
-  
   matching_both_ways <- processed_rows[processed_rows$type == "matching", ]
   flipped_rows <- processed_rows[processed_rows$type == "flipped", ]
   cat(nrow(flipped_rows),": SNPs flipped","\n")
-  missing <- processed_rows[processed_rows$type == "missing values", ]
-  cat(nrow(missing),": SNPs with missing values","\n")
   to_remove <- processed_rows[processed_rows$type == "?", ]
-  cat(nrow(to_remove),": SNPs to exclude","\n")
+  cat(nrow(to_remove),": SNPs to exclude?","\n")
   
   #Create a list of other SNPs to remove later in plink
   to_remove_list <- to_remove$snp_id
   
-  ########### Borneo specific issue 
-  
-  #N_condition <-processed_rows[processed_rows$type == "N condition",]
-  #cat(nrow(N_condition),": SNPs with N as allele A?","\n")
-  N_6_10 <-processed_rows[processed_rows$type == "N 6 10",]
-  N_6_11 <-processed_rows[processed_rows$type == "N 6 11",]
-  N_flip_6_10 <-processed_rows[processed_rows$type == "N flip 6 10",]
-  N_flip_6_11 <-processed_rows[processed_rows$type == "N flip 6 11",]
-  other <- df[!(df[,2] %in% processed_rows[,2]),]
   cat(nrow(processed_rows),": Processed","\n")
-  cat(nrow(other),": left","\n") 
   
   output <- dplyr::anti_join(processed_rows,to_remove)
   output <-output[,1:6]
@@ -378,30 +404,31 @@ flip <- function(x, y) {
   #processed_rows <- rbind(processed_rows,x_non_overlap)
   #cat(nrow(processed_rows),": Adding all non-overlapping SNPs back into set","\n")
   
-  return(list(output,processed_rows,to_remove,missing))
+  return(list(output,processed_rows,to_remove))
 }
 
 
 some_flips <- flip(new_data, new_bim_no_NA) 
+#write.table(file=resrepo::path_resrepo("data/intermediate/biomart/Borneo_raw_data_updated_full.bim"), some_flips[[1]], sep="\t",row.names = FALSE, quote = FALSE, col.names = FALSE)
 
-#updated_borneo_bim <- some_flips[[1]]
-updated_SA_bim <- some_flips[[1]]
 
-#write.table(file=resrepo::path_resrepo("data/intermediate/biomart/Borneo_raw_data_updated_full.bim"), updated_borneo_bim, sep="\t",row.names = FALSE, quote = FALSE, col.names = FALSE)
-#write.table(file=resrepo::path_resrepo("data/intermediate/biomart/Borneo_exclude_full.txt"),some_flips[[3]], sep="\t",row.names = FALSE, quote = FALSE, col.names = FALSE)
+#write.table(file=resrepo::path_resrepo("data/intermediate/biomart/SAN_SA_OmniEx_updated_full.bim"), some_flips[[1]], sep="\t",row.names = FALSE, quote = FALSE, col.names = FALSE)
 
-write.table(file=resrepo::path_resrepo("data/intermediate/biomart/SAN_SA_OmniEx_updated_full.bim"), updated_SA_bim, sep="\t",row.names = FALSE, quote = FALSE, col.names = FALSE)
-
-write.table(file=resrepo::path_resrepo("data/intermediate/biomart/SAN_SA_OmniEx_exclude_full.txt"),some_flips[[3]], sep="\t",row.names = FALSE, quote = FALSE, col.names = FALSE)
-
+#write.table(file=resrepo::path_resrepo("data/intermediate/biomart/Sumba_Timor_updated_full.bim"), some_flips[[1]], sep="\t",row.names = FALSE, quote = FALSE, col.names = FALSE)
 ```
-Output [[1]] is an updated .bim file where all SNPs that overlap with our dataset will have positions updated to HG38 and strand consistency with our data. 
+
+Ambiguous and non-overlapping SNPs currently removed at this stage  
+
+Output [[1]] is an updated .bim file where all SNPs that overlap with our dataset will have positions updated to HG38 and strand consistency with our data.
+
 Output [[3]] is a list of SNPs to remove later in plink.
+
+
 
 # Check resulting data 
 ```{r}
-# Check if updated borneo bim is a subset of malagasy updated bim
-is_subset <- dplyr::anti_join(updated_borneo_bim, new_bim_no_NA, by = "snp_id")
+# Check if updated bim is a subset of malagasy updated bim
+is_subset <- dplyr::anti_join(some_flips[[1]], new_bim_no_NA, by = "snp_id")
 
 if (nrow(is_subset) == 0) {
   print("df1 is a subset of df2")
@@ -410,5 +437,32 @@ if (nrow(is_subset) == 0) {
 }
 
 ```
+
+#Check .fam file format
+
+Mostly for admixtools, so individuals are categorised correctly 
+
+```{r}
+
+fam <- read.table(resrepo::path_resrepo("data/intermediate/biomart/Sumba_Timor_full_extracted.fam"))
+summary(fam)
+timor <- read.table(resrepo::path_resrepo("data/raw/data_input/timor"))
+timor <- subset(fam, fam$V2 %in% timor$V2)
+timor$V1 <- "Timor"
+sumba <- fam[!(fam$V2 %in% timor$V2),]
+sumba$V1 <- "Sumba"
+new_fam <- rbind(sumba,timor)
+#write.table(new_fam, resrepo::path_resrepo("data/intermediate/biomart/Sumba_Timor_full_extracted_fixed.fam"), row.names = FALSE, col.names = FALSE, quote = FALSE, sep="\t")
+
+#Rewriting the Borneo .fam file to resolve F2 ADMIXTOOLS populations
+
+fam <- read.table(resrepo::path_resrepo("data/intermediate/biomart/Borneo_full_extracted.fam"))
+fam$V1[1:39] <- sub("_.*","",fam$V1[1:39])
+
+#write.table(fam, resrepo::path_resrepo("data/intermediate/biomart/Borneo_full_extracted_fixed.fam"), row.names = FALSE, col.names = FALSE, quote = FALSE, sep="\t")
+
+
+```
+
 
 
