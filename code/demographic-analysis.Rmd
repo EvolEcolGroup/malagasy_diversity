@@ -11,12 +11,12 @@ knitr::opts_chunk$set(root.dir = "C:/Users/eviec/Git/malagasy_diversity/")
 # Trial PCA
 ```{r}
 setwd("C:/Users/eviec/Git/malagasy_diversity")
-data <- pcadapt::read.pcadapt(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_no_relatives.bed"), type = "bed") 
+data <- pcadapt::read.pcadapt(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_auto_no_relatives.bed"), type = "bed") 
 
 pca1 <- pcadapt::pcadapt(input = data, K=5)
 #plot(pca1, option = "screeplot")
 
-fam <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_no_relatives.fam"))
+fam <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_auto_no_relatives.fam"))
 
 
 #groups <- tidyr::separate(fam, V2, into = c("char_prefix", "numeric_suffix"), sep = "(?<=\\D)(?=\\d)")
@@ -67,14 +67,30 @@ ggplot2::ggplot(PCA_scores, ggplot2::aes(x = V1, y= V2, color = fam$V1)) +
 
 #devtools::install_github("uqrmaie1/admixtools", dependencies = TRUE)
 
-#no snps
-bim <- read.table(resrepo::path_resrepo("data/intermediate/biomart/merge_full_no_relatives_LDpruned.bim"))
+#Creating directory for f-stats
+#new = ("C:/Users/eviec/OneDrive - Anglia Ruskin University/gitdata/data/intermediate/f-stats")
+#dir.create(new)
+#base_dir <- file.path("C:/Users/eviec")
+#resrepo::data_dir_link(link_dir = "/data/intermediate/f-stats",
+#target_dir = file.path(base_dir,
+#"OneDrive - Anglia Ruskin University/gitdata/data/intermediate/f-stats"))
+#dir.exists(resrepo::path_resrepo("data/intermediate/f-stats"))
 
-geno_data = resrepo::path_resrepo("data/intermediate/biomart/merge_full_no_relatives_LDpruned")
+#Worked this time?
+geno_data <- resrepo::path_resrepo("data/intermediate/biomart/merge_full_auto_no_relatives_LDpruned")
+
+f2_dir <- resrepo::path_resrepo("data/intermediate/f-stats/")
+test <- admixtools::extract_f2(geno_data,f2_dir)
+
+f2_blocks <- admixtools::f2_from_precomp(f2_dir)
+dim(f2_blocks)
+
+
+#bim <- read.table(resrepo::path_resrepo("data/intermediate/biomart/merge_full_no_relatives_LDpruned.bim")) #- checking SNP number 
 
 #For now won't write to disk
-f2_blocks <- admixtools::f2_from_geno(geno_data)
-dim(f2_blocks)
+#f2_blocks <- admixtools::f2_from_geno(geno_data)
+#dim(f2_blocks)
 # 9     9 49183
 #`f2_blocks` is now a 3d-array with $f_2$-statistics for each population pair along dimensions 1 and 2, and each SNP block along the 3rd dimension.
 admixtools::count_snps(f2_blocks)
@@ -82,11 +98,13 @@ admixtools::count_snps(f2_blocks)
 pop1 <- c("Central_Highland","East_Coast","Northern_Coast","NorthWestern_Coast","Southern_Highland")
 pop2 <- c("KHM_SA")
 pop3 <- c("BOR") #compared to Sumba
+pop4 <- c("Sumba")
 
 test <- admixtools::f3(f2_blocks, pop1, pop2, pop3)
-
-
 print(test)
+
+test2 <- admixtools::f4(f2_blocks, pop1, pop2, pop3, pop4)
+
 
 admixtools::count_snps(f2_blocks)
 # was 659301 first go - removes 16k filtering
@@ -103,7 +121,7 @@ admixtools::count_snps(f2_blocks)
 
 ROH.indiv <- read.table(resrepo::path_resrepo("data/intermediate/biomart/ROH.hom.indiv"), header = TRUE)
 ROH.indiv <- as.data.frame(ROH.indiv)
-fam <- read.table(resrepo::path_resrepo("data/intermediate/biomart/merge_full_no_relatives_LDpruned.fam"))
+fam <- read.table(resrepo::path_resrepo("data/intermediate/biomart/merge_full_auto_no_relatives_LDpruned.fam"))
 
 
 ggplot2::ggplot(ROH.indiv, ggplot2::aes(x = NSEG, y= KBAVG,color = fam$V1)) +

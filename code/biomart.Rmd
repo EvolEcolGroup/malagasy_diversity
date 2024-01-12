@@ -12,9 +12,15 @@ library(biomaRt)
 # Find HG38 SNP positions using biomart
 
 ```{r}
+#Read in Malagasy data
 bim_file1 <- read.table(resrepo::path_resrepo("data/raw/data_input/Madagascar_full.bim")
            , header = FALSE, col.names = c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2"))
 as.data.frame(bim_file1)
+
+#Read in new data to merge
+new_data <- read.table(resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.bim"))
+
+
 ```
 
 Removing SNPs with VG identifiers from .bim file 
@@ -113,8 +119,13 @@ new_bim=new_bim[,c(7,2:3,8,5:6)]
 
 new_bim_no_NA <- na.omit(new_bim)
 
-#Remove missing
+#Checking whether those missing allele A/B are the monomorphic SNPs
 to_remove <- subset(new_bim_no_NA, new_bim_no_NA[,5]==0 | new_bim_no_NA[,6]==0)
+mono_test <- read.table(resrepo::path_resrepo("data/intermediate/biomart/Madagascar_monomorphic_test.bim"), header = FALSE, col.names = c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2"))
+check <- dplyr::anti_join(bim_file1,mono_test,by="snp_id")
+non_overlapping <- dplyr::anti_join(to_remove,check)
+
+#Remove missing
 new_bim_no_NA <- dplyr::anti_join(new_bim_no_NA,to_remove)
 tracking_SNP_number <- rbind(tracking_SNP_number,c("Removing NA entries and SNPs missing an allele in our data",nrow(new_bim_no_NA), nrow(new_bim)-nrow(new_bim_no_NA)))
 
@@ -157,7 +168,6 @@ Tests to check whether the new .bim files are in the format expected for the pip
 
 ```{r}
 #Check new data
-new_data <- read.table(resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.bim"))
 
 testthat::test_that("Test .bim dimensions and data types",{
   dims <- dim(new_data)
@@ -199,8 +209,10 @@ data_pipeline_bim <- function(x, y) {
   # and y is the current dataset e.g., updated Malagasy biomart positions
   
   # Read in the data
-  new_data <- read.table(x, col.names = c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2"))
-  comparative_data <- read.table(y, col.names = c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2"))
+  new_data <- x
+  colnames(new_data) <- c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2")
+  comparative_data <- y 
+  colnames(comparative_data) <- c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2")
   
   
   # Find overlap between SNPs in each set
@@ -229,7 +241,7 @@ data_pipeline_bim <- function(x, y) {
 }
 
 
-new_data=data_pipeline_bim(resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.bim"),                          resrepo::path_resrepo("data/intermediate/biomart/Madagascar_full_HG38.bim"))
+new_data <- data_pipeline_bim(new_data,new_bim_no_NA)
 
 ```
 
@@ -247,11 +259,15 @@ Updating other data .bim files so SNPs match our strand
 
 
 ```{r}
-
-
 flip <- function(x, y) {
   # where x is new data to convert to our strands
   # and y is the current dataset e.g., updated Malagasy biomart positions
+  
+  # Read in the data
+  new_data <- x
+  colnames(new_data) <- c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2")
+  comparative_data <- y 
+  colnames(comparative_data) <- c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2")
   
   # Find overlap between SNPs in each set
   overlap <- sum(x$snp_id %in% y$snp_id)
@@ -269,12 +285,14 @@ flip <- function(x, y) {
   
   
   df <- dplyr::left_join(x_overlapping, y, by = "snp_id")
+  colnames(df) <- c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2","chromosome.2", "genetic_dist.2", "physical_pos.2","ref1","ref2")
   
+
   # Create list of ambiguous SNPs 
-  ambiguous <- subset(df, df$allele1.y == "A" & df$allele2.y == "T" |
-                        df$allele1.y == "T" & df$allele2.y == "A" |
-                        df$allele1.y == "G" & df$allele2.y == "C" |
-                        df$allele1.y == "C" & df$allele2.y == "G")
+  ambiguous <- subset(df, df$allele1 == "A" & df$allele2 == "T" |
+                        df$allele1 == "T" & df$allele2 == "A" |
+                        df$allele1 == "G" & df$allele2 == "C" |
+                        df$allele1 == "C" & df$allele2 == "G")
   cat(nrow(ambiguous), ": ambiguous SNPs", "\n")
   cat(overlap - nrow(ambiguous), ": SNPs to process", "\n")
   
@@ -282,7 +300,7 @@ flip <- function(x, y) {
   df <- dplyr::anti_join(df,ambiguous)
   cat(nrow(df),": left after removing ambiguous SNPs", "\n")
   
-  #Create function to find complementary bases
+  #Function to find complementary bases
   complement_base <- function(base) {
     switch(base,
            A = "T",
@@ -293,92 +311,98 @@ flip <- function(x, y) {
     )
   }
   
+  #Function to find opposite
+  opposite_base <- function(base) {
+    switch(base,
+           A = "G",
+           G = "A",
+           C = "T",
+           T = "C",
+           base  
+    )
+  }
   
-  #Finding same strand (matching) and those to flip (flipped_condition)
+  
+  # Rename cases where allele 1 or 2 is missing, using biomart data
+  rename <- function(row){
+    if(!(row["allele1"] %in% c("A", "T", "C", "G")) & row["allele2"] == row["ref2"]){
+      row["allele1"] <- row["ref1"]
+      return(row)
+    }
+    else if(!(row["allele2"] %in% c("A", "T", "C", "G")) & row["allele1"] == row["ref1"]){
+      row["allele2"] <- row["ref2"]
+      return(row)
+    }
+    else if(!(row["allele1"] %in% c("A", "T", "C", "G")) & row["allele2"] == row["ref1"]){
+      row["allele1"] <- row["ref2"]
+      return(row)
+    }
+    else if(!(row["allele2"] %in% c("A", "T", "C", "G")) & row["allele1"] == row["ref2"]){
+      row["allele2"] <- row["ref1"]
+      return(row)
+    }
+    else if(row["allele1"]==complement_base(row["ref1"]) & !row["allele2"]%in% c("A", "T", "C", "G")){
+      row["allele2"] <- complement_base(row["ref2"])
+      return(row)
+    }
+    else if(row["allele2"]==complement_base(row["ref2"]) & !(row["allele1"]%in% c("A", "T", "C", "G"))){
+      row["allele1"] <- complement_base(row["ref1"])
+      return(row)
+    }
+    else if(row["allele1"]==complement_base(row["ref2"]) & !(row["allele2"]%in% c("A", "T", "C", "G"))){
+      row["allele2"] <- complement_base(row["ref1"])
+      return(row)
+    }
+    else if(row["allele2"]==complement_base(row["ref1"]) & !(row["allele1"]%in% c("A", "T", "C", "G"))){
+      row["allele1"] <- complement_base(row["ref2"])
+      return(row)
+    }
+    else{
+      return(row)
+    }
+  }
+  
+  renamed <- apply(df, MARGIN = 1, rename)
+  renamed <- t(renamed)
+  cat("renamed","\n")
+  renamed <- as.data.frame(renamed)
+  print(str(renamed))
+  colnames(renamed) <- c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2","chromosome.2", "genetic_dist.2", "physical_pos.2","ref1","ref2")
+
+  
+  #Finding same strand (matching) and those to flip (flipped_condition) after renaming
   process_row <- function(row) {
     
     #Same strand - matching ancestral, minor, allele1, allele2 
-    matching <- (row[5] == row[10] & row[6] == row[11] | row[5] == row[11] & row[6] == row[10])
-    
+    matching <- (row["allele1"] == row["ref1"] & row["allele2"] == row["ref2"] | row["allele1"] == row["ref2"] & row["allele2"] == row["ref1"])
     
     #Opposite strand - matching ancestral, minor, allele1, allele2
-    flipped_condition_5_10 <- (row[5] == complement_base(row[10]) & row[6] == complement_base(row[11]))
-    flipped_condition_5_11 <- (row[5] == complement_base(row[11]) & row[6] == complement_base(row[10]))
+    flipped_condition_allele1_ref1 <- (row["allele1"] == complement_base(row["ref1"]) & row["allele2"] == complement_base(row["ref2"]))
+    flipped_condition_allele1_ref2 <- (row["allele1"] == complement_base(row["ref2"]) & row["allele2"] == complement_base(row["ref1"]))
     
-    
-    
-    #Rows where allele A is missing/a wrong character
-    N_6_10 <-(row[6] == row[10] & !(row[5] %in% c("A", "T", "C", "G")))
-    N_6_11 <- (row[6] == row[11] & !(row[5] %in% c("A", "T", "C", "G")))
-    N_flip_6_10 <- (row[6] == complement_base(row[10]) & !(row[5] %in% c("A", "T", "C", "G")))
-    N_flip_6_11 <- (row[6] == complement_base(row[11]) & !(row[5] %in% c("A", "T", "C", "G")))
-    
-    #Rows where allele B is missing/a wrong character
-    N_5_10 <-(row[5] == row[10] & !(row[6] %in% c("A", "T", "C", "G")))
-    N_5_11 <- (row[5] == row[11] & !(row[6] %in% c("A", "T", "C", "G")))
-    N_flip_5_10 <- (row[5] == complement_base(row[10]) & !(row[6] %in% c("A", "T", "C", "G")))
-    N_flip_5_11 <- (row[5] == complement_base(row[11]) & !(row[6] %in% c("A", "T", "C", "G")))
-    
-    
+   
     if(matching) {
       return(c(row, type = "matching"))
-    } else if (flipped_condition_5_10) {
-      row[5] <- row[10] 
-      row[6] <- row[11]
+    } else if (flipped_condition_allele1_ref1) {
+      row["allele1"] <- row["ref1"] 
+      row["allele2"] <- row["ref2"]
       return(c(row, type = "flipped"))
-    } else if (flipped_condition_5_11){
-      row[5] <- row[11]
-      row[6] <- row[10]
+    } else if (flipped_condition_allele1_ref2){
+      row["allele1"] <- row["ref2"]
+      row["allele2"] <- row["ref1"]
       return(c(row, type = "flipped"))
-   
-    } else if (N_6_10){
-      row[5] <- row[11] 
-      return(c(row, type = "N 6 10"))
-    } else if (N_6_11){
-      row[5] <- row[10]
-      return(c(row, type = "N 6 11"))
-    } else if (N_flip_6_10){
-      row[5] <- complement_base(row[11])
-      row[5] <- row[11]
-      row[6] <- row[10]
-      return(c(row, type = "N flip 6 10"))
-    } else if (N_flip_6_11){
-      row[5] <- complement_base(row[10])
-      row[5] <- row[10]
-      row[6] <- row[11]
-      return(c(row, type = "N flip 6 11"))
-      
-    } else if(N_5_10){
-      row[6] <- row[11] 
-      return(c(row, type = "N 5 10"))
-    } else if (N_5_11){
-      row[6] <- row[10]
-      return(c(row, type = "N 5 11"))
-    } else if (N_flip_5_10){
-      row[6] <- complement_base(row[11])
-      row[6] <- row[11]
-      row[5] <- row[10]
-      return(c(row, type = "N flip 5 10"))
-    } else if (N_flip_5_11){
-      row[6] <- complement_base(row[10])
-      row[6] <- row[10]
-      row[5] <- row[11]
-      return(c(row, type = "N flip 5 11"))
-      
-    } else {
+    } 
+      else {
       return(c(row,type = "?"))
     }
   }
   
-  processed_rows <- apply(df, 1, process_row)
+  processed_rows <- apply(renamed, 1, process_row)
   processed_rows <- t(processed_rows)
   
   processed_rows <- as.data.frame(processed_rows,colnames=c("snp_id","chr_name","chrom_start","updated_allele_a","allele","updated_allele_B","chrom_strand","genetic_dist","allele1","allele2","type"))
   
   cat("Processing finished", "\n")
-  
-  #Checking numbers of each case/how many unprocessed rows
-  
   matching_both_ways <- processed_rows[processed_rows$type == "matching", ]
   flipped_rows <- processed_rows[processed_rows$type == "flipped", ]
   cat(nrow(flipped_rows),": SNPs flipped","\n")
@@ -387,28 +411,18 @@ flip <- function(x, y) {
   
   #Create a list of other SNPs to remove later in plink
   to_remove_list <- to_remove$snp_id
-  
   cat(nrow(processed_rows),": Processed","\n")
   
   output <- dplyr::anti_join(processed_rows,to_remove)
   output <-output[,1:6]
   
-  #Add ambiguous SNPs back in to output and trim down
-  #ambiguous[setdiff(names(processed_rows),names(ambiguous))] <- NA
-  #processed_rows <- rbind(processed_rows, ambiguous)
-  #cat(nrow(processed_rows), ": Adding ambiguous SNPs back into set","\n")
-  
-  #Add all other original .bim SNPs back into output 
-  #x_non_overlap <- dplyr::anti_join(x,x_overlapping,by="snp_id")
-  #colnames(processed_rows)<-c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2")
-  #processed_rows <- rbind(processed_rows,x_non_overlap)
-  #cat(nrow(processed_rows),": Adding all non-overlapping SNPs back into set","\n")
-  
-  return(list(output,processed_rows,to_remove))
+  return(list(output,renamed,processed_rows,to_remove))
 }
 
 
 some_flips <- flip(new_data, new_bim_no_NA) 
+
+
 #write.table(file=resrepo::path_resrepo("data/intermediate/biomart/Borneo_raw_data_updated_full.bim"), some_flips[[1]], sep="\t",row.names = FALSE, quote = FALSE, col.names = FALSE)
 
 
@@ -438,31 +452,7 @@ if (nrow(is_subset) == 0) {
 
 ```
 
-#Check .fam file format
 
-Mostly for admixtools, so individuals are categorised correctly 
-
-```{r}
-
-fam <- read.table(resrepo::path_resrepo("data/intermediate/biomart/Sumba_Timor_full_extracted.fam"))
-summary(fam)
-timor <- read.table(resrepo::path_resrepo("data/raw/data_input/timor"))
-timor <- subset(fam, fam$V2 %in% timor$V2)
-timor$V1 <- "Timor"
-sumba <- fam[!(fam$V2 %in% timor$V2),]
-sumba$V1 <- "Sumba"
-new_fam <- rbind(sumba,timor)
-#write.table(new_fam, resrepo::path_resrepo("data/intermediate/biomart/Sumba_Timor_full_extracted_fixed.fam"), row.names = FALSE, col.names = FALSE, quote = FALSE, sep="\t")
-
-#Rewriting the Borneo .fam file to resolve F2 ADMIXTOOLS populations
-
-fam <- read.table(resrepo::path_resrepo("data/intermediate/biomart/Borneo_full_extracted.fam"))
-fam$V1[1:39] <- sub("_.*","",fam$V1[1:39])
-
-#write.table(fam, resrepo::path_resrepo("data/intermediate/biomart/Borneo_full_extracted_fixed.fam"), row.names = FALSE, col.names = FALSE, quote = FALSE, sep="\t")
-
-
-```
 
 
 
