@@ -174,4 +174,47 @@ ggplot2::ggplot(ROH.indiv[ROH.indiv$FID==c("Central_Highland","East_Coast","Nort
 
 
 
+```{r}
+world <- ggplot2::map_data("world")
+
+worldplot <- ggplot2::ggplot() +
+  ggplot2::geom_polygon(data = world, ggplot2::aes(x=long, y = lat, group = group))+
+  ggplot2::coord_cartesian(xlim = c(-20, 160), ylim = c(-50, 50)) +
+  ggplot2::labs(title = "Data sources")
+
+# List of ISO3 codes for countries to highlight
+highlight_countries <- c("Madagascar","Kenya", "Tanzania", "Sudan", "Ethiopia", "Chad", "Cameroon", "Senegal", "Nigeria", "Namibia", "Algeria", "Benin", "Cameroon", "Gabon", "Angola","Democratic Republic of the Congo","Central African Republic","South Africa","Timor-Leste")
+
+highlight_region <- c("Borneo","Sumba")
+
+countries <- world[world$region %in% highlight_countries, ] 
+regions <- world[world$subregion %in% highlight_region,]
+data <- rbind(countries,regions)
+
+highlighted_plot <- worldplot +
+  ggplot2::geom_polygon(data = data,
+                        ggplot2::aes(x = long, y = lat, group = group),
+                        fill = "orange", color = "orange")
+
+print(highlighted_plot)
+
+
+
+```
+
+
+```{r}
+
+
+
+
+```
+
+
+
+
+
+
+
+
 
