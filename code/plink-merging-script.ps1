@@ -13,8 +13,10 @@ plink --bfile raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR --extract intermedia
 #Create the text file of files to merge
 #merge.txt in data/intermediate/biomart
 
+
+#Find common snps between datasets in R, and then merge only these SNPs
 #Merge files
-plink --merge-list intermediate/biomart/merge.txt --chr 1-22 --mind 0.05 --geno 0.1 --maf 0.01 --make-bed --out intermediate/biomart/merge_full_auto
+plink --merge-list intermediate/biomart/merge.txt --extract intermediate/biomart/merged_snps.txt --chr 1-22 --mind 0.05 --geno 0.1 --maf 0.01 --make-bed --out intermediate/biomart/merge_full_auto
 
 #Find close relatives with KING
 C:\Users\eviec\OneDrive\Desktop\King\king.exe -b intermediate/biomart/merge_full_auto.bed --unrelated –out intermediate/biomart
@@ -29,11 +31,12 @@ plink --bfile intermediate/biomart/merge_full_auto --remove 'C:\Users\eviec\OneD
 #LD pruning (saved separately)
 plink --bfile intermediate/biomart/merge_full_auto_no_relatives --indep-pairwise 50 5 0.5 --out intermediate/biomart/merge_full_auto_no_relatives_LDpruned
 plink --bfile intermediate/biomart/merge_full_auto_no_relatives --extract intermediate/biomart/merge_full_no_relatives_LDpruned.prune.in --make-bed --out intermediate/biomart/merge_full_auto_no_relatives_LDpruned
-#296055 of 670081 variants removed
+#279180 of 654356 variants removed
 
 
 #ROH:
-	plink --bfile intermediate/biomart/merge_full_auto_no_relatives_LDpruned --homozyg --out intermediate/biomart/ROH
+plink --bfile intermediate/biomart/merge_full_auto_no_relatives_LDpruned --homozyg --out intermediate/biomart/ROH
+#found 6535 ROH
 
 
 #Checking monomorphic SNPs
