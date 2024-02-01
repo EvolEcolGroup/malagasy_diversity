@@ -1,0 +1,255 @@
+---
+title: "PCA"
+output: html_document
+date: "2024-01-31"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(root.dir = "C:/Users/eviec/Git/malagasy_diversity/")
+```
+
+
+
+# PCA's using LD trimmed Malagasy only data
+Choosing number of PC's (K).
+"The ‘scree plot’ displays in decreasing order the percentage of variance explained by each PC."
+
+```{r}
+library(ggplot2)
+setwd("C:/Users/eviec/Git/malagasy_diversity")
+
+dataM_LD <- pcadapt::read.pcadapt(resrepo::path_resrepo("/data/intermediate/biomart/Madagascar_full_extracted_clean_auto_no_relatives_LDpruned.bed"), type = "bed") 
+
+#Choose K value 
+pca1LD <- pcadapt::pcadapt(input = dataM_LD, K=10 , ploidy = 2)
+
+plot(pca1LD, option = "screeplot") 
+
+#Drops sharply after K=5
+
+#Set to K=5
+pca1LD <- pcadapt::pcadapt(input = dataM_LD, K=5, ploidy = 2)
+
+
+```
+
+
+```{r}
+
+fam_Malagasy_LD <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/Madagascar_full_extracted_clean_auto_no_relatives_LDpruned.fam"))
+colnames(fam_Malagasy_LD) <- c("FID", "IID", "V3","V4","V5","V6")
+
+groups <- tidyr::separate(fam_Malagasy_LD, IID, into = c("char_prefix", "numeric_suffix"), sep = "(?<=\\D)(?=\\d)")
+fam_Malagasy_LD <- cbind(fam_Malagasy_LD,groups$char_prefix)
+
+colnames(fam_Malagasy_LD)[7] <- "Group"
+fam_Malagasy_LD$Population <- ifelse(fam_Malagasy_LD$Group == "BET","Betsimisaraka",
+                         ifelse(fam_Malagasy_LD$Group == "CH","Merina",
+                         ifelse(fam_Malagasy_LD$Group == "IR", "Diego",
+                         ifelse(fam_Malagasy_LD$Group == "ANT","Diego",
+                         ifelse(fam_Malagasy_LD$Group == "NW", "Sakalava/Tsimhety",
+                         ifelse(fam_Malagasy_LD$Group == "SH", "Betsileo",NA))))))
+
+PCA_scores_M <- as.data.frame(pca1$scores)
+
+#PCA 1 & 2
+ggplot(PCA_scores_M, aes(x = V1, y= V2, color = fam_Malagasy_LD$Population)) +
+  geom_point() + #shape = 1
+  labs(title = "Madagascar Principle Component Analysis", x = "PC1", y = "PC2", color = "Population")
+
+#PCA 3 & 4
+ggplot(PCA_scores_M, aes(x = V3, y= V4, color = fam_Malagasy_LD$Population)) +
+  geom_point() + #shape = 1
+  labs(title = "Madagascar Principle Component Analysis", x = "PC3", y = "PC4", color = "Population")
+
+
+```
+
+
+
+# PCA's of our merged data (so far)
+```{r}
+
+data <- pcadapt::read.pcadapt(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_auto_1000G_V_no_relatives_LDpruned.bed"), type = "bed") 
+
+#Choose K value
+pca2 <- pcadapt::pcadapt(input = data, K=10, ploidy = 2)
+plot(pca2, option = "screeplot") 
+
+#Drops sharply after K=5
+
+#Set to K=5
+pca2 <- pcadapt::pcadapt(input = data, K=5, ploidy = 2)
+
+```
+
+```{r}
+
+fam <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_auto_1000G_V_no_relatives_LDpruned.fam"))
+colnames(fam) <- c("FID", "IID", "V3","V4","V5","V6")
+G1000_groups <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/1000G_keep_all.txt"),sep = "\t")
+colnames(G1000_groups) <- c("FID","IID", "Population", "Sex")
+
+sub <- fam[fam$IID %in% G1000_groups$IID,] 
+missing <- dplyr::anti_join(G1000_groups,sub,by = "IID")
+G1000_groups <- dplyr::anti_join(G1000_groups,missing,by="IID")
+
+matching_indices <- match(fam$IID, G1000_groups$IID)
+fam$FID <- ifelse(!is.na(matching_indices), G1000_groups$FID[matching_indices], fam$FID)
+
+
+HG <- fam[grepl("HG",fam$IID),]
+
+sub_HG <- function(x){
+  old_prefix <- "HG"
+  new_prefix <- x[1]
+  x[2] <- sub(paste0("^", old_prefix), new_prefix,as.character(x[2]))
+  return(x)
+}
+
+
+res <- apply(HG, sub_HG, MARGIN = 1)
+res <- t(res)
+res <- as.data.frame(res)
+
+matching_indices <- match(fam$IID,res$IID)
+for (i in seq_along(res$IID)) {
+  fam[grepl("HG", fam$IID) & fam$IID == HG$IID[i], "IID"] <- res$IID[i]
+}
+
+groups <- tidyr::separate(fam, IID, into = c("char_prefix", "numeric_suffix"), sep = "(?<=\\D)(?=\\d)")
+
+fam <- cbind(fam,groups$char_prefix)
+colnames(fam)[7] <- "Group"
+unique(fam$Group)
+
+fam$Population <- ifelse(fam$Group == "BET","Betsimisaraka",
+                         ifelse(fam$Group == "CH","Merina",
+                         ifelse(fam$Group == "IR", "Diego",
+                         ifelse(fam$Group == "ANT","Diego",
+                         ifelse(fam$Group == "NW", "Sakalava/Tsimhety",
+                         ifelse(fam$Group == "SH", "Betsileo",
+                         ifelse(fam$Group == "BJM", "Borneo",
+                         ifelse(fam$Group == "SA","Khomani San, South Africa",
+                         ifelse(fam$Group == "GRC", "Sumba and Timor",
+                         ifelse(fam$Group == "TMR", "Timor",
+                         ifelse(fam$Group == "KHV", "Kinh Vietnam",
+                         ifelse(fam$Group == "BEB", "Bengali Bangladesh", 
+                         ifelse(fam$Group == "MSL", "Mende Sierra Leone",
+                         ifelse(fam$Group == "CHS", "Southern Han Chinese",
+                         ifelse(fam$Group == "PJL", "Punjabi Pakistan",
+                         ifelse(fam$Group == "GWD", "Gambian Mandinka",
+                         ifelse(fam$Group == "ESN", "Esan Nigeria",
+                         ifelse(fam$Group == "NA", "Yoruba",
+
+NA))))))))))))))))))
+
+
+pca2$singular.values
+variance.explained=(pca2$singular.values)^2 
+variance.explained
+sum(variance.explained)
+
+PCA_scores <- as.data.frame(pca2$scores)
+
+
+
+ggplot(PCA_scores, aes(x = V1, y= V2, color = fam$Population)) +
+  geom_point() +
+  labs(title = "Madagascar Principle Component Analysis", x = "PC1", y = "PC2", color = "Population")
+
+ggplot(PCA_scores, aes(x = V3, y= V4, color = fam$Population)) +
+  geom_point() +
+  labs(title = "Madagascar Principle Component Analysis", x = "PC3", y = "PC4", color = "Population")
+
+#Sort Timor 
+```
+
+
+
+
+
+
+# Old version 
+```{r}
+
+fam <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_auto_1000G_V_no_relatives_LDpruned.fam"))
+
+vietnam_ID <- read.table(resrepo::path_resrepo("data/intermediate/biomart/vietnamese_ID.txt"))
+bangladesh_ID <- read.table(resrepo::path_resrepo("data/intermediate/biomart/bangladeshi_ID.txt"))
+
+colnames(fam) <- c("FID", "IID", "V3","V4","V5","V6")
+
+#Subset to Vietnam and Bangladesh
+v <- subset(fam, fam$IID %in% vietnam_ID$V1)
+b <- subset(fam, fam$IID %in% bangladesh_ID$V1)
+
+#Change the FID in fam of Vietnam and Bangladesh
+fam[fam$FID %in% v$IID, "FID"] <- "Vietnam"
+fam[fam$FID %in% b$IID, "FID"] <- "Bangladesh"
+
+#Replace HGO prefix in IID with VNM and BDG
+old_prefix <- "HG"
+v_prefix <- "VNM"
+fam[fam$FID =="Vietnam","IID"] <- sub(paste0("^", old_prefix), v_prefix, fam[fam$FID == "Vietnam", "IID"])
+b_prefix <- "BDG"
+fam[fam$FID =="Bangladesh","IID"]<- sub(paste0("^", old_prefix), b_prefix, fam[fam$FID == "Bangladesh", "IID"])
+
+GRC_prefix <- "GRC"
+t_prefix <- "TMR"
+fam[fam$FID =="Timor","IID"] <- sub(paste0("^", GRC_prefix), t_prefix, fam[fam$FID == "Timor", "IID"])
+
+#Split IID into Groups for population ID's
+groups <- tidyr::separate(fam, IID, into = c("char_prefix", "numeric_suffix"), sep = "(?<=\\D)(?=\\d)")
+
+fam <- cbind(fam,groups$char_prefix)
+colnames(fam)[7] <- "Group"
+
+#Check all groups are included
+unique(fam$Group)
+#"BJM" "CH"  "BET" "VNM" "BDG" "SA"  "ANT" "IR"  "NW"  "SH"  "GRC"
+unique(fam$FID)
+#
+
+fam$Population <- ifelse(fam$Group == "BET","Betsimisaraka",
+                         ifelse(fam$Group == "CH","Merina",
+                         ifelse(fam$Group == "IR", "Diego",
+                         ifelse(fam$Group == "ANT","Diego",
+                         ifelse(fam$Group == "NW", "Sakalava/Tsimhety",
+                         ifelse(fam$Group == "SH", "Betsileo",
+                         ifelse(fam$Group == "BJM", "Borneo",
+                         ifelse(fam$Group == "SA","Khomani San, South Africa",
+                         ifelse(fam$Group == "GRC", "Sumba",
+                         ifelse(fam$Group == "TMR", "Timor",
+                         ifelse(fam$Group == "VNM", "Vietnam",
+                         ifelse(fam$Group == "BDG", "Bangladesh", 
+
+NA))))))))))))
+
+
+pca2$singular.values
+variance.explained=(pca2$singular.values)^2 
+variance.explained
+sum(variance.explained)
+
+PCA_scores <- as.data.frame(pca2$scores)
+
+
+ggplot(PCA_scores, aes(x = V1, y= V2, color = fam$Population)) +
+  geom_point() +
+  labs(title = "Madagascar Principle Component Analysis", x = "PC1", y = "PC2%", color = "Population")
+
+ggplot(PCA_scores, aes(x = V3, y= V4, color = fam$Population)) +
+  geom_point() +
+  labs(title = "Madagascar Principle Component Analysis", x = "PC3", y = "PC4", color = "Population")
+
+
+
+```
+
+
+
+
+
+
+
