@@ -1,0 +1,42 @@
+---
+title: "1000 Genomes population labels"
+output: html_document
+date: "2024-01-31"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(root.dir = "C:/Users/eviec/Git/malagasy_diversity/")
+
+
+```
+
+
+```{r}
+G1000 <- read.table(resrepo::path_resrepo("data/raw/data_input/igsr-1000 genomes phase 3 release.tsv.tsv"), sep = "\t", header = TRUE)
+
+pop <- c("KHV","BEB","YRI","PJL","GWD","MSL","ESN","LWK","CHS")
+#- Kinh in Ho Chi Minh City, Vietnam
+#- Bengali in Bangladesh
+#- Han Chinese South
+#- Luhya in Webuye, Kenya
+#- Yoruba in Ibadan, Nigeria
+#- Punjabi in Lahore, Pakistan
+#- Gambian in Western Division, The Gambia - Mandinka
+#- Mende in Sierra Leone
+#- Esan in Nigeria
+
+pops <- subset(G1000, G1000$Population.code %in% pop)
+
+all(grepl("1000 Genomes phase 3 release",pops$Data.collections))
+
+pops[,c(4,1,5,2)]
+
+#Just for plink 
+write.table(file=resrepo::path_resrepo("data/intermediate/biomart/1000G_keep.txt"), pops[,c(1,1)] , sep="\t",row.names = FALSE, quote = FALSE, col.names = FALSE)
+
+write.table(file=resrepo::path_resrepo("data/intermediate/biomart/1000G_keep_all.txt"), pops[,c(4,1,5,2)] , sep="\t",row.names = FALSE, quote = FALSE, col.names = FALSE)
+
+
+
+```
+
