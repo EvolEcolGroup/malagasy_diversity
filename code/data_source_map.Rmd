@@ -1,0 +1,29 @@
+---
+title: "Map of 5 data collection areas in Madagascar "
+output: html_document
+date: "2024-02-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r echo = FALSE}
+world <- map_data("world")
+
+worldplot <- ggplot() +
+  geom_polygon(data = world, aes(x=long, y = lat, group = group), fill = "grey")+
+  coord_cartesian(xlim = c(30, 60), ylim = c(-30, -10)) +
+  labs(title = "Malagasy data sources", x= "Longitude", y = "Latitude")
+
+# Took a kml from google maps 
+kml_data <- st_read(dsn = resrepo::path_resrepo("/data/intermediate/biomart/test_map.kml"))
+
+worldplot + geom_sf(data = kml_data, color = "darkblue", fill = "transparent", size = 1) + coord_sf(xlim = c(30, 60), ylim = c(-30, -10))
+
+
+
+
+```
+
