@@ -20,7 +20,7 @@ plink --merge-list intermediate/biomart/merge.txt --extract intermediate/biomart
 
 #Find close relatives with KING
 C:\Users\eviec\OneDrive\Desktop\King\king.exe -b intermediate/biomart/merge_full_auto.bed --unrelated –out intermediate/biomart
-#Manually move these files to a ‘king’ folder in intermediate – for now
+#These are currently left in top level of the data folder - directing output
 #–degree 2 gives this output
 #Remove close relatives
 plink --bfile intermediate/biomart/merge_full_auto --remove 'C:\Users\eviec\OneDrive - Anglia Ruskin University\gitdata\data\kingunrelated_toberemoved.txt' --make-bed --out intermediate/biomart/merge_full_auto_no_relatives
