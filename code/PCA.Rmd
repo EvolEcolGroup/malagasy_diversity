@@ -1,24 +1,26 @@
 ---
 title: "PCA"
-output: html_document
+output: pdf_document
 date: "2024-01-31"
+knit: resrepo::knit_to_results
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(root.dir = "C:/Users/eviec/Git/malagasy_diversity/")
+knitr::opts_chunk$set(root.dir = "C:/Users/eviec/Git/malagasy_diversity")
 ```
 
 
 
-# PCA's using LD trimmed Malagasy only data
-Choosing number of PC's (K).
-"The ‘scree plot’ displays in decreasing order the percentage of variance explained by each PC."
+# PCA's using Malagasy only data
 
-```{r}
+First, choosing number of PC's (K) from scree plot of percentage variance explained.
+
+
+```{r echo=FALSE}
 library(ggplot2)
-setwd("C:/Users/eviec/Git/malagasy_diversity")
+#setwd("C:/Users/eviec/Git/malagasy_diversity")
 
-dataM_LD <- pcadapt::read.pcadapt(resrepo::path_resrepo("/data/intermediate/biomart/Madagascar_full_extracted_clean_auto_no_relatives_LDpruned.bed"), type = "bed") 
+dataM_LD <- pcadapt::read.pcadapt(resrepo::path_resrepo("/data/intermediate/biomart/merged_malagasy_clean_auto_no_relatives_LDpruned.bed"), type = "bed") 
 
 #Choose K value 
 pca1LD <- pcadapt::pcadapt(input = dataM_LD, K=10 , ploidy = 2)
@@ -32,25 +34,28 @@ pca1LD <- pcadapt::pcadapt(input = dataM_LD, K=3, ploidy = 2)
 
 
 ```
+Sharp drop around 2, K is set to 3.
 
 
-```{r}
+```{r echo=FALSE}
 
-fam_Malagasy_LD <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/Madagascar_full_extracted_clean_auto_no_relatives_LDpruned.fam"))
+fam_Malagasy_LD <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/merged_malagasy_clean_auto_no_relatives_LDpruned.fam"))
 colnames(fam_Malagasy_LD) <- c("FID", "IID", "V3","V4","V5","V6")
 
-groups <- tidyr::separate(fam_Malagasy_LD, IID, into = c("char_prefix", "numeric_suffix"), sep = "(?<=\\D)(?=\\d)")
-fam_Malagasy_LD <- cbind(fam_Malagasy_LD,groups$char_prefix)
+#Rename Malagasy populations using population table
+pop_table <- read.table(resrepo::path_resrepo("/data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
+colnames(pop_table) <- c("IID", "V2","FID","Population","V5","V6","V7")
+fam_Malagasy_LD$IID <- sub("RR.*", "", fam_Malagasy_LD$IID)
 
-colnames(fam_Malagasy_LD)[7] <- "Group"
-fam_Malagasy_LD$Population <- ifelse(fam_Malagasy_LD$Group == "BET","Betsimisaraka",
-                         ifelse(fam_Malagasy_LD$Group == "CH","Merina",
-                         ifelse(fam_Malagasy_LD$Group == "IR", "Diego",
-                         ifelse(fam_Malagasy_LD$Group == "ANT","Diego",
-                         ifelse(fam_Malagasy_LD$Group == "NW", "Sakalava/Tsimhety",
-                         ifelse(fam_Malagasy_LD$Group == "SH", "Betsileo",NA))))))
+pop_table_sub <- subset(pop_table,pop_table$IID %in% fam_Malagasy_LD$IID & pop_table$V5 =="Madagascar")
 
+matching_m <- match(fam_Malagasy_LD$IID, pop_table_sub$IID)
+fam_Malagasy_LD$Population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], fam_Malagasy_LD$Popualtion)
+
+
+#Find PC loadings
 pca1LD$singular.values
+#singular.values is a vector containing the K ordered square root of the proportion of variance explained by each PC.
 variance.explained=(pca1LD$singular.values)^2 
 variance.explained
 sum(variance.explained)
@@ -59,61 +64,78 @@ PCA_scores_M <- as.data.frame(pca1LD$scores)
 #PCA 1 & 2
 ggplot(PCA_scores_M, aes(x = V1, y = V2, group = fam_Malagasy_LD$Population, colour = fam_Malagasy_LD$Population, shape = fam_Malagasy_LD$Population, fill = fam_Malagasy_LD$Population)) +
   geom_point(size = 2) +
-  scale_shape_manual(values = c(1,3,7,15,17))+
+  scale_shape_manual(values = c(1,3,7,15,17,19,21,23))+
   labs(title = "Madagascar PCA", x = "PC 1 (0.02%)" , y = "PC 2 (0.01%)", colour = "Population", shape = "Population", fill = "Population") +
   theme(legend.position = "right", legend.title = element_text(face="bold"))
 
+```
+
+```{r echo=FALSE, eval=FALSE}
 #PCA 1 & 2 colourblind friendly
 ggplot(PCA_scores_M, aes(x = V1, y = V2, group = fam_Malagasy_LD$Population, colour = fam_Malagasy_LD$Population, shape = fam_Malagasy_LD$Population, fill = fam_Malagasy_LD$Population)) +
   geom_point(size = 2) +
-  scale_shape_manual(values = c(1,3,7,15,17))+
+  scale_shape_manual(values = c(1,3,7,15,17,19,21,23))+
   labs(title = "Madagascar PCA", x = "PC 1 (0.02%)" , y = "PC 2 (0.01%)", colour = "Population", shape = "Population", fill = "Population") +
   theme(legend.position = "right", legend.title = element_text(face="bold"))+
   scale_color_brewer(palette = "Dark2")
-
-
-#PCA 1 & 2 black and white
-ggplot(PCA_scores_M, aes(x = V1, y = V2, group = fam_Malagasy_LD$Population, shape = fam_Malagasy_LD$Population, fill = fam_Malagasy_LD$Population)) +
-  geom_point(size = 2) +
-  scale_shape_manual(values = c(1,3,7,15,17)) +
-  labs(title = "Madagascar PCA", x = "PC 1 (0.02%)" , y = "PC 2 (0.01%)", shape = "Population", fill = "Population") +
-  theme(legend.position = "right", legend.title = element_text(face="bold"))  
-
-
-
 ```
 
-```{r}
-MDS <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/Madagascar_full_extracted_clean_auto_no_relatives_LDpruned_IBS_MDS.mds"), header=TRUE)
 
+```{r echo=FALSE, eval=FALSE}
+#PCA 1 & 2 black and white
+ggplot(PCA_scores_M, aes(x = V1, y = V2, group = fam_Malagasy_LD$Population, shape = fam_Malagasy_LD$Population)) + #, fill = fam_Malagasy_LD$Population
+  geom_point(size = 2) +
+  scale_shape_manual(values = c(1,3,7,15,17,19,21,23)) +
+  labs(title = "Madagascar PCA", x = "PC 1 (0.02%)" , y = "PC 2 (0.01%)", shape = "Population") + #, fill = "Population"
+  theme(legend.position = "right", legend.title = element_text(face="bold"))  
+```
+
+
+PCA of Malagasy populations alone shows overlap in PC space of the Betsimisaraka, Sakalava, Tsimhety, and Diego samples, all from Northern Madagascar. Some Merina samples also fall within this cluster, but the Merina and Betsileo (more Southern) populations show less overlap with others. However, the overall % explained by each PC is very low. 
+
+```{r echo=FALSE}
+
+MDS <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/merged_malagasy_clean_auto_no_relatives_LDpruned_IBS_MDS.mds"), header=TRUE)
+
+#IBS-MDS plot
 ggplot(MDS, aes(x = C1, y= C2, group = FID, shape = FID, color = FID)) +
   geom_point() + 
+  scale_shape_manual(values = c(1,3,7,15,17,19,21,23))+
   labs(title = "Madagascar IBS-MDS", x = "C1", y = "C2", color = "Population",shape = "Population")+
   xlab("Dimension 1")+
   ylab("Dimension 2")
 
-#With colourblind palette
+```
+
+IBS-MDS exhibits an almost identical patterning of popualtions to the PCA above. 
+
+```{r echo=FALSE, eval=FALSE}
+#IBS-MDS With colourblind palette
 ggplot(MDS, aes(x = C1, y= C2, group = FID, shape = FID, color = FID)) +
   geom_point() + 
+  scale_shape_manual(values = c(1,3,7,15,17,19,21,23))+
   labs(title = "Madagascar IBS-MDS", x = "C1", y = "C2", color = "Population",shape = "Population")+
   xlab("Dimension 1")+
   ylab("Dimension 2")+
   scale_color_brewer(palette="Dark2")
+```
 
-#BW check
+
+```{r echo=FALSE, eval=FALSE}
+#IBS-MDS in black and white
 ggplot(MDS, aes(x = C1, y= C2, group = FID, shape = FID)) +
   geom_point() + 
+  scale_shape_manual(values = c(1,3,7,15,17,19,21,23))+
   labs(title = "Madagascar IBS-MDS", x = "C1", y = "C2",shape = "Population")+
   xlab("Dimension 1")+
   ylab("Dimension 2")
-
-
 ```
 
 
 
 # PCA's of our merged data (so far)
-```{r}
+
+```{r echo=FALSE}
 
 data <- pcadapt::read.pcadapt(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_auto_1000G_V_no_relatives_LDpruned.bed"), type = "bed") 
 
@@ -121,14 +143,14 @@ data <- pcadapt::read.pcadapt(resrepo::path_resrepo("/data/intermediate/biomart/
 pca2 <- pcadapt::pcadapt(input = data, K=10, ploidy = 2)
 plot(pca2, option = "screeplot") 
 
-#Drops sharply after K=5
+#Drops after K=2 but levels off around K = 5 
 
 #Set to K=5
 pca2 <- pcadapt::pcadapt(input = data, K=5, ploidy = 2)
 
 ```
 
-```{r}
+```{r echo=FALSE}
 fam <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_auto_1000G_V_no_relatives_LDpruned.fam"))
 colnames(fam) <- c("FID", "IID", "V3","V4","V5","V6")
 G1000_groups <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/1000G_keep_all.txt"),sep = "\t")
@@ -165,15 +187,8 @@ fam <- as.data.frame(fam)
 pop_table <- read.table(resrepo::path_resrepo("/data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
 
 fam$IID <- sub("RR.*", "", fam$IID)
-pop_table_sub <- subset(pop_table,pop_table$V1 %in% fam$IID & pop_table$V5 =="Madagascar")
 
-just_malagasy <- subset(fam, fam$IID %in% pop_table$V1 & FID %in% c("Central_Highland","East_Coast","Northern_Coast","NorthWestern_Coast","Southern_Highland"))
-matching_malagasy <- match(just_malagasy$IID, pop_table$V1)
-
-just_malagasy$Population <- ifelse(!is.na(matching_malagasy), pop_table$V4[matching_malagasy], just_malagasy$Popualtion)
-
-fam[fam$IID %in% just_malagasy$IID,] <- just_malagasy
-
+fam[fam$IID %in% fam_Malagasy_LD$IID,] <- fam_Malagasy_LD
 
 #Clean up the data
 fam$Population <- sub(",.*", "", fam$Population)
@@ -183,7 +198,7 @@ Kinh$Population <- "Kinh Vietnamese"
 fam[fam$FID=="KHV",] <- Kinh
 
 SA <- fam[grepl("KHM_SA",fam$Population),]
-SA$Population <- "South Africa"
+SA$Population <- "Khomani San South Africa"
 fam[fam$FID=="KHM_SA",] <- SA
 
 BOR <- fam[grepl("BOR",fam$Population),]
@@ -194,8 +209,10 @@ fam$Population <- sapply(strsplit(fam$Population, "_"), function(x) paste(x, col
  #to do after SA above
 
 #Add a factor column so Malagasy can be a different shape/color
+#Add Mikea, Temoro, and Vezo here 
 fam$Malagasy <- 0
-fam[fam$IID %in% just_malagasy$IID, "Malagasy"] <- 1
+all_malagasy <- subset(fam, FID %in% c("Central_Highland","East_Coast","Northern_Coast","NorthWestern_Coast","Southern_Highland","Vez","Mik","Tem"))
+fam[fam$IID %in% all_malagasy$IID, "Malagasy"] <- 1
 
 
 pca2$singular.values
@@ -206,20 +223,212 @@ sum(variance.explained)
 PCA_scores <- as.data.frame(pca2$scores)
 
 
-
-ggplot(PCA_scores, aes(x = V1, y= V2, colour = fam$Population, shape = as.factor(fam$Malagasy))) + geom_point(alpha = 0.5) + #alpha = fam$Malagasy
+main <- ggplot(PCA_scores, aes(x = V1, y= V2, colour = fam$Population, shape = as.factor(fam$Malagasy))) + geom_point(alpha = 0.5) + #alpha = fam$Malagasy
   labs(title = "Madagascar PCA", x = "PC 1 (0.11%)", y = "PC 2 (0.02%)", colour = "Population")+
-  theme(legend.title = element_text(face="bold"), legend.position = "right")+
-  guides(shape = "none")
+  theme(legend.title = element_text(face="bold"), legend.position = "bottom")+
+  guides(shape = "none") +
+  geom_rect(aes(xmin = -0.02, xmax = 0.02, ymin = -0.02, ymax = 0.025), colour = "darkgrey",fill = NA, linetype = "dashed") 
 
-ggplot(PCA_scores, aes(x = V3, y= V4, colour = fam$Population, shape = as.factor(fam$Malagasy))) +
-  geom_point(alpha = 0.5) +
-  labs(title = "Madagascar PCA", x = "PC 3 (0.01%)", y = "PC 4 (0.01%)", colour = "Population")+ 
-  theme(legend.title = element_text(face="bold"), legend.position = "right")
+
+zoom <- ggplot(PCA_scores, aes(x = V1, y= V2, colour = fam$Population, shape = as.factor(fam$Malagasy))) + geom_point(alpha = 0.5) + #alpha = fam$Malagasy
+  #labs(x = "PC 1 (0.11%)", y = "PC 2 (0.02%)")+  
+  theme(legend.position = "none", axis.title.x = element_blank(),axis.title.y = element_blank())+ #,axis.ticks.x = element_blank(),axis.ticks.y = element_blank()
+  guides(shape = "none") + 
+  coord_cartesian(xlim = c(-0.02,0.02),
+             ylim = c(-0.02,0.025))
+
+
+
+gridExtra::grid.arrange(main,zoom,ncol = 2)
 
 
 
 ```
 
+In the first two PC's, the Malagasy form a cline between African and southeast Asian groups. The Merina are located closer to individuals from Borneo and the Lesser Sunda islands while Northern Malagasy groups are located towards Southern African and Bantu individuals. 
+
+
+
+
+
+```{r echo=FALSE}
+#Weird inset version
+
+#xmin_inset <- max(PCA_scores$V1) - 0.04  # Width of inset is 0.04
+#ymin_inset <- max(PCA_scores$V2) - 0.045 # Height of inset is 0.045
+# Calculate top-right corner of inset
+#xmax_inset <- max(PCA_scores$V1)
+#ymax_inset <- max(PCA_scores$V2)
+
+
+#main + annotation_custom(ggplotGrob(zoom), xmin = 1, xmax = 2, ymin = 1, ymax = 2)
+
+#main +
+#  annotation_custom(ggplotGrob(zoom), xmin = xmin_inset, xmax = xmax_inset, ymin = ymin_inset, ymax = ymax_inset)
+```
+
+
+
+
+```{r echo=FALSE}
+
+#PC's 3 and 4 
+ggplot(PCA_scores, aes(x = V3, y= V4, colour = fam$Population, shape = as.factor(fam$Malagasy))) +
+  geom_point(alpha = 0.5) +
+  labs(title = "Madagascar PCA", x = "PC 3 (0.01%)", y = "PC 4 (0.01%)", colour = "Population")+ 
+  theme(legend.title = element_text(face="bold"), legend.position = "right")
+
+```
+
+
+
+```{r echo=FALSE}
+#Facet zoom inset version - not very pretty 
+ggplot(PCA_scores, aes(x = V1, y= V2, colour = fam$Population, shape = as.factor(fam$Malagasy))) + geom_point(alpha = 0.5) + #alpha = fam$Malagasy
+  labs(title = "Madagascar PCA", x = "PC 1 (0.11%)", y = "PC 2 (0.02%)", colour = "Population")+
+  theme(legend.title = element_text(face="bold"), legend.position = "below")+
+  guides(shape = "none")+
+  ggforce::facet_zoom(xlim = c(-0.02,0.02),
+             ylim = c(-0.015,0.025))
+
+```
+
+
+```{r echo=FALSE}
+#Sample indiviudals for a more balanced PCA
+
+library(dplyr)
+split_dfs <- fam %>% group_split(Population)
+
+sampled_individuals <- list()
+
+# Loop through each tibble in split_dfs
+for(i in 1:length(split_dfs)) {
+  # Sample 30 individuals from the current tibble if it has more than 30 rows, otherwise include all rows
+  if (nrow(split_dfs[[i]]) > 30 ){
+    sampled_individuals[[i]] <- split_dfs[[i]][sample(nrow(split_dfs[[i]]), size = 30), ]
+  } else {
+    sampled_individuals[[i]] <- split_dfs[[i]]
+  }
+}
+
+new <- do.call(rbind,sampled_individuals)
+
+original_fam <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_auto_1000G_V_no_relatives_LDpruned.fam"))
+colnames(original_fam) <- c("FID", "IID", "V3","V4","V5","V6")
+
+#Return Malagasy to RR
+update <- new$FID %in% c("Central_Highland","East_Coast","Northern_Coast","NorthWestern_Coast","Southern_Highland")
+new$IID[update] <- paste(new$IID[update], "RR", sep = "")
+
+
+
+sub <- subset(original_fam, original_fam$IID %in% new$IID)
+
+
+#Use this subset with --keep in plink 
+write.table(sub[,c(1,2)], resrepo::path_resrepo("data/intermediate/biomart/sampled_individuals.txt"), row.names = FALSE, col.names = FALSE, quote = FALSE, sep="\t")
+
+
+
+```
+
+#Trying PCA with a balanced sample 
+```{r echo=FALSE}
+data <- pcadapt::read.pcadapt(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_sampled.bed"), type = "bed")
+
+pca3 <- pcadapt::pcadapt(input = data, K=10, ploidy = 2)
+plot(pca3, option = "screeplot")
+
+pca3 <- pcadapt::pcadapt(input = data, K=4, ploidy = 2)
+
+```
+
+
+
+```{r echo=FALSE}
+fam_sample <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_sampled.fam"))
+colnames(fam_sample) <- c("FID", "IID", "V3","V4","V5","V6")
+
+
+G1000_groups <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/1000G_keep_all.txt"),sep = "\t")
+colnames(G1000_groups) <- c("FID","IID", "Population", "Sex")
+
+sub <- fam_sample[fam_sample$IID %in% G1000_groups$IID,] 
+
+#Missing is individuals in the metadata G1000_groups who were filtered out in QC process
+missing <- dplyr::anti_join(G1000_groups,sub,by = "IID")
+G1000_groups <- dplyr::anti_join(G1000_groups,missing,by="IID")
+
+#Match based on individual ID
+matching_indices <- match(fam_sample$IID, G1000_groups$IID)
+#Replace FID column in fam_sample with FID given in G1000_groups
+fam_sample$FID <- ifelse(!is.na(matching_indices), G1000_groups$FID[matching_indices], fam_sample$FID)
+
+#Population  labels
+fam_sample$Population <- NA
+fam_sample$Population <- ifelse(!is.na(matching_indices), G1000_groups$Population[matching_indices], fam_sample$Population)
+
+pop <- function(x){
+  if(length(x) >= 7 && is.na(x[7])){
+    x[7] <- x[1]
+  }
+  return(x)
+}
+
+fam_sample <- apply(fam_sample, FUN=pop, MARGIN = 1)
+fam_sample <- t(fam_sample)
+fam_sample <- as.data.frame(fam_sample)
+
+
+#Rename Malagasy populations
+pop_table <- read.table(resrepo::path_resrepo("/data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
+
+fam_sample$IID <- sub("RR.*", "", fam_sample$IID)
+
+fam_Malagasy_LD_sub <- subset(fam_Malagasy_LD, fam_Malagasy_LD$IID %in% fam_sample$IID)
+
+fam_sample[fam_sample$IID %in% fam_Malagasy_LD_sub$IID,] <- fam_Malagasy_LD_sub
+
+
+
+#Clean up the data
+fam_sample$Population <- sub(",.*", "", fam_sample$Population)
+
+Kinh <- fam_sample[grepl("Kinh",fam_sample$Population),]
+Kinh$Population <- "Kinh Vietnamese"
+fam_sample[fam_sample$FID=="KHV",] <- Kinh
+
+SA <- fam_sample[grepl("KHM_SA",fam_sample$Population),]
+SA$Population <- "Khomani San South Africa"
+fam_sample[fam_sample$FID=="KHM_SA",] <- SA
+
+BOR <- fam_sample[grepl("BOR",fam_sample$Population),]
+BOR$Population <- "Borneo"
+fam_sample[fam_sample$FID=="BOR",] <- BOR
+
+fam_sample$Population <- sapply(strsplit(fam_sample$Population, "_"), function(x) paste(x, collapse = " and "))
+ #to do after SA above
+
+#Add a factor column so Malagasy can be a different shape/color
+#Add Mikea, Temoro, and Vezo here 
+fam_sample$Malagasy <- 0
+all_malagasy <- subset(fam_sample, FID %in% c("Central_Highland","East_Coast","Northern_Coast","NorthWestern_Coast","Southern_Highland","Vez","Mik","Tem"))
+fam_sample[fam_sample$IID %in% all_malagasy$IID, "Malagasy"] <- 1
+
+
+
+pca3$singular.values
+variance.explained=(pca3$singular.values)^2 
+variance.explained
+sum(variance.explained)
+
+PCA_scores <- as.data.frame(pca3$scores)
+
+ggplot(PCA_scores, aes(x = V1, y= V2, colour = fam_sample$Population, shape = as.factor(fam_sample$Malagasy))) + geom_point(alpha = 0.5) + 
+  labs(title = "Madagascar PCA", x = "PC 1 (8%)", y = "PC 2 (2%)", colour = "Population")+
+  theme(legend.title = element_text(face="bold"), legend.position = "right")+
+  guides(shape = "none")
+```
 
 
