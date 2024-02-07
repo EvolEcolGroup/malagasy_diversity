@@ -1,0 +1,113 @@
+---
+title: "Untitled"
+output: html_document
+date: "2024-02-06"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(root.dir = "C:/Users/eviec/Git/malagasy_diversity")
+```
+
+
+
+#Instructions taken from github vignette
+```{r}
+## PLINK to raw genotype (.traw)
+
+#'Now we will use the *plink2* software to transform the .bed file into raw genotypes. Again, note that we will need a "transposed" version since *smartsnp* assumes that samples are in columns, not rows.'
+
+setwd("C:/Users/eviec/Git/malagasy_diversity/data/")
+
+system("plink --bfile intermediate/biomart/merge_full_sampled --recode A-transpose --out intermediate/biomart/test_genotypeMatrix")
+
+```
+```{r}
+# 'To use .traw files, we will need to load the latest development version of smartsnp.
+#install.packages("devtools")
+devtools::install_github("ChristianHuber/smartsnp")
+```
+
+```{r}
+
+fam <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_sampled.fam"))
+
+colnames(fam) <- c("FID", "IID", "V3","V4","V5","V6")
+G1000_groups <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/1000G_keep_all.txt"),sep = "\t")
+colnames(G1000_groups) <- c("FID","IID", "Population", "Sex")
+
+sub <- fam[fam$IID %in% G1000_groups$IID,] 
+
+#Missing is individuals in the metadata G1000_groups who were filtered out in QC process
+missing <- dplyr::anti_join(G1000_groups,sub,by = "IID")
+G1000_groups <- dplyr::anti_join(G1000_groups,missing,by="IID")
+
+matching_indices <- match(fam$IID, G1000_groups$IID)
+#Replace FID column in fam with FID given in G1000_groups
+fam$FID <- ifelse(!is.na(matching_indices), G1000_groups$FID[matching_indices], fam$FID)
+
+
+# Running smart_pca
+sm.pca <- smartsnp::smart_pca(snp_data = resrepo::path_resrepo("/data/intermediate/biomart/test_genotypeMatrix.traw"), sample_group = fam$FID, missing_value = NA)
+
+
+
+plot(sm.pca$pca.sample_coordinates[, c(3,4)])
+
+ggplot(sm.pca$pca.sample_coordinates, aes(x = PC1, y= PC2, colour = Group)) + geom_point(alpha = 0.5) + 
+  labs(title = "Madagascar PCA", x = "PC 1 (8%)", y = "PC 2 (2%)", colour = "Population")+
+  theme(legend.title = element_text(face="bold"), legend.position = "right")+
+  guides(shape = "none")
+
+```
+
+```{r}
+
+#Now trying projecting Malagasy onto other modern individuals 
+
+# Group names of the ancient groups
+malagasy <- c("Central_Highland","East_Coast","Northern_Coast","NorthWestern_Coast","Southern_Highland","Vez","Mik","Tem")
+
+# fam contains group names of all groups in merged data
+
+# Vector defining ancient and modern groups
+S <- ifelse(fam$FID %in% malagasy, "ancient","modern")
+
+# Samples to remove
+
+
+# Simple index vectors that determines which samples to remove and which to use for PCA ordination or projection:
+SR <- which(fam$FID %in% malagasy)  # Column numbers of samples to remove
+SP <- which(S == "ancient")        # Column numbers of samples to project (i.e. aDNA)
+
+
+
+# Running smart_pca:
+sm.pca <- smartsnp::smart_pca(snp_data =  resrepo::path_resrepo("/data/intermediate/biomart/test_genotypeMatrix.traw"),
+                    sample_group = fam$FID, missing_value = NA,
+                    sample_remove = SR, sample_project = SP, pc_project = 1:2)
+
+#Errors with checks for invariant SNPs, I removed #missing_value = 9, missing_impute = "mean", scaling = "drift", program_svd = "RSpectra", pc_axes = 2 and added #missing_value = NA as in first example 
+
+#Error in 1:sampN.anc : argument of length 0
+#366 samples included in PCA computation
+#201 samples omitted from PCA computation
+#0 samples projected after PCA computation - so its a problem with SP
+
+#sample_project becomes 0 at some point? 
+#It doesn't state NO samples projected, it states 0 samples projected, so its turning sample_project from a vector to an integer 0 at some point before line 340 - but why? 
+#There's no overlap between SP and SR that would cause this (tested with setdiff)
+
+#What is snp_dat2
+#snp_dat2 <- do.call(cbind, snp_dat[, sample_project])
+#
+
+```
+
+
+
+
+
+
+```
+
+
