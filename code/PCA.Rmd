@@ -155,7 +155,7 @@ fam <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_a
 colnames(fam) <- c("FID", "IID", "V3","V4","V5","V6")
 G1000_groups <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/1000G_keep_all.txt"),sep = "\t")
 colnames(G1000_groups) <- c("FID","IID", "Population", "Sex")
-
+#
 sub <- fam[fam$IID %in% G1000_groups$IID,] 
 
 #Missing is individuals in the metadata G1000_groups who were filtered out in QC process
@@ -165,7 +165,7 @@ G1000_groups <- dplyr::anti_join(G1000_groups,missing,by="IID")
 #Match based on individual ID
 matching_indices <- match(fam$IID, G1000_groups$IID)
 #Replace FID column in fam with FID given in G1000_groups
-fam$FID <- ifelse(!is.na(matching_indices), G1000_groups$FID[matching_indices], fam$FID)
+#fam$FID <- ifelse(!is.na(matching_indices), G1000_groups$FID[matching_indices], fam$FID)
 
 #Population  labels
 fam$Population <- NA
@@ -314,20 +314,15 @@ for(i in 1:length(split_dfs)) {
 
 new <- do.call(rbind,sampled_individuals)
 
-original_fam <- read.table(resrepo::path_resrepo("/data/intermediate/biomart/merge_full_auto_1000G_V_no_relatives_LDpruned.fam"))
-colnames(original_fam) <- c("FID", "IID", "V3","V4","V5","V6")
 
-#Return Malagasy to RR
+
+#Return Malagasy RR
 update <- new$FID %in% c("Central_Highland","East_Coast","Northern_Coast","NorthWestern_Coast","Southern_Highland")
 new$IID[update] <- paste(new$IID[update], "RR", sep = "")
 
 
-
-sub <- subset(original_fam, original_fam$IID %in% new$IID)
-
-
 #Use this subset with --keep in plink 
-write.table(sub[,c(1,2)], resrepo::path_resrepo("data/intermediate/biomart/sampled_individuals.txt"), row.names = FALSE, col.names = FALSE, quote = FALSE, sep="\t")
+write.table(new[,c(1,2)], resrepo::path_resrepo("data/intermediate/biomart/sampled_individuals.txt"), row.names = FALSE, col.names = FALSE, quote = FALSE, sep="\t")
 
 
 
@@ -363,7 +358,7 @@ G1000_groups <- dplyr::anti_join(G1000_groups,missing,by="IID")
 #Match based on individual ID
 matching_indices <- match(fam_sample$IID, G1000_groups$IID)
 #Replace FID column in fam_sample with FID given in G1000_groups
-fam_sample$FID <- ifelse(!is.na(matching_indices), G1000_groups$FID[matching_indices], fam_sample$FID)
+#fam_sample$FID <- ifelse(!is.na(matching_indices), G1000_groups$FID[matching_indices], fam_sample$FID)
 
 #Population  labels
 fam_sample$Population <- NA
@@ -407,7 +402,7 @@ BOR <- fam_sample[grepl("BOR",fam_sample$Population),]
 BOR$Population <- "Borneo"
 fam_sample[fam_sample$FID=="BOR",] <- BOR
 
-fam_sample$Population <- sapply(strsplit(fam_sample$Population, "_"), function(x) paste(x, collapse = " and "))
+fam_sample$Population <- sapply(strsplit(fam_sample$Population, "_"), function(x) paste(x, collapse = " "))
  #to do after SA above
 
 #Add a factor column so Malagasy can be a different shape/color
@@ -429,6 +424,43 @@ ggplot(PCA_scores, aes(x = V1, y= V2, colour = fam_sample$Population, shape = as
   labs(title = "Madagascar PCA", x = "PC 1 (8%)", y = "PC 2 (2%)", colour = "Population")+
   theme(legend.title = element_text(face="bold"), legend.position = "right")+
   guides(shape = "none")
+```
+
+#PCA with broader groupings 
+
+```{r echo=FALSE}
+
+fam_sample[fam_sample$Population %in% c("Borneo","Sumba","Timor"),"Population"] <- "Island southeast Asia"
+fam_sample[fam_sample$Population %in% c("Bengali","Punjabi"),"Population"] <- "South Asia"
+fam_sample[fam_sample$Population %in% c("Southern Han Chinese","Kinh Vietnamese"),"Population"] <- "East Asia"
+fam_sample[fam_sample$Population %in% c("Khomani San South Africa"),"Population"] <- "Khomani San South African hunter gatherers"
+
+#Not really happy about grouping all African samples here though...
+fam_sample[fam_sample$Population %in% c("Esan","Gambian Mandinka","Luhya","Mende","Yoruba"),"Population"] <- "African"
+
+#Legend corrected
+ggplot(PCA_scores, aes(x = V1, y= V2, colour = fam_sample$Population, shape = as.factor(fam_sample$Malagasy))) + geom_point(alpha = 0.5) + 
+  labs(title = "Madagascar PCA", x = "PC 1 (8%)", y = "PC 2 (2%)", colour = "Population")+
+  theme(legend.title = element_text(face="bold"), legend.position = "right")+
+  guides(shape = "none",colour = guide_legend(override.aes = list(shape = c(16, 17, 16, 17, 16, 16, 17, 17, 17, 16, 17, 17, 17))))
+
+
+```
+
+```{r echo=FALSE}
+#Plot with all Malagasy in one colour too 
+
+fam_sample[fam_sample$FID %in% c("Central_Highland","East_Coast","Northern_Coast","NorthWestern_Coast","Southern_Highland","Vez","Mik","Tem"),"Population"] <- "Malagasy"
+
+#Works to have only a single legend!
+ggplot(PCA_scores, aes(x = V1, y= V2, shape = as.factor(fam_sample$Malagasy), colour = fam_sample$Population)) + geom_point(alpha = 0.5) + 
+  scale_shape_manual(values = c(16, 17)) +
+  labs(title = "Madagascar PCA", x = "PC 1 (8%)", y = "PC 2 (2%)", shape = "Malagasy", colour = "Population")+ #
+  theme(legend.title = element_text(face="bold"), legend.position = "right")+
+  guides(shape = "none",colour = guide_legend(override.aes = list(shape = c(16, 16,16,16,17,16))))
+  
+
+
 ```
 
 
