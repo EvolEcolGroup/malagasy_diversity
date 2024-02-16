@@ -3,6 +3,7 @@
 #Change wd
 cd 'C:\Users\eviec\OneDrive - Anglia Ruskin University\gitdata\data'
 
+
 #Create new binary filesets for each dataset
 plink --bfile raw/data_input/Madagascar_full --extract intermediate/biomart/Madagascar_full_HG38.bim --make-bed --out intermediate/biomart/Madagascar_full_extracted
 plink --bfile raw/data_input/Borneo_raw_data --extract intermediate/biomart/Borneo_raw_data_updated_full.bim --make-bed --out intermediate/biomart/Borneo_full_extracted
@@ -39,5 +40,6 @@ plink --bfile intermediate/biomart/merge_full_auto_no_relatives_LDpruned --homoz
 #found 6535 ROH
 
 
+
 #Checking monomorphic SNPs
-#plink --bfile raw/data_input/Madagascar_full --maf 0.000000001 --make-bed --out intermediate/biomart/Madagascar_monomorphic_test
+plink --bfile raw/data_input/Madagascar_full --maf 0.000000001 --make-bed --out intermediate/biomart/Madagascar_monomorphic_test

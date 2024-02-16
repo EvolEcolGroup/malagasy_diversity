@@ -9,8 +9,8 @@ plink --bfile raw/data_input/SAN_SA_OmniEx_hg19 --extract intermediate/biomart/S
 plink --bfile raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR --extract intermediate/biomart/Sumba_Timor_updated_full.bim --make-bed --out intermediate/biomart/Sumba_Timor_full_extracted
 plink --bfile raw/data_input/1000_Genomes_b37_clean --extract intermediate/biomart/1000_updated_full.bim --make-bed --out intermediate/biomart/1000_full_extracted
 plink --bfile raw/data_input/Pierron_Malagasy --extract intermediate/biomart/Mikea_updated_full.bim --make-bed --out intermediate/biomart/Mikea_full_extracted
-#Edit .fam files as necessary in R at this stage (separate scripts)
-#Borneo Sumba and Mikea separately 
+
+#################### Edit Borneo Sumba and Mikea .fam files as necessary in R at this stage (separate scripts) #################
 
 #ID file requires two rows - a family and individual ID, identical in this case 
 #plink --bfile intermediate/biomart/1000_full_extracted --keep intermediate/biomart/vietnamese_ID.txt --make-bed --out intermediate/biomart/1000_full_extracted_V
@@ -18,10 +18,11 @@ plink --bfile raw/data_input/Pierron_Malagasy --extract intermediate/biomart/Mik
 
 plink --bfile intermediate/biomart/1000_full_extracted --keep intermediate/biomart/1000G_keep.txt --make-bed --out intermediate/biomart/1000_full_extracted_V
 
+#################### Then edit 1000G .fam file in R (separate script) #######################
 
 
 #Create the text file of files to merge
-#merge.txt in data/intermediate/biomart
+#merge_1000G.txt in data/intermediate/biomart
 
 #Merge files
 plink --merge-list intermediate/biomart/merge_1000G.txt --extract intermediate/biomart/merged_1000G_snps.txt --chr 1-22 --mind 0.05 --geno 0.1 --maf 0.01 --make-bed --out intermediate/biomart/merge_full_auto_1000G_V
