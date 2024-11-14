@@ -1,0 +1,98 @@
+---
+title: "Full dataset PCA"
+output: html_document
+date: "2024-11-06"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+
+# Load gt
+
+```{r}
+mad_bor_g1000_sum <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/mad_bor_g1000_sum.gt")
+```
+
+# Subsample
+
+# Impute
+
+```{r}
+mad_bor_g1000_sum <- gt_impute_simple(mad_bor_g1000_sum, method = "random")
+gt_set_imputed(mad_bor_g1000_sum, TRUE)
+```
+
+
+#LD clumping
+
+```{r}
+show_loci(mad_bor_g1000_sum)$chromosome <- as.integer(show_loci(mad_bor_g1000_sum)$chromosome)
+
+show_loci(mad_bor_g1000_sum) <- mad_bor_g1000_sum %>% show_loci() %>% arrange(chr_int,position)
+
+to_keep_LD <- loci_ld_clump(mad_bor_g1000_sum, thr_r2 = 0.5, size = 50, return_id = TRUE)
+
+mad_bor_g1000_sum <- mad_bor_g1000_sum%>% select_loci(all_of(to_keep_LD))
+```
+
+
+Here - we previously had issues with 'Error: 'pos.chr' is not sorted.'
+
+
+# PCA
+
+```{r}
+random_pca <- gt_pca_randomSVD(mad_bor_g1000_sum)
+
+pcs <- as.data.frame(random_pca$u)
+
+#big_random_pca <- gt_pca_randomSVD(imputed_data)
+#auto_pca <- gt_pca_autoSVD(imputed_data) # there's still an error here...
+```
+
+
+```{r}
+main2 <- ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$population)) + geom_point(alpha = 0.5) + #
+  labs(title = "PCA", x = "PC 1", y = "PC 2", colour = NULL)+ 
+  theme(legend.title = element_text(face="bold"),legend.text = element_text(size = 5))
+main2
+```
+
+# Subsample
+
+```{r}
+subsample <- function(x){
+  
+  if(nrow(x)<=30){
+    return(x)
+  } else {
+    sample_n(x, size = 30)
+  }
+  
+}
+
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  group_by(population) %>%
+  group_modify(~ subsample(.x)) %>%
+  ungroup()
+  
+mad_bor_g1000_sum %>% group_by(population) %>% count() 
+
+```
+
+
+```{r}
+partial_pca <- gt_pca_partialSVD(mad_bor_g1000_sum)
+
+pcs <- as.data.frame(partial_pca$u)
+
+main2 <- ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$population)) + geom_point(alpha = 0.5) + #
+  labs(title = "PCA", x = "PC 1", y = "PC 2", colour = NULL)+ 
+  theme(legend.title = element_text(face="bold"),legend.text = element_text(size = 5))
+main2
+```
+
+
+

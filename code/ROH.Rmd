@@ -1,0 +1,237 @@
+---
+title: "Malagasy runs of homozygosity"
+output: html_document
+date: "2024-11-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(detectRUNS)
+library(ggplot2)
+library(tidypopgen)
+```
+
+
+```{r}
+madagascar <- gt_load(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_cleaned.gt"))
+```
+
+
+#LD clumping
+
+```{r}
+show_loci(madagascar)$chromosome <- as.integer(show_loci(madagascar)$chromosome)
+
+show_loci(madagascar) <- madagascar %>% show_loci() %>% arrange(chr_int,position)
+
+madagascar <- gt_impute_simple(madagascar, method = "random")
+
+to_keep_LD <- loci_ld_clump(madagascar, thr_r2 = 0.5, size = 50, return_id = TRUE)
+#Previous Error: Not compatible with requested type: [type=character; target=double].
+
+#Error: 'infos.chr' should contain only integers.
+
+madagascar <- madagascar%>% select_loci(all_of(to_keep_LD))
+
+```
+
+
+```{r}
+madagascar <- madagascar %>% group_by(population)
+#runs <- gt_roh_window(madagascar,
+#                            window_size = 15,
+#                            threshold = 0.05,
+#                            min_snp = 3,
+#                            heterozygosity = FALSE,
+#                            max_opp_window = 1,
+#                            max_miss_window = 1,
+#                            max_gap = 10^6,
+#                            min_length_bps = 1000,
+#                            min_density = 0.1)
+#Error in data.frame(..., check.names = FALSE) : 
+#  arguments imply differing number of rows: 713014, 361633
+# one taken from the FBM, one taken from the gt object
+
+```
+
+```{r}
+#gt_as_plink(madagascar,"/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Madagascar_clean", type = "bed")
+```
+
+```{r}
+#madagascar <- gen_tibble("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Madagascar_clean.bed")
+madagascar <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Madagascar_clean.gt")
+```
+
+
+```{r}
+#Read in Pierron Malagasy metadata
+
+pop_table <- read.table(resrepo::path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
+colnames(pop_table) <- c("IID", "V2","FID","Population","V5","V6","V7")
+
+#Remove the "RR"
+madagascar$id <- sub("RR.*", "", madagascar$id)
+
+#Find Malagasy entries 
+pop_table_sub <- subset(pop_table,pop_table$IID %in% madagascar$id & pop_table$V5 =="Madagascar")
+
+#match up the ID's with pop table metadata
+matching_m <- match(madagascar$id, pop_table_sub$IID)
+
+madagascar$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], madagascar$population)
+
+```
+
+```{r}
+madagascar <- madagascar %>% group_by(population)
+runs <- gt_roh_window(madagascar,
+                            window_size = 15,
+                            threshold = 0.05,
+                            min_snp = 3,
+                            heterozygosity = FALSE,
+                            max_opp_window = 1,
+                            max_miss_window = 1,
+                            max_gap = 10^6,
+                            min_length_bps = 1000,
+                            min_density = 0.1)
+```
+
+
+# Total number of runs
+
+```{r}
+runs_per_indiv <- runs %>% group_by(id) %>% count()
+
+madagascar <- left_join(madagascar, runs_per_indiv, by = "id")
+#madagascar$n <- as.factor(madagascar$n)
+madagascar$n <- as.numeric(madagascar$n)
+madagascar$population <- as.factor(madagascar$population)
+```
+
+```{r}
+ggplot(data=madagascar, aes(x=id , y=n, fill=population)) +
+  geom_bar(stat="identity") + 
+  coord_flip()+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
+  labs(x = "Number of runs", y = "ID", fill = "Population")
+```
+
+
+```{r}
+ggplot(madagascar,aes(x=population, y = n, fill = population))+
+geom_violin()+
+labs(title = "Number of runs of homozygosity per individual", y = "Number", x = NULL, fill = "Population")
+```
+
+# Total length of runs
+
+```{r}
+total_length_per_indiv <- aggregate(runs$lengthBps, by = list(id = runs$id), FUN = sum)
+colnames(total_length_per_indiv) <- c("id","length")
+madagascar <- left_join(madagascar, total_length_per_indiv, by = "id")
+```
+
+```{r}
+ggplot(data=madagascar, aes(x=id , y=length, fill=population)) +
+  geom_bar(stat="identity") + 
+  coord_flip()+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
+  labs(x = "Total length", y = "ID", fill = "Population")
+```
+
+
+```{r}
+ggplot(madagascar,aes(x=population, y = length, fill = population))+
+geom_violin()+
+labs(title = "Total length of runs of homozygosity per individual", y = "Length (BPs)", x = NULL, fill = "Population")
+```
+
+
+# Average length of runs per individual
+
+```{r}
+avg_length_per_indiv <- aggregate(runs$lengthBps, by = list(id = runs$id), FUN = mean)
+colnames(avg_length_per_indiv) <- c("id","mean")
+madagascar <- left_join(madagascar, avg_length_per_indiv, by = "id")
+```
+
+```{r}
+ggplot(data=madagascar, aes(x=id , y=mean, fill=population)) +
+  geom_bar(stat="identity") + 
+  coord_flip()+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
+  labs(x = "Mean length", y = "ID", fill = "Population")
+
+```
+
+
+```{r}
+ggplot(madagascar,aes(x=population, y = mean, fill = population))+
+geom_violin()+
+labs(title = "Mean length of runs of homozygosity per individual", y = "Length (BPs)", x = NULL, fill = "Population")
+```
+
+
+This warning pops up sometimes? 
+
+
+Warning in gzfile(file, "wb") :
+  cannot open compressed file '/home/EJC199/Git/tidypopgen/.Rproj.user/shared/notebooks/B3ABC2B0-ROH/1/6DCF959C33396828/c17cy1kwrhcvn_t/4867127a4fac4ff4b8f35acc62751dde.snapshot', probable reason 'No such file or directory'
+Error in gzfile(file, "wb") : cannot open the connection
+
+# Total length by total number 
+
+```{r}
+ggplot(madagascar,aes(x = n, y= length, color = population, fill = population,shape = population)) +
+geom_point(size = 1.8) +
+labs(title = "Runs of homozygosity per individual", x = "Number of runs", y = "Total length (BPs)")+
+  scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
+  
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
+  scale_fill_brewer(palette = "Dark2") 
+```
+
+
+We could test using Kruskal-wallis whether there is a significant diff between 
+groups in both number and total length of ROH's. But, this may not answer our 
+question. 
+
+We may expect to see higher ROH's in individuals with more Asian ancestry among
+the Merina, but we have several confounding effects:
+
+1) Merina with higher African ancestry will be likely to have fewer ROH's anyway, 
+as African popualtions have lower homozygosity than other global pops
+
+2) IBD analysis (Alva et al 2022) suggests a bottleneck in the Asian ancestry 
+source of all Malagasy people, meaning (if all other things were equal) the Asian 
+ancestry component would have more ROH's than the African component 
+
+
+Ideas:
+
+Anything else we can use as a proxy for caste? Not really, the groups live side by 
+side, so location won't help.
+
+Correlations of ROH versus ancestry for all individuals, regardless of ethnic group
+Correlations of ROH versus ethnicity for all individuals, regardless of ancestry
+
+Analyse, see how well each explains the data
+
+A model including the effects of both should be the best fit?
+
+
+Could we remove the Merina, predict based on the correlation of ancestry/ROH's in the
+other data where they should fall in ROH distribution given their ancestry, and 
+then show that that model alone doesn't account for the inflation in ROH's?
+
+
+
+```{r}
+plot_Runs(runs = runs)
+#plot_StackedRuns(runs = runs)
+```
+
+
+
