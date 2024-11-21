@@ -13,31 +13,31 @@ library(tidypopgen)
 
 
 ```{r}
-madagascar <- gt_load(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_cleaned.gt"))
+#madagascar <- gt_load(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_cleaned.gt"))
 ```
 
 
 #LD clumping
 
 ```{r}
-show_loci(madagascar)$chromosome <- as.integer(show_loci(madagascar)$chromosome)
+#show_loci(madagascar)$chromosome <- as.integer(show_loci(madagascar)$chromosome)
 
-show_loci(madagascar) <- madagascar %>% show_loci() %>% arrange(chr_int,position)
+#show_loci(madagascar) <- madagascar %>% show_loci() %>% arrange(chr_int,position)
 
-madagascar <- gt_impute_simple(madagascar, method = "random")
+#madagascar <- gt_impute_simple(madagascar, method = "random")
 
-to_keep_LD <- loci_ld_clump(madagascar, thr_r2 = 0.5, size = 50, return_id = TRUE)
+#to_keep_LD <- loci_ld_clump(madagascar, thr_r2 = 0.5, size = 50, return_id = TRUE)
 #Previous Error: Not compatible with requested type: [type=character; target=double].
 
 #Error: 'infos.chr' should contain only integers.
 
-madagascar <- madagascar%>% select_loci(all_of(to_keep_LD))
+#madagascar <- madagascar%>% select_loci(all_of(to_keep_LD))
 
 ```
 
 
 ```{r}
-madagascar <- madagascar %>% group_by(population)
+#madagascar <- madagascar %>% group_by(population)
 #runs <- gt_roh_window(madagascar,
 #                            window_size = 15,
 #                            threshold = 0.05,
@@ -60,7 +60,55 @@ madagascar <- madagascar %>% group_by(population)
 
 ```{r}
 #madagascar <- gen_tibble("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Madagascar_clean.bed")
-madagascar <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Madagascar_clean.gt")
+#madagascar <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Madagascar_clean.gt")
+#malagasy <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/malagasy_merge_master.gt")
+```
+
+#LD clumping
+
+```{r}
+#show_loci(malagasy)$chromosome <- as.integer(show_loci(malagasy)$chromosome)
+
+#show_loci(malagasy) <- malagasy %>% show_loci() %>% arrange(chr_int,position)
+
+#malagasy <- gt_impute_simple(malagasy, method = "random")
+
+#to_keep_LD <- loci_ld_clump(malagasy, thr_r2 = 0.5, size = 50, return_id = TRUE)
+#Previous Error: Not compatible with requested type: [type=character; target=double].
+
+#Error: 'infos.chr' should contain only integers.
+
+#malagasy <- malagasy%>% select_loci(all_of(to_keep_LD))
+```
+
+
+# Write to plink and read back in
+
+otherwise gt_roh_window will throw an error becasue the .gt and .fbm have different numbers of rows
+
+```{r}
+#gt_as_plink(malagasy,"/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Malagasy_all_clean", type = "bed")
+#malagasy <- gen_tibble("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Malagasy_all_clean.bed")
+#malagasy <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Malagasy_all_clean.gt")
+```
+
+Alternative, using the low relatedness set, totally changed the patterns for the Merina. This more stringent kinship filter removed mostly Merina with high .Q1 values, leaving only 12 Merina individuals.
+
+Social group A had lower FIS than social group B, and a lot of correlations between .Q1 and ROH's for the Merina attenuated. The correlations between .Q1 and number of runs, mean length, and total length still remain, but weaker.
+
+```{r}
+#malagasy <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/malagasy_merge_master_low_kin.gt")
+
+#show_loci(malagasy)$chromosome <- as.integer(show_loci(malagasy)$chromosome)
+#show_loci(malagasy) <- malagasy %>% show_loci() %>% arrange(chr_int,position)
+#malagasy <- gt_impute_simple(malagasy, method = "random")
+#to_keep_LD <- loci_ld_clump(malagasy, thr_r2 = 0.5, size = 50, return_id = TRUE)
+#malagasy <- malagasy%>% select_loci(all_of(to_keep_LD))
+
+#gt_as_plink(malagasy,"/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Malagasy_low_rel_all_clean", type = "bed")
+#malagasy <- gen_tibble("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Malagasy_low_rel_all_clean.bed")
+malagasy <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Malagasy_low_rel_all_clean.gt")
+
 ```
 
 
@@ -71,21 +119,21 @@ pop_table <- read.table(resrepo::path_resrepo("data/raw/data_input/Madagascar_Bo
 colnames(pop_table) <- c("IID", "V2","FID","Population","V5","V6","V7")
 
 #Remove the "RR"
-madagascar$id <- sub("RR.*", "", madagascar$id)
+malagasy$id <- sub("RR.*", "", malagasy$id)
 
 #Find Malagasy entries 
-pop_table_sub <- subset(pop_table,pop_table$IID %in% madagascar$id & pop_table$V5 =="Madagascar")
+pop_table_sub <- subset(pop_table,pop_table$IID %in% malagasy$id & pop_table$V5 =="Madagascar")
 
 #match up the ID's with pop table metadata
-matching_m <- match(madagascar$id, pop_table_sub$IID)
+matching_m <- match(malagasy$id, pop_table_sub$IID)
 
-madagascar$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], madagascar$population)
+malagasy$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], malagasy$population)
 
 ```
 
 ```{r}
-madagascar <- madagascar %>% group_by(population)
-runs <- gt_roh_window(madagascar,
+malagasy <- malagasy %>% group_by(population)
+runs <- gt_roh_window(malagasy,
                             window_size = 15,
                             threshold = 0.05,
                             min_snp = 3,
@@ -103,14 +151,14 @@ runs <- gt_roh_window(madagascar,
 ```{r}
 runs_per_indiv <- runs %>% group_by(id) %>% count()
 
-madagascar <- left_join(madagascar, runs_per_indiv, by = "id")
-#madagascar$n <- as.factor(madagascar$n)
-madagascar$n <- as.numeric(madagascar$n)
-madagascar$population <- as.factor(madagascar$population)
+malagasy <- left_join(malagasy, runs_per_indiv, by = "id")
+#malagasy$n <- as.factor(malagasy$n)
+malagasy$n <- as.numeric(malagasy$n)
+malagasy$population <- as.factor(malagasy$population)
 ```
 
 ```{r}
-ggplot(data=madagascar, aes(x=id , y=n, fill=population)) +
+ggplot(data=malagasy, aes(x=id , y=n, fill=population)) +
   geom_bar(stat="identity") + 
   coord_flip()+
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
@@ -119,8 +167,8 @@ ggplot(data=madagascar, aes(x=id , y=n, fill=population)) +
 
 
 ```{r}
-ggplot(madagascar,aes(x=population, y = n, fill = population))+
-geom_violin()+
+ggplot(malagasy,aes(x=population, y = n, fill = population))+
+geom_violin(trim = FALSE)+
 labs(title = "Number of runs of homozygosity per individual", y = "Number", x = NULL, fill = "Population")
 ```
 
@@ -129,11 +177,11 @@ labs(title = "Number of runs of homozygosity per individual", y = "Number", x = 
 ```{r}
 total_length_per_indiv <- aggregate(runs$lengthBps, by = list(id = runs$id), FUN = sum)
 colnames(total_length_per_indiv) <- c("id","length")
-madagascar <- left_join(madagascar, total_length_per_indiv, by = "id")
+malagasy <- left_join(malagasy, total_length_per_indiv, by = "id")
 ```
 
 ```{r}
-ggplot(data=madagascar, aes(x=id , y=length, fill=population)) +
+ggplot(data=malagasy, aes(x=id , y=length, fill=population)) +
   geom_bar(stat="identity") + 
   coord_flip()+
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
@@ -142,8 +190,8 @@ ggplot(data=madagascar, aes(x=id , y=length, fill=population)) +
 
 
 ```{r}
-ggplot(madagascar,aes(x=population, y = length, fill = population))+
-geom_violin()+
+ggplot(malagasy,aes(x=population, y = length, fill = population))+
+geom_violin(trim = FALSE)+
 labs(title = "Total length of runs of homozygosity per individual", y = "Length (BPs)", x = NULL, fill = "Population")
 ```
 
@@ -153,11 +201,11 @@ labs(title = "Total length of runs of homozygosity per individual", y = "Length 
 ```{r}
 avg_length_per_indiv <- aggregate(runs$lengthBps, by = list(id = runs$id), FUN = mean)
 colnames(avg_length_per_indiv) <- c("id","mean")
-madagascar <- left_join(madagascar, avg_length_per_indiv, by = "id")
+malagasy <- left_join(malagasy, avg_length_per_indiv, by = "id")
 ```
 
 ```{r}
-ggplot(data=madagascar, aes(x=id , y=mean, fill=population)) +
+ggplot(data=malagasy, aes(x=id , y=mean, fill=population)) +
   geom_bar(stat="identity") + 
   coord_flip()+
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
@@ -167,8 +215,8 @@ ggplot(data=madagascar, aes(x=id , y=mean, fill=population)) +
 
 
 ```{r}
-ggplot(madagascar,aes(x=population, y = mean, fill = population))+
-geom_violin()+
+ggplot(malagasy,aes(x=population, y = mean, fill = population))+
+geom_violin(trim = FALSE)+
 labs(title = "Mean length of runs of homozygosity per individual", y = "Length (BPs)", x = NULL, fill = "Population")
 ```
 
@@ -183,7 +231,7 @@ Error in gzfile(file, "wb") : cannot open the connection
 # Total length by total number 
 
 ```{r}
-ggplot(madagascar,aes(x = n, y= length, color = population, fill = population,shape = population)) +
+ggplot(malagasy,aes(x = n, y= length, color = population, fill = population,shape = population)) +
 geom_point(size = 1.8) +
 labs(title = "Runs of homozygosity per individual", x = "Number of runs", y = "Total length (BPs)")+
   scale_color_brewer(palette = "Dark2")+
@@ -229,9 +277,415 @@ then show that that model alone doesn't account for the inflation in ROH's?
 
 
 ```{r}
-plot_Runs(runs = runs)
+#plot_Runs(runs = runs)
 #plot_StackedRuns(runs = runs)
 ```
+
+# Load workspace from fastmixture 
+
+```{r}
+load("/home/EJC199/Git/fastmixturer/fastmixture_m.RData")
+```
+
+```{r}
+autoplot(qmats$q_matrices[[1]],data = mad_bor_g1000_sum)
+```
+
+
+```{r}
+autoplot(qmats$q_matrices[[2]],data = mad_bor_g1000_sum)
+```
+
+```{r}
+tidyq <- tidy(qmats$q_matrices[[2]], data = mad_bor_g1000_sum)
+head(tidyq)
+```
+
+
+```{r}
+#Read in Pierron Malagasy metadata
+pop_table <- read.table(resrepo::path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
+colnames(pop_table) <- c("IID", "V2","FID","Population","V5","V6","V7")
+
+#Remove the "RR"
+tidyq$id <- sub("RR.*", "", tidyq$id)
+
+#Find Malagasy entries 
+pop_table_sub <- subset(pop_table,pop_table$IID %in% tidyq$id & pop_table$V5 =="Madagascar")
+
+#match up the ID's with pop table metadata
+matching_m <- match(tidyq$id, pop_table_sub$IID)
+
+tidyq$group <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], tidyq$group)
+head(tidyq)
+```
+
+
+
+```{r}
+all_malagasy <- c("Betsimisaraka","Merina","Sakalava_Tsimihety","Betsileo","Diego","Vezo","Mikea","Temoro")
+
+malagasyq <- tidyq %>% filter(group %in% all_malagasy)
+head(malagasyq)
+```
+
+```{r}
+annotate_group_info <- function(q_tbl){
+  group <- q_tbl %>% dplyr::distinct(id,group) %>% dplyr::pull(group)
+  if (length(rle(group)$values)!=length(unique(group))) {
+    stop("values in 'group' are not ordered (they should be in consecutive blocks, one per group")
+  }
+  group_x <- cumsum(table(forcats::fct_inorder(group)))
+  segment_data = data.frame(
+    x = group_x+0.5,
+    xend = group_x+0.5,
+    y = rep(0,length(group_x)),
+    yend = rep(1, length(group_x))
+  )
+
+  get_mid_points <- function (vec){
+    (vec[-length(vec)] + vec[-1L])/2.
+  }
+
+  list(
+  ggplot2::geom_segment(data = segment_data,
+                        ggplot2::aes(x = .data$x,
+                                     y = .data$y,
+                                     xend = .data$xend,
+                                     yend = .data$yend),
+                        inherit.aes = FALSE),
+    ggplot2::scale_x_discrete(breaks = unique(q_tbl$id)[get_mid_points(c(0,group_x))],
+                                labels = names(group_x)),
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, vjust = 1, hjust=1)))
+}
+
+order_plot <- function(q_tbl, data, annotate_group = FALSE){
+    
+  K <- 3
+
+  #q_tbl <- tidy(object, data)
+    q_tbl <- q_tbl %>% tidyr::pivot_longer(cols = dplyr::starts_with(".Q"),
+                                           names_to = "q", values_to = "percentage") %>%
+      dplyr::mutate(percentage = as.numeric(.data$percentage))
+
+    q_tbl <- q_tbl %>%
+      dplyr::group_by(.data$group, .data$id) %>%
+      dplyr::arrange(.data$group, .data$id)
+    
+    
+    levels_q <- unique(q_tbl$id)
+
+    q_tbl <- q_tbl %>%
+      dplyr::mutate(id = factor(.data$id, levels = levels_q))
+    
+    plt <- ggplot2::ggplot(q_tbl,
+                           ggplot2::aes(x = .data$id,
+                                        y = .data$percentage,
+                                        fill = .data$q)) +
+      ggplot2::geom_col(width = 1,
+                        position = "stack")+
+      ggplot2::labs(y = paste("K = ", K))+
+      #ggplot2::scale_fill_manual(values = color_mapping)+
+      scale_fill_distruct()+
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+    
+    if (annotate_group){
+      if (is.null(data)){
+        warning("no annotation possible if 'gen_tbl' is NULL")
+      } else {
+        plt <- plt + annotate_group_info(q_tbl)
+      }
+    }
+    plt
+  }
+   
+
+```
+
+
+```{r}
+order_plot(malagasyq, data = mad_bor_g1000_sum, annotate_group = TRUE)
+```
+
+# Comparing proportion to ROH's
+
+```{r}
+malagasy_all <- left_join(malagasy, malagasyq, by = "id")
+```
+
+gen_tbl class is dropped at this point...investigate
+
+# Ancestry proportion compared to number of ROHS
+
+```{r}
+ggplot(malagasy_all,aes(x = n, y = .Q1, fill = population, colour = population, shape = population))+
+geom_point(size = 1.8) +
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Number of Runs", y = ".Q1 proportion (% Asian ancestry)")+
+  scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
+  theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+ 
+  #axis.text.x = element_blank(), axis.text.y = element_blank(),
+  scale_fill_brewer(palette = "Dark2")  +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  ) 
+
+#ggsave("/home/EJC199/Documents/tidypopgen/ROH_plots/n_roh_ancestry.tiff")
+```
+
+```{r}
+ggplot(malagasy_all,aes(x = n, y = .Q2, fill = population, colour = population, shape = population))+
+geom_point(size = 1.8) +
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Number of Runs", y = ".Q2 proportion (% African ancestry)")+
+  scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
+  theme( axis.ticks.x = element_blank(),  axis.ticks.y = element_blank())+
+  #axis.text.x = element_blank(),axis.text.y = element_blank(),
+  scale_fill_brewer(palette = "Dark2")   +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  ) 
+```
+
+# Ancestry proportion compared to mean length of ROHS
+
+```{r}
+ggplot(malagasy_all,aes(x = mean, y = .Q1, fill = population, colour = population, shape = population))+
+geom_point(size = 1.8) +
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Mean length of Runs (bp)", y = ".Q1 proportion (% Asian ancestry)")+
+  scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
+  theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+
+  #axis.text.x = element_blank(),  axis.text.y = element_blank(),
+  scale_fill_brewer(palette = "Dark2")   +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  ) 
+
+#ggsave("/home/EJC199/Documents/tidypopgen/ROH_plots/mean_l_roh_ancestry.tiff")
+```
+
+```{r}
+ggplot(malagasy_all,aes(x = mean, y = .Q2, fill = population, colour = population, shape = population))+
+geom_point(size = 1.8) +
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Mean length of Runs (bp)", y = ".Q2 proportion (% African ancestry)")+
+  scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
+  theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+
+  #axis.text.x = element_blank(), axis.text.y = element_blank(),
+  scale_fill_brewer(palette = "Dark2")   +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  ) 
+```
+
+# Ancestry proportion compared to total length of ROHS
+
+```{r}
+ggplot(malagasy_all,aes(x = length, y = .Q1, fill = population, colour = population, shape = population))+
+geom_point(size = 1.8) +
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Total length of runs (bp)", y = ".Q1 proportion (% Asian ancestry)")+
+  scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
+  theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+
+  #axis.text.x = element_blank(),  axis.text.y = element_blank(),
+  scale_fill_brewer(palette = "Dark2")   +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  ) 
+
+#ggsave("/home/EJC199/Documents/tidypopgen/ROH_plots/total_l_roh_ancestry.tiff")
+```
+
+```{r}
+ggplot(malagasy_all,aes(x = length, y = .Q2, fill = population, colour = population, shape = population))+
+geom_point(size = 1.8) +
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Total length of runs (bp)", y = ".Q2 proportion (% African ancestry) (% African ancestry)")+
+  scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
+  theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+
+  #axis.text.x = element_blank(),  axis.text.y = element_blank(),
+  scale_fill_brewer(palette = "Dark2")   +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  ) 
+```
+
+
+
+# Playing with trend lines 
+
+
+```{r}
+ggplot(malagasy_all,aes(x = n, y = .Q1, fill = population, colour = population, shape = population))+
+geom_point(size = 1.8) +
+geom_smooth(method = "lm")+
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Number of runs", y = ".Q1 proportion (% Asian ancestry)")+
+  scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
+  theme(axis.ticks.x = element_blank(),axis.ticks.y = element_blank())+
+  #axis.text.x = element_blank(),  axis.text.y = element_blank(), 
+  scale_fill_brewer(palette = "Dark2")   +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  ) 
+```
+
+
+```{r}
+ggplot(malagasy_all,aes(x = n, y = .Q1, fill = population, colour = population, shape = population))+
+geom_point(size = 1.8) +
+geom_smooth(method = "lm", aes(group = 1))+
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Number of runs", y = ".Q1 proportion (% Asian ancestry)")+
+  scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
+  theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+
+  #axis.text.x = element_blank(), axis.text.y = element_blank(), 
+  scale_fill_brewer(palette = "Dark2")   +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  ) 
+```
+
+
+
+```{r}
+ggplot(malagasy_all,aes(x = mean, y = .Q1, fill = population, colour = population, shape = population))+
+geom_point(size = 1.8) +
+geom_smooth(method = "lm")+
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Mean length of runs (bp)", y = ".Q1 proportion (% Asian ancestry)")+
+  scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
+  theme(axis.ticks.x = element_blank(),axis.ticks.y = element_blank())+
+  #axis.text.x = element_blank(),  axis.text.y = element_blank(), 
+  scale_fill_brewer(palette = "Dark2")  +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  ) 
+```
+
+
+```{r}
+ggplot(malagasy_all,aes(x = mean, y = .Q1, fill = population, colour = population, shape = population))+
+geom_point(size = 1.8) +
+geom_smooth(method = "lm", aes(group = 1))+
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Mean length of runs (bp)", y = ".Q1 proportion (% Asian ancestry)")+
+  scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
+  theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+
+  #axis.text.x = element_blank(),  axis.text.y = element_blank(), 
+  scale_fill_brewer(palette = "Dark2")  +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  ) 
+```
+
+# FIS
+
+FIS Merina as a whole
+FIS for non-Merina to compare 
+
+
+```{r}
+malagasy$population <- as.character(malagasy$population)
+fis <- malagasy %>% group_by(population) %>% pop_fis(method = "WG17", by_locus = FALSE, include_global=FALSE, allele_sharing_mat = NULL)
+fis <- as.data.frame(fis)
+fis$population <- rownames(fis)
+
+# rearrange fis column fis in descending order
+fis <- fis[order(fis$fis, decreasing = TRUE),]
+
+# Reorder the population variable as a factor based on the descending order of FIS
+fis$population <- factor(fis$population, levels = fis$population)
+
+ggplot(fis, aes(x = population, y = fis, fill = population, colour = population, shape = population))+
+  geom_point(size = 1.8) +
+labs(title = "FIS for each population", x = "Population", y = "FIS (WG17)")+
+  scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8)) +
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
+  scale_fill_brewer(palette = "Dark2") +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  ) 
+
+```
+
+FIS for the Merina subsets 
+
+```{r}
+# subset the malagasy_all dataframe to only the "Merina"
+merina <- malagasy_all %>% filter(population == "Merina")
+
+# plot column .Q1 for the merina
+ggplot(merina, aes(x = .Q1))+geom_histogram()
+
+# replace column $group in merina with a factor - those with .Q1 higher than 0.5 are 1 and those lower than 0.5 are 2
+merina$group <- ifelse(merina$.Q1 > 0.5, "Social group A", "Social group B")
+
+# calculate FIS by grouping merina by the new column $group and then using group_map
+fis_merina <- merina %>% group_by(group) %>% pop_fis(method = "WG17", by_locus = FALSE, include_global=FALSE, allele_sharing_mat = NULL)#
+
+# change fis_merina to a dataframe and make a column $population corresponding to group
+fis_merina <- as.data.frame(fis_merina)
+fis_merina$population <- rownames(fis_merina)
+colnames(fis_merina) <- c("fis", "population")
+
+# add fis_merina to fis
+fis <- rbind(fis, fis_merina)
+
+# rearrange fis column fis in descending order
+fis <- fis[order(fis$fis, decreasing = TRUE),]
+
+# Reorder the population variable as a factor based on the descending order of FIS
+fis$population <- factor(fis$population, levels = fis$population)
+
+
+
+ggplot(fis, aes(x = population, y = fis, fill = population, colour = population, shape = population))+
+  geom_point(size = 1.8) +
+labs(title = "FIS for each population", x = "Population", y = "FIS (WG17)")+
+  #scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8, 2, 1)) +
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
+  #scale_fill_brewer(palette = "Dark2") +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  ) 
+
+
+```
+
+```{r}
+
+```
+
+
 
 
 
