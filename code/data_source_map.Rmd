@@ -1,0 +1,131 @@
+---
+title: "Map of 5 data collection areas in Madagascar "
+output: html_document
+date: "2024-02-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(rnaturalearth)
+library(sf)
+```
+
+
+# Old maps with ggplot
+
+
+```{r echo = FALSE}
+
+world <- map_data("world")
+
+# Took a kml from google maps 
+#kml_data <- sf::st_read(dsn = resrepo::path_resrepo("/data/intermediate/biomart/Data.kml"))
+
+kml_data <- sf::st_read(dsn = resrepo::path_resrepo("/data/raw/data_input/Data_with_pierron.kml"))
+
+names <- kml_data$Name
+
+# Extracting coordinates
+kml_data <- sf::st_as_sf(kml_data)
+kml_data <- sf::st_coordinates(kml_data)
+kml_data <- data.frame(kml_data)  # Convert to data frame
+
+colnames(kml_data) <- c("lon", "lat")
+
+
+#Add names
+kml_data$Name <- c("Merina","Sakalava","Betsimisaraka","Betsileo","Diego", "Temoro","Vezo","Mikea","Mikea","Mikea","Mikea","Mikea","Mikea","Mikea")
+
+#worldplot <- ggplot() +
+#  geom_polygon(data = world, aes(x=long, y = lat, group = group), fill = "grey")+
+#  coord_cartesian(xlim = c(30, 60), ylim = c(-30, -10)) +
+#  labs(title = NULL, x= "Longitude", y = "Latitude") +
+#  geom_sf(data = kml_data, color = "darkblue", fill = "transparent", size = 1) +
+#  geom_text(data = kml_data, aes(label = Name), size = 3) +
+#  coord_sf(xlim = c(30, 60), ylim = c(-30, -10)) +
+
+
+worldplot <- ggplot() +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group), fill = "grey") +
+  coord_cartesian(xlim = c(30, 60), ylim = c(-30, -10)) +
+  labs(title = NULL, x = "Longitude", y = "Latitude") +
+  geom_sf(data = sf::st_as_sf(kml_data, coords = c("lon", "lat")), color = "darkblue", fill = "transparent", size = 1.5) +
+  geom_text(data = kml_data, aes(x = lon, y = lat, label = Name), size = 3, hjust = -0.3) + #nudge_x = 0.1, nudge_y = 0.1
+  coord_sf(xlim = c(30, 60), ylim = c(-30, -10))
+
+worldplot
+
+#ggsave(filename="C:/Users/eviec/OneDrive/Documents/Madagascar/Temporary figure/Data-source-map.tiff", width=7, height=5, units="in",dpi=300)
+
+```
+
+
+```{r}
+worldplot <- ggplot() +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group), fill = "grey") +
+  coord_cartesian(xlim = c(30, 60), ylim = c(-30, -10)) +
+  coord_sf(xlim = c(30, 60), ylim = c(-30, -10))
+
+worldplot
+
+#ggsave(filename="C:/Users/eviec/OneDrive/Documents/Madagascar/Temporary figure/Data-source-map-no-label.tiff", width=7, height=5, units="in",dpi=300)
+
+```
+
+
+```{r}
+worldplot <- ggplot() +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group), fill = "grey") +
+  coord_cartesian(xlim = c(30, 60), ylim = c(-30, -10)) +
+  coord_sf(xlim = c(30, 60), ylim = c(-45, -5))
+
+worldplot
+
+#ggsave(filename="C:/Users/eviec/OneDrive/Documents/Madagascar/Temporary figure/Data-source-map-no-label-zoom-out.tiff", width=7, height=5, units="in",dpi=300)
+
+```
+
+
+```{r}
+library(ggplot2)
+
+# Assuming 'world' is your dataset with a column 'region' or 'country' containing country names
+madagascar <- world[world$region == "Madagascar", ] # Filter for Madagascar
+
+#give other sample a different shape
+kml_data$Name <- c("Merina","Sakalava","Betsimisaraka","Betsileo","Diego", "Temoro","Vezo","Mikea","Mikea","Mikea","Mikea","Mikea","Mikea","Mikea")
+
+ours <- rep(0,5)
+pierron <- rep(1,9)
+sample <- c(ours,pierron)
+kml_data$sample <- sample
+
+# Plotting only Madagascar
+madagascar_plot <- ggplot() +
+  geom_polygon(data = madagascar, aes(x = long, y = lat, group = group), fill = "grey") +
+  coord_cartesian(xlim = c(30, 60), ylim = c(-30, -10)) +
+  coord_sf(xlim = c(30, 60), ylim = c(-45, -5))+
+  geom_sf(data = sf::st_as_sf(kml_data, coords = c("lon", "lat")), aes(shape = factor(sample)), color = "darkblue", size = 0.5) +
+  scale_shape_manual(values = c(16, 17),labels = c("Our sample", "From literature")) +
+   labs(shape = NULL) +
+   coord_sf(xlim = c(30, 60), ylim = c(-45, -5))
+madagascar_plot
+
+#ggsave(filename="C:/Users/eviec/OneDrive/Documents/Madagascar/Temporary figure/madagascar_pierron_map.tiff", width=7, height=5, units="in",dpi=300)
+
+```
+
+# New plan for map with rnaturalearth
+
+```{r}
+#WGS84 standard
+Madagascar <- ne_countries(country = "Madagascar", type = "map_units", scale = "medium")
+
+ggplot()+
+  geom_sf(data = Madagascar)+
+  coord_sf(crs = st_crs(29702)) + # Laborde projection, commonly used for Madagascar
+  theme_light()
+
+```
+
