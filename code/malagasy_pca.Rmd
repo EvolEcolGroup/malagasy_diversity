@@ -11,7 +11,19 @@ knitr::opts_chunk$set(echo = TRUE)
 # Load gt
 
 ```{r}
-malagasy_merged <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/malagasy_merge_master.gt")
+malagasy_merged <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master.gt"))
+```
+
+Here - we previously had issues with 'Error: 'pos.chr' is not sorted.'
+
+# Reorder Loci
+
+```{r}
+testthat::expect_false(is_loci_table_ordered(malagasy_merged, error_on_false = FALSE))
+
+malagasy_merged <- gt_order_loci(malagasy_merged, use_current_table = FALSE, quiet = TRUE)
+
+gt_save(malagasy_merged, quiet = TRUE)
 ```
 
 # Impute
@@ -20,26 +32,18 @@ malagasy_merged <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data
 malagasy_merged <- gt_impute_simple(malagasy_merged, method = "random")
 ```
 
-Here - we previously had issues with 'Error: 'pos.chr' is not sorted.'
-
 #LD clumping
 
 ```{r}
-show_loci(malagasy_merged)$chromosome <- as.integer(show_loci(malagasy_merged)$chromosome)
-
-show_loci(malagasy_merged) <- malagasy_merged %>% show_loci() %>% arrange(chr_int,position)
-
 to_keep_LD <- loci_ld_clump(malagasy_merged, thr_r2 = 0.5, size = 50, return_id = TRUE)
 #Previous Error: Not compatible with requested type: [type=character; target=double].
 
 #Error: 'infos.chr' should contain only integers.
 
 malagasy_merged <- malagasy_merged%>% select_loci(all_of(to_keep_LD))
-
 ```
 
 # PCA
-
 
 ```{r}
 random_pca <- gt_pca_randomSVD(malagasy_merged) #- this works
@@ -88,34 +92,33 @@ madagascar <- gt_load(resrepo::path_resrepo("data/raw/data_input/Madagascar_full
 madagascar_p <- gt_load(resrepo::path_resrepo("data/raw/data_input/Pierron_Malagasy_clean.gt"))
 
 madagascar <- madagascar %>% group_by(population)
-individual_report_m <- qc_report_indiv(madagascar, kings_threshold = 0.177)
+individual_report_m <- qc_report_indiv(madagascar, kings_threshold = 0.0442)
 madagascar_p <- madagascar_p %>% group_by(population)
-individual_report_m_p <- qc_report_indiv(madagascar_p, kings_threshold = 0.177)
+individual_report_m_p <- qc_report_indiv(madagascar_p, kings_threshold = 0.0442)
 
 #find relatives
 madagascar <- madagascar %>% ungroup()
-rels_m <- filter_high_relatedness(attr(individual_report_m$to_keep, "king"), madagascar, kings_threshold = 0.0442)
 madagascar_p <- madagascar_p %>% ungroup()
-rels_m_p <- filter_high_relatedness(attr(individual_report_m_p$to_keep, "king"), madagascar_p, kings_threshold = 0.0442)
 
-#apply new filtering
-madagascar_low_rel <- madagascar %>% filter(id %in% rels_m[[1]])
-madagascar_p_low_rel <- madagascar_p %>% filter(id %in% rels_m_p[[1]])
+madagascar_low_rel <- madagascar %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
+madagascar_p_low_rel<- madagascar_p %>% filter(id %in% individual_report_m_p$id & individual_report_m_p$to_keep == TRUE)
 
 #merge again
-#malagasy_low_rel <- rbind(madagascar_low_rel,madagascar_p_low_rel,as_is = FALSE, flip_strand = TRUE, quiet = FALSE, backingfile = "/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/malagasy_merge_master_low_kin")
+#malagasy_low_rel <- rbind(madagascar_low_rel,madagascar_p_low_rel,as_is = FALSE, flip_strand = TRUE, quiet = FALSE, backingfile = resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_low_kin"))
 
-malagasy_low_rel <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/malagasy_merge_master_low_kin.gt")
+malagasy_low_rel <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_low_kin.gt"))
+
+# Reorder Loci - sort
+testthat::expect_false(is_loci_table_ordered(malagasy_low_rel, error_on_false = FALSE))
+
+malagasy_low_rel <- gt_order_loci(malagasy_low_rel, use_current_table = FALSE, quiet = TRUE)
+
+gt_save(malagasy_low_rel, quiet = TRUE)
 
 # impute 
 malagasy_low_rel <- gt_impute_simple(malagasy_low_rel, method = "random")
 
-# integer
-#show_loci(malagasy_low_rel)$chromosome <- #as.integer(show_loci(malagasy_low_rel)$chromosome)
-
-# sort
-show_loci(malagasy_low_rel) <- malagasy_low_rel %>% show_loci() %>% arrange(chr_int,position)
-
+# ld clumping
 to_keep_LD <- loci_ld_clump(malagasy_low_rel, thr_r2 = 0.5, size = 50, return_id = TRUE)
 
 #remove out of LD
@@ -163,6 +166,71 @@ ggplot(pcs, aes(x = V1, y = V2, group = malagasy_low_rel$population, colour = ma
 
 
 ```
+
+# With original relatedness filtering
+
+```{r}
+madagascar <- gt_load(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_cleaned.gt"))
+madagascar_p <- gt_load(resrepo::path_resrepo("data/raw/data_input/Pierron_Malagasy_clean.gt"))
+
+individual_report_m <- qc_report_indiv(madagascar, kings_threshold = 0.0442)
+individual_report_m_p <- qc_report_indiv(madagascar_p, kings_threshold = 0.0442)
+
+madagascar_low_rel <- madagascar %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
+madagascar_p_low_rel<- madagascar_p %>% filter(id %in% individual_report_m_p$id & individual_report_m_p$to_keep == TRUE)
+
+#merge again
+#malagasy_low_rel_original <- rbind(madagascar_low_rel,madagascar_p_low_rel,as_is = FALSE, flip_strand = TRUE, quiet = FALSE, backingfile = resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_low_kin_original"))
+
+malagasy_low_rel <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_low_kin_original.gt"))
+
+# Reorder Loci
+
+testthat::expect_false(is_loci_table_ordered(malagasy_low_rel, error_on_false = FALSE))
+
+malagasy_low_rel <- gt_order_loci(malagasy_low_rel, use_current_table = FALSE, quiet = TRUE)
+
+gt_save(malagasy_low_rel, quiet = TRUE)
+
+# impute 
+malagasy_low_rel <- gt_impute_simple(malagasy_low_rel, method = "random")
+
+# ld clumping
+to_keep_LD <- loci_ld_clump(malagasy_low_rel, thr_r2 = 0.5, size = 50, return_id = TRUE)
+
+#remove out of LD
+malagasy_low_rel <- malagasy_low_rel %>% select_loci(all_of(to_keep_LD))
+
+#PCA
+random_pca3 <- gt_pca_randomSVD(malagasy_low_rel)
+
+#Remove the "RR"
+malagasy_low_rel$id <- sub("RR.*", "", malagasy_low_rel$id)
+
+#Find Malagasy entries 
+pop_table_sub <- subset(pop_table,pop_table$IID %in% malagasy_low_rel$id) #& pop_table$V5 =="Madagascar"something wrong here
+
+
+#match up the ID's with pop table metadata
+matching_m <- match(malagasy_low_rel$id, pop_table_sub$IID)
+
+
+malagasy_low_rel$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], malagasy_low_rel$population)
+
+
+#pcs <- as.data.frame(big_random_pca$u)
+pcs <- as.data.frame(random_pca3$u)
+
+
+ggplot(pcs, aes(x = V1, y = V2, group = malagasy_low_rel$population, colour = malagasy_low_rel$population, shape = malagasy_low_rel$population, fill = malagasy_low_rel$population)) +
+  geom_point(size = 2) +
+  scale_shape_manual(values = c(1,3,7,15,17,19,21,23))+
+  labs(title = "Madagascar PCA", x = "PC 1" , y = "PC 2", colour = "population", shape = "population", fill = "population") +
+  theme(legend.position = "right", legend.title = element_text(face="bold"))#+ geom_text(aes(label=malagasy_low_rel$id))
+
+
+```
+
 
 ```{r}
 

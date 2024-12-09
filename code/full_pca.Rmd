@@ -7,15 +7,24 @@ date: "2024-11-06"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
+library(tidypopgen)
 ```
 
 # Load gt
 
 ```{r}
-mad_bor_g1000_sum <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/mad_bor_g1000_sum.gt")
+mad_bor_g1000_sum <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
 ```
 
-# Subsample
+# Reorder Loci
+
+```{r}
+testthat::expect_false(is_loci_table_ordered(mad_bor_g1000_sum, error_on_false = FALSE))
+
+mad_bor_g1000_sum <- gt_order_loci(mad_bor_g1000_sum, use_current_table = FALSE, quiet = TRUE)
+
+gt_save(mad_bor_g1000_sum, quiet = TRUE)
+```
 
 # Impute
 
@@ -25,12 +34,9 @@ gt_set_imputed(mad_bor_g1000_sum, TRUE)
 ```
 
 
-#LD clumping
+# LD clumping
 
 ```{r}
-show_loci(mad_bor_g1000_sum)$chromosome <- as.integer(show_loci(mad_bor_g1000_sum)$chromosome)
-
-show_loci(mad_bor_g1000_sum) <- mad_bor_g1000_sum %>% show_loci() %>% arrange(chr_int,position)
 
 to_keep_LD <- loci_ld_clump(mad_bor_g1000_sum, thr_r2 = 0.5, size = 50, return_id = TRUE)
 
@@ -59,6 +65,41 @@ main2 <- ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$population)) 
   theme(legend.title = element_text(face="bold"),legend.text = element_text(size = 5))
 main2
 ```
+
+# Fix pop names
+
+```{r}
+# read in a file
+pop_names <- read.csv(resrepo::path_resrepo("data/raw/data_input/igsr-1000-genomes-phase-3-release.tsv"), sep = "\t")
+
+# find matching id in pop_names Sample.name and mad_bor_g1000_sum id, and for the matches, replace the population in mad_bor_g1000_sum with the population in pop_names
+for(i in 1:nrow(pop_names)){
+  if(pop_names$Sample.name[i] %in% mad_bor_g1000_sum$id){
+    mad_bor_g1000_sum[mad_bor_g1000_sum$id == pop_names$Sample.name[i], "population"] <- pop_names$Population.name[i]
+  }
+}
+
+# replace "Luhya,Luhya" with "Luhya"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Luhya,Luhya"] <- "Luhya"
+# replace "Esan,Esan" with "Esan"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Esan,Esan"] <- "Esan"
+# replace "Gambian Mandinka,Gambian" with "Gambian Mandinka"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Gambian Mandinka,Gambian"] <- "Gambian Mandinka"
+# replace "Mende,Mende" with "Mende"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Mende,Mende"] <- "Mende"
+# replace "Kinh,Kinh Vietnamese" with "Kinh Vietnamese"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Kinh,Kinh Vietnamese"] <- "Kinh Vietnamese"
+# replcae "Punjabi,Punjabi" with "Punjabi"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Punjabi,Punjabi"] <- "Punjabi"
+# replcae "Benga,Bengali" with "Bengali"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Bengali,Bengali"] <- "Bengali"
+
+# replace any _ with a space
+mad_bor_g1000_sum$population <- gsub("_", " ", mad_bor_g1000_sum$population)
+
+```
+
+
 
 # Subsample
 
@@ -93,6 +134,41 @@ main2 <- ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$population)) 
   theme(legend.title = element_text(face="bold"),legend.text = element_text(size = 5))
 main2
 ```
+
+```{r}
+# create a new factor column with Malagasy populations as 1 and others as 0
+mad_bor_g1000_sum$malagasy <-  0
+all_malagasy <- subset(mad_bor_g1000_sum, population %in% c("Central Highland","East Coast","Northern Coast","NorthWestern Coast","Southern Highland","Vezo","Mikea","Temoro"))
+mad_bor_g1000_sum[mad_bor_g1000_sum$id %in% all_malagasy$id, "malagasy"] <- 1
+
+main2 <- ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$population,shape = as.factor(mad_bor_g1000_sum$malagasy))) + geom_point(alpha = 0.5) + #
+  labs(title = "PCA", x = "PC 1", y = "PC 2", colour = NULL)+ 
+  theme(legend.title = element_text(face="bold"),legend.text = element_text(size = 5))
+main2
+```
+
+```{r}
+mad_bor_g1000_sum$Region <- "Other"
+
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Borneo","Sumba","Timor"),"Region"] <- "Island southeast Asia"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Bengali","Punjabi"),"Region"] <- "South Asia"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Southern Han Chinese","Kinh Vietnamese"),"Region"] <- "East Asia"
+#Not really happy about grouping all African samples here though...
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Esan","Gambian Mandinka","Luhya","Mende","Yoruba"),"Region"] <- "African"
+
+
+ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$Region, shape = as.factor(mad_bor_g1000_sum$malagasy))) + geom_point(alpha = 0.5) + 
+  labs(title = "Madagascar PCA", x = "PC 1 (%)", y = "PC 2 (%)", colour = "Population")+
+  theme(legend.title = element_text(face="bold"), legend.position = "right")
+
+
+```
+
+
+```{r}
+
+```
+
 
 
 
