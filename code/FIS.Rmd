@@ -1,0 +1,409 @@
+---
+title: "FIS"
+output: html_document
+date: "2024-12-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidypopgen)
+```
+
+
+# Load gt
+
+```{r}
+#malagasy <- gen_tibble(resrepo::path_resrepo("data/intermediate/Malagasy_all_clean.bed"))
+malagasy <- gt_load(resrepo::path_resrepo("data/intermediate/Malagasy_all_clean.gt"))
+```
+
+# Metadata
+
+```{r}
+#Read in Pierron Malagasy metadata
+
+pop_table <- read.table(resrepo::path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
+colnames(pop_table) <- c("IID", "V2","FID","Population","V5","V6","V7")
+
+#Remove the "RR"
+malagasy$id <- sub("RR.*", "", malagasy$id)
+
+#Find Malagasy entries 
+pop_table_sub <- subset(pop_table,pop_table$IID %in% malagasy$id & pop_table$V5 =="Madagascar")
+
+#match up the ID's with pop table metadata
+matching_m <- match(malagasy$id, pop_table_sub$IID)
+
+malagasy$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], malagasy$population)
+
+```
+
+
+# FIS
+
+FIS Merina as a whole
+FIS for non-Merina to compare 
+
+
+```{r}
+malagasy$population <- as.character(malagasy$population)
+
+fis <- malagasy %>% group_by(population) %>% pop_fis(method = "WG17", by_locus = FALSE, include_global=FALSE, allele_sharing_mat = NULL)
+fis <- as.data.frame(fis)
+fis$population <- rownames(fis)
+
+# rearrange fis column fis in descending order
+fis <- fis[order(fis$fis, decreasing = TRUE),]
+
+# Reorder the population variable as a factor based on the descending order of FIS
+fis$population <- factor(fis$population, levels = fis$population)
+
+ggplot(fis, aes(x = population, y = fis, fill = population, colour = population, shape = population))+
+  geom_point(size = 1.8) +
+labs(title = "FIS for each population", x = "Population", y = "FIS (WG17)")+
+  scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8)) +
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())+
+  scale_fill_brewer(palette = "Dark2") +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  ) 
+
+```
+
+# FIS for the Merina subsets 
+
+Load workspace from fastmixture 
+
+```{r}
+load("/home/EJC199/Git/fastmixturer/fastmixture_m.RData")
+```
+
+```{r}
+tidyq <- tidy(qmats$q_matrices[[2]], data = mad_bor_g1000_sum)
+#Remove the "RR"
+tidyq$id <- sub("RR.*", "", tidyq$id)
+
+#Find Malagasy entries 
+pop_table_sub <- subset(pop_table,pop_table$IID %in% tidyq$id & pop_table$V5 =="Madagascar")
+
+#match up the ID's with pop table metadata
+matching_m <- match(tidyq$id, pop_table_sub$IID)
+
+tidyq$group <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], tidyq$group)
+
+all_malagasy <- c("Betsimisaraka","Merina","Sakalava_Tsimihety","Betsileo","Diego","Vezo","Mikea","Temoro")
+
+malagasyq <- tidyq %>% filter(group %in% all_malagasy)
+
+malagasy_all <- left_join(malagasy, malagasyq, by = "id")
+```
+
+```{r}
+# subset the malagasy_all dataframe to only the "Merina"
+merina <- malagasy_all %>% filter(population == "Merina")
+
+# plot column .Q1 for the merina
+ggplot(merina, aes(x = .Q1))+geom_histogram()
+```
+
+
+```{r}
+# replace column $group in merina with a factor - those with .Q1 higher than 0.5 are 1 and those lower than 0.5 are 2
+merina$group <- ifelse(merina$.Q1 > 0.5, "Social group A", "Social group B")
+
+# calculate FIS by grouping merina by the new column $group and then using group_map
+fis_merina <- merina %>% group_by(group) %>% pop_fis(method = "WG17", by_locus = FALSE, include_global=FALSE, allele_sharing_mat = NULL)#
+
+# change fis_merina to a dataframe and make a column $population corresponding to group
+fis_merina <- as.data.frame(fis_merina)
+fis_merina$population <- rownames(fis_merina)
+colnames(fis_merina) <- c("fis", "population")
+
+# add fis_merina to fis
+fis <- rbind(fis, fis_merina)
+
+# rearrange fis column fis in descending order
+fis <- fis[order(fis$fis, decreasing = TRUE),]
+
+# Reorder the population variable as a factor based on the descending order of FIS
+fis$population <- factor(fis$population, levels = fis$population)
+
+
+
+ggplot(fis, aes(x = population, y = fis, fill = population, colour = population, shape = population))+
+  geom_point(size = 1.8) +
+labs(title = "FIS for each population", x = "Population", y = "FIS (WG17)")+
+  #scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8, 2, 1)) +
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())+
+  #scale_fill_brewer(palette = "Dark2") +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  ) 
+
+
+```
+
+```{r}
+table(malagasy$population)
+table(merina$group)
+```
+
+# FIS in plink
+
+Using plink 1.9
+
+ plink --bfile Malagasy_all_clean --het --out Malagasy_all_clean
+ 
+```{r}
+path <- resrepo::path_resrepo("data/intermediate/Malagasy_all_clean")
+system2("plink --bfile",path,"--het --out Malagasy_all_clean") # error 
+```
+ 
+ 
+F: Inbreeding coefficient, calculated as:
+
+F=E(HOM)−O(HOM)N(NM)−E(HOM)/N(NM)−E(HOM)E(HOM)−O(HOM)
+
+```{r}
+fis_indiv <- read.table(resrepo::path_resrepo("data/intermediate/Malagasy_all_clean.het"), header = TRUE)
+```
+
+```{r}
+#Read in Pierron Malagasy metadata
+
+pop_table <- read.table(resrepo::path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
+colnames(pop_table) <- c("IID", "V2","FID","Population","V5","V6","V7")
+
+#Remove the "RR"
+fis_indiv$IID <- sub("RR.*", "", fis_indiv$IID)
+
+#Find Malagasy entries 
+pop_table_sub <- subset(pop_table,pop_table$IID %in% fis_indiv$IID & pop_table$V5 =="Madagascar")
+
+#match up the ID's with pop table metadata
+matching_m <- match(fis_indiv$IID, pop_table_sub$IID)
+
+fis_indiv$FID <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], fis_indiv$FID)
+
+```
+
+
+```{r}
+# plot fis_indiv$F for each individual IID coloured by FID
+ggplot(fis_indiv, aes(x = FID, y = F))+geom_violin(aes(fill = FID))
+```
+
+```{r}
+# create a column $total_count in fis_indiv to count the number of individuals in each group
+total_count <- table(fis_indiv$FID)
+fis_indiv$total_count <- total_count[fis_indiv$FID]
+
+# add total_count number to the top right corner of each facet plot 
+ggplot(fis_indiv, aes(x = F, fill = FID))+
+  geom_histogram()+
+  facet_wrap(~FID)+
+  labs(y = "Count of Individuals", Y = "FIS (F)") +
+  guides(fill = "none") +
+  geom_text(data = fis_indiv %>%
+              distinct(FID, total_count),  # Extract unique FID and total_count
+            aes(x = Inf, y = Inf, label = paste0("Individuals: ", total_count)), 
+            size = 3, hjust = 1.1, vjust = 1.1, inherit.aes = FALSE)
+
+```
+
+
+```{r}
+malagasy_all <- left_join(malagasy_all, fis_indiv, by = c("id" = "IID"))
+
+# now plot malagasy_all$.Q1 vs malagasy_all$F
+ggplot(malagasy_all, aes(x = F, y = .Q1, fill = population, shape = population, color = population))+
+  geom_point(size = 1.8) +
+  labs(title = "FIS against ancestry proportion for Malagasy individuals", x = "FIS (F)", y = ".Q1 proportion (% Asian ancestry)")+
+  scale_fill_brewer(palette = "Dark2")+
+  scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
+  theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+
+  scale_fill_brewer(palette = "Dark2")    +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  ) 
+```
+
+```{r}
+# subset the malagasy_all dataframe to only the "Merina"
+merina <- malagasy_all %>% filter(population == "Merina")
+
+# create a factor
+merina$group <- ifelse(merina$.Q1 > 0.5, "Social group A", "Social group B")
+
+# plot merina$.Q1 vs merina$F
+ggplot(merina, aes(x = F, y = .Q1, fill = group, color = group))+
+  geom_point(size = 1.8, shape = 21) +
+  labs(title = "FIS against ancestry proportion for Merina individuals", x = "FIS (F)", y = ".Q1 proportion (% Asian ancestry)")+
+  scale_color_brewer(palette = "Dark2")+
+  scale_shape_manual(values = c(21, 22))+
+  theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+
+  scale_fill_brewer(palette = "Dark2") 
+
+
+```
+
+```{r}
+ggplot(merina, aes(x = F, fill = group)) +
+  geom_histogram(binwidth = 0.005, color = "black", size = 0.2) +  # Adjust binwidth as needed
+  labs(
+    title = "Distribution of FIS by Social Group for Merina Individuals", 
+    x = "FIS (F)", 
+    y = "Count"
+  ) +
+  scale_fill_brewer(palette = "Dark2") +
+  facet_wrap(~group) +  # Creates separate histograms for each 'group'
+  theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+```
+
+```{r}
+glm(fis_indiv$F ~ fis_indiv$FID) 
+```
+
+
+
+# Recalculate FIS using plink, this time separating the inferred social groups
+
+If there is assorative mating, FIS should drop when the Merina are considered as two independent populations
+
+```{r}
+# take the merina dataset, and rename $population based on $group, "Social group A" will become "Merina_A" and "Social group B" will become "Merina_B"
+merina$population <- ifelse(merina$group == "Social group A", "Merina_A", "Merina_B")
+
+# write the merina dataset to a new plink file with gt_as_plink()
+gt_as_plink(merina, resrepo::path_resrepo("data/intermediate/Merina"), type = "bed")
+
+# problem - pop names are lost?
+# read in Merina.fam
+merina_fam <- read.table(resrepo::path_resrepo("data/intermediate/Merina.fam"), header = FALSE)
+# remove RR from the IID column
+merina_fam$V2 <- sub("RR.*", "", merina_fam$V2)
+# match V2 and merina$id and replace the population column in merina_fam with the population column in merina
+matching_m <- match(merina_fam$V2, merina$id)
+merina_fam$V1 <- ifelse(!is.na(matching_m), merina$population[matching_m], merina_fam$V1)
+# rewrite merina_fam out to merina.fam
+write.table(merina_fam, resrepo::path_resrepo("data/intermediate/Merina.fam"), row.names = FALSE, col.names = FALSE, quote = FALSE)
+
+```
+
+
+Using plink 1.9
+
+```{r}
+path <- resrepo::path_resrepo("data/intermediate/Merina")
+system2("plink --bfile",path,"--het --out Merina")
+```
+
+
+ plink --bfile Merina --het --out Merina
+ 
+```{r}
+fis_indiv <- read.table(resrepo::path_resrepo("data/intermediate/Merina.het"), header = TRUE)
+
+# plot fis_indiv$F for each individual IID coloured by FID
+ggplot(fis_indiv, aes(x = FID, y = F))+geom_violin(aes(fill = FID))
+```
+
+```{r}
+# create a column $total_count in fis_indiv to count the number of individuals in each group
+total_count <- table(fis_indiv$FID)
+fis_indiv$total_count <- total_count[fis_indiv$FID]
+
+# add total_count number to the top right corner of each facet plot 
+ggplot(fis_indiv, aes(x = F, fill = FID))+
+  geom_histogram()+
+  facet_wrap(~FID)+
+  labs(title = "Distribution of FIS for Merina Individuals after splitting social groups", y = "Count of Individuals", Y = "FIS (F)") +
+  guides(fill = "none") +
+  geom_text(data = fis_indiv %>%
+              distinct(FID, total_count),  # Extract unique FID and total_count
+            aes(x = Inf, y = Inf, label = paste0("Individuals: ", total_count)), 
+            size = 3, hjust = 1.1, vjust = 1.1, inherit.aes = FALSE)+  # Creates separate histograms for each 'group'
+  theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+```
+
+
+```{r}
+social_group_a <- subset(fis_indiv, FID == "Merina_A")
+
+# add total_count number to the top right corner of each facet plot 
+ggplot(social_group_a, aes(x = F, fill = FID))+
+  geom_histogram()+
+  labs(y = "Count of Individuals", Y = "FIS (F)", title = "Merina_A") +
+  guides(fill = "none") 
+
+```
+
+
+# Now retest using indiv_inbreeding in tidypopgen
+
+```{r}
+#malagasy <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/malagasy_merge_master_v2.gt")
+
+malagasy <- malagasy %>% dplyr::group_by(population)
+inbreed_gt <- malagasy %>% indiv_inbreeding(method = "WG17")
+```
+
+# We get a very similar distribution 
+
+```{r}
+# inbreed_gt is a list of each inbreeding coefficient for each individual
+
+# turn this list of lists into a dataframe, where the first column is the inbreeding coefficient, and the next is the population
+inbreed_df <- unlist(inbreed_gt)
+inbreed_df <- as.data.frame(inbreed_df)
+inbreed_df$id <- rownames(inbreed_df)
+#Remove the "RR"
+inbreed_df$id <- sub("RR.*", "", inbreed_df$id)
+# match id with malagasy_all
+matching_m <- match(inbreed_df$id, malagasy_all$id)
+malagasy_all$population <- as.character(malagasy_all$population)
+# create population column based on id
+inbreed_df$population <- ifelse(!is.na(matching_m), malagasy_all$population[matching_m], inbreed_df$population)
+colnames(inbreed_df) <- c("F", "id", "population")
+
+# create a column $total_count in fis_indiv to count the number of individuals in each group
+total_count <- table(inbreed_df$population)
+inbreed_df$count <- total_count[inbreed_df$population]
+
+# plot fis_indiv$F for each individual IID coloured by FID
+ggplot(inbreed_df, aes(x = population, y = F))+geom_violin(aes(fill = population))
+
+# add total_count number to the top right corner of each facet plot 
+ggplot(inbreed_df, aes(x = F, fill = population))+
+  geom_histogram()+
+  facet_wrap(~population)+
+  labs(y = "Count of Individuals", Y = "FIS (F)") +
+  guides(fill = "none") +
+  geom_text(data = inbreed_df %>%
+              distinct(population, count),  # Extract unique population and count
+            aes(x = Inf, y = Inf, label = paste0("Individuals: ", count)), 
+            size = 3, hjust = 1.1, vjust = 1.1, inherit.aes = FALSE)
+
+```
+
+All the distributions are very similar, but slightly shifted to lower values. The Merina have shifted the most. 
+
+```{r}
+
+```
+
+
+
+
