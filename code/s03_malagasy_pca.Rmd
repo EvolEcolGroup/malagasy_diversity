@@ -59,12 +59,12 @@ malagasy_merged$Population <- ifelse(!is.na(matching_m), pop_table_sub$Populatio
 
 #pcs <- as.data.frame(big_random_pca$u)
 pcs <- as.data.frame(random_pca$u)
-
+variance <- round((random_pca$d^2/sum(random_pca$d^2))*100,2)
 
 ggplot(pcs, aes(x = V1, y = V2, group = malagasy_merged$Population, colour = malagasy_merged$Population, shape = malagasy_merged$Population, fill = malagasy_merged$Population)) +
   geom_point(size = 2) +
   scale_shape_manual(values = c(1,3,7,15,17,19,21,23))+
-  labs(title = "Madagascar PCA", x = "PC 1" , y = "PC 2", colour = "Population", shape = "Population", fill = "Population") +
+  labs(title = "Madagascar PCA", x = paste0("PC 1: ",variance[1],"%"), y = paste0("PC 2: ",variance[2],"%"), colour = "Population", shape = "Population", fill = "Population") +
   theme(legend.position = "right", legend.title = element_text(face="bold"))#+ geom_text(aes(label=malagasy_merged$id))
 
 ggsave(paste0(res_dir, "madagascar_pca.pdf"), width = 10, height = 10)
@@ -137,12 +137,13 @@ malagasy_low_rel$population <- ifelse(!is.na(matching_m), pop_table_sub$Populati
 
 #pcs <- as.data.frame(big_random_pca$u)
 pcs <- as.data.frame(random_pca2$u)
+variance <- round((random_pca2$d^2/sum(random_pca2$d^2))*100,2)
 
 
 ggplot(pcs, aes(x = V1, y = V2, group = malagasy_low_rel$population, colour = malagasy_low_rel$population, shape = malagasy_low_rel$population, fill = malagasy_low_rel$population)) +
   geom_point(size = 2) +
   scale_shape_manual(values = c(1,3,7,15,17,19,21,23))+
-  labs(title = "Madagascar PCA", x = "PC 1" , y = "PC 2", colour = "population", shape = "population", fill = "population") +
+  labs(title = "Madagascar PCA", x = paste0("PC 1: ",variance[1],"%") , y =  paste0("PC 2: ",variance[2],"%"), colour = "Population", shape = "Population", fill = "Population") +
   theme(legend.position = "right", legend.title = element_text(face="bold"))#+ geom_text(aes(label=malagasy_low_rel$id))
 
 
@@ -194,12 +195,13 @@ malagasy_low_rel$population <- ifelse(!is.na(matching_m), pop_table_sub$Populati
 
 #pcs <- as.data.frame(big_random_pca$u)
 pcs <- as.data.frame(random_pca3$u)
+variance <- round((random_pca3$d^2/sum(random_pca3$d^2))*100,2)
 
 
 ggplot(pcs, aes(x = V1, y = V2, group = malagasy_low_rel$population, colour = malagasy_low_rel$population, shape = malagasy_low_rel$population, fill = malagasy_low_rel$population)) +
   geom_point(size = 2) +
   scale_shape_manual(values = c(1,3,7,15,17,19,21,23))+
-  labs(title = "Madagascar PCA", x = "PC 1" , y = "PC 2", colour = "population", shape = "population", fill = "population") +
+  labs(title = "Madagascar PCA", x = paste0("PC 1: ",variance[1],"%") , y =  paste0("PC 2: ",variance[2],"%"), colour = "Population", shape = "Population", fill = "Population") +
   theme(legend.position = "right", legend.title = element_text(face="bold"))#+ geom_text(aes(label=malagasy_low_rel$id))
 
 ggsave(paste0(res_dir, "madagascar_pca_king_0442_original_filtering.pdf"), width = 10, height = 10)
