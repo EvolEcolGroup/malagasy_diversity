@@ -2,18 +2,25 @@
 title: "Full dataset PCA"
 output: html_document
 date: "2024-11-06"
+knit: resrepo::knit_to_results
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(tidypopgen)
+library(resrepo)
+```
+
+```{r set-directories}
+res_dir <- path_resrepo("results/s04_full_pca/")
 ```
 
 # Load gt
 
 ```{r}
-mad_bor_g1000_sum <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
+mad_bor_g1000_sum <- gt_load(path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
 ```
 
 # Reorder Loci
@@ -70,7 +77,7 @@ main2
 
 ```{r}
 # read in a file
-pop_names <- read.csv(resrepo::path_resrepo("data/raw/data_input/igsr-1000-genomes-phase-3-release.tsv"), sep = "\t")
+pop_names <- read.csv(path_resrepo("data/raw/data_input/igsr-1000-genomes-phase-3-release.tsv"), sep = "\t")
 
 # find matching id in pop_names Sample.name and mad_bor_g1000_sum id, and for the matches, replace the population in mad_bor_g1000_sum with the population in pop_names
 for(i in 1:nrow(pop_names)){
@@ -135,6 +142,8 @@ main2 <- ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$population)) 
   labs(title = "PCA", x = "PC 1", y = "PC 2", colour = NULL)+ 
   theme(legend.title = element_text(face="bold"),legend.text = element_text(size = 5))
 main2
+
+ggsave(paste0(res_dir, "full_pca_subsampled.pdf"), width = 10, height = 10)
 ```
 
 ```{r}
