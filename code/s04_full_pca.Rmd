@@ -19,11 +19,11 @@ mad_bor_g1000_sum <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data
 # Reorder Loci
 
 ```{r}
-testthat::expect_false(is_loci_table_ordered(mad_bor_g1000_sum, error_on_false = FALSE))
+#testthat::expect_false(is_loci_table_ordered(mad_bor_g1000_sum, error_on_false = FALSE))
 
-mad_bor_g1000_sum <- gt_order_loci(mad_bor_g1000_sum, use_current_table = FALSE, quiet = TRUE)
+#mad_bor_g1000_sum <- gt_order_loci(mad_bor_g1000_sum, use_current_table = FALSE, quiet = TRUE)
 
-gt_save(mad_bor_g1000_sum, quiet = TRUE)
+#gt_save(mad_bor_g1000_sum, quiet = TRUE)
 ```
 
 # Impute
@@ -104,6 +104,8 @@ mad_bor_g1000_sum$population <- gsub("_", " ", mad_bor_g1000_sum$population)
 # Subsample
 
 ```{r}
+set.seed(1)
+
 subsample <- function(x){
   
   if(nrow(x)<=30){

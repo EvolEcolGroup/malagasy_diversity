@@ -1,0 +1,167 @@
+---
+title: "LD pruning and updating backingfiles"
+output: html_document
+date: "2024-12-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidypopgen)
+```
+
+# Load merged gt
+
+```{r}
+malagasy_merged <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master.gt"))
+unique(show_loci(malagasy_merged)$chromosome)
+rle(show_loci(malagasy_merged)$chr_int)$values
+rle(show_loci(malagasy_merged)$chromosome)$values
+```
+
+# Check loci order 
+
+```{r}
+is_loci_table_ordered(malagasy_merged)
+```
+
+# Impute
+
+```{r}
+malagasy_merged <- gt_impute_simple(malagasy_merged)
+```
+
+
+#LD clumping
+
+Linked loci are removed through LD clumping, (r2 > 0.5, window size = 50Kb).
+
+```{r}
+to_keep_LD <- loci_ld_clump(malagasy_merged, thr_r2 = 0.5, size = 50, return_id = TRUE)
+malagasy_merged <- malagasy_merged %>% select_loci(all_of(to_keep_LD))
+count_loci(malagasy_merged)
+```
+
+# Reorder
+
+```{r}
+malagasy_merged <- gt_order_loci(malagasy_merged, use_current_table = FALSE, quiet = TRUE)
+rle(show_loci(malagasy_merged)$chromosome)$values
+rle(show_loci(malagasy_merged)$chr_int)$values
+# save
+gt_save(malagasy_merged, quiet = TRUE)
+malagasy_merged <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/malagasy_merge_master_v2.gt")
+rle(show_loci(malagasy_merged)$chromosome)$values
+rle(show_loci(malagasy_merged)$chr_int)$values
+# reload
+```
+
+
+# Update the backingfile and save the gt
+
+loci are ordered and some have been removed through LD, backingfiles should be updated to reflect this.
+
+```{r}
+#This step avoids error in gt_roh_window where the .gt and .fbm have different numbers of rows.
+#malagasy_merged <- gt_update_backingfile(malagasy_merged)
+#gt_save(malagasy_merged)
+#malagasy_merged <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_v2.gt"))
+```
+
+```{r}
+
+show_loci(malagasy_merged)$genetic_dist <- 0
+gt_update_backingfile(malagasy_merged)
+
+```
+
+
+# Write cleaned version out to a plink file
+
+This file can be used for FIS through plink. 
+
+```{r}
+gt_as_plink(malagasy_merged,"/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Malagasy_all_clean", type = "bed", overwrite = TRUE, chromosomes_as_int = TRUE)
+```
+
+```{r}
+# subset malagasy merged down to two chromosomes
+malagasy_merged_ch <- malagasy_merged %>% select_loci_if(loci_chromosomes(genotypes) %in% c(1,2))
+gt_as_plink(malagasy_merged_ch,"/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Malagasy_chrom_1_2", type = "bed", overwrite = TRUE, chromosomes_as_int = TRUE)
+
+```
+
+
+
+# Read back into gen_tibble to check order
+
+```{r}
+malagasy_from_plink <- gen_tibble("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Malagasy_all_clean.bed")
+```
+
+```{r}
+malagasy_from_plink <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Malagasy_all_clean.gt")
+```
+
+```{r}
+
+rle(show_loci(malagasy_from_plink)$chromosome)$values
+rle(show_loci(malagasy_from_plink)$chr_int)$values
+
+```
+
+
+```{r}
+# read in the .bim file using read.table
+bim <- read.table("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Malagasy_all_clean.bim", header = FALSE)
+
+unique(bim$V1)
+rle(bim$V1)$values
+
+is.integer(bim$V1)
+is.numeric(bim$V1)
+all(bim$V1 %in% c(1:22))
+
+sorted_bim <- bim[order(bim$V1, bim$V4), ]
+identical(bim, sorted_bim)
+
+positions_sorted <- all(unlist(lapply(split(bim, bim$V1), function(x) all(diff(x$V4) >= 0))))
+
+if (!positions_sorted) {
+  stop("Base-pair positions are not sorted within chromosomes.")
+}
+
+
+# Check for duplicate SNPs
+duplicates <- bim[duplicated(bim$V2), ]
+if (nrow(duplicates) > 0) {
+  print("Duplicate SNPs detected:")
+  print(duplicates)
+}
+
+duplicate_positions <- bim[duplicated(bim[, c("V1", "V4")]), ]
+if (nrow(duplicate_positions) > 0) {
+  print("Duplicate positions detected:")
+  print(duplicate_positions)
+}
+
+
+bim[] <- lapply(bim, function(x) gsub("^\\s+|\\s+$", "", x))
+
+all.equal(bim[],bim)
+identical(bim[],bim)
+
+```
+
+
+
+
+
+
+```{r}
+malagasy_chrom_1_2 <- gen_tibble("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Malagasy_chrom_1_2.bed")
+
+rle(show_loci(malagasy_chrom_1_2)$chromosome)$values
+rle(show_loci(malagasy_chrom_1_2)$chr_int)$values
+
+
+```

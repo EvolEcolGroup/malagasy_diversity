@@ -6,41 +6,20 @@ date: "2024-11-01"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidypopgen)
+library(ggplot2)
 ```
 
 # Load gt
 
 ```{r}
-malagasy_merged <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master.gt"))
-```
-
-Here - we previously had issues with 'Error: 'pos.chr' is not sorted.'
-
-# Reorder Loci
-
-```{r}
-testthat::expect_false(is_loci_table_ordered(malagasy_merged, error_on_false = FALSE))
-
-malagasy_merged <- gt_order_loci(malagasy_merged, use_current_table = FALSE, quiet = TRUE)
-
-gt_save(malagasy_merged, quiet = TRUE)
+malagasy_merged <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_v2.gt"))
 ```
 
 # Impute
 
 ```{r}
 malagasy_merged <- gt_impute_simple(malagasy_merged, method = "random")
-```
-
-#LD clumping
-
-```{r}
-to_keep_LD <- loci_ld_clump(malagasy_merged, thr_r2 = 0.5, size = 50, return_id = TRUE)
-#Previous Error: Not compatible with requested type: [type=character; target=double].
-
-#Error: 'infos.chr' should contain only integers.
-
-malagasy_merged <- malagasy_merged%>% select_loci(all_of(to_keep_LD))
 ```
 
 # PCA
@@ -108,13 +87,6 @@ madagascar_p_low_rel<- madagascar_p %>% filter(id %in% individual_report_m_p$id 
 
 malagasy_low_rel <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_low_kin.gt"))
 
-# Reorder Loci - sort
-testthat::expect_false(is_loci_table_ordered(malagasy_low_rel, error_on_false = FALSE))
-
-malagasy_low_rel <- gt_order_loci(malagasy_low_rel, use_current_table = FALSE, quiet = TRUE)
-
-gt_save(malagasy_low_rel, quiet = TRUE)
-
 # impute 
 malagasy_low_rel <- gt_impute_simple(malagasy_low_rel, method = "random")
 
@@ -164,7 +136,6 @@ ggplot(pcs, aes(x = V1, y = V2, group = malagasy_low_rel$population, colour = ma
   labs(title = "Madagascar PCA", x = "PC 1" , y = "PC 2", colour = "population", shape = "population", fill = "population") +
   theme(legend.position = "right", legend.title = element_text(face="bold"))#+ geom_text(aes(label=malagasy_low_rel$id))
 
-
 ```
 
 # With original relatedness filtering
@@ -183,14 +154,6 @@ madagascar_p_low_rel<- madagascar_p %>% filter(id %in% individual_report_m_p$id 
 #malagasy_low_rel_original <- rbind(madagascar_low_rel,madagascar_p_low_rel,as_is = FALSE, flip_strand = TRUE, quiet = FALSE, backingfile = resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_low_kin_original"))
 
 malagasy_low_rel <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_low_kin_original.gt"))
-
-# Reorder Loci
-
-testthat::expect_false(is_loci_table_ordered(malagasy_low_rel, error_on_false = FALSE))
-
-malagasy_low_rel <- gt_order_loci(malagasy_low_rel, use_current_table = FALSE, quiet = TRUE)
-
-gt_save(malagasy_low_rel, quiet = TRUE)
 
 # impute 
 malagasy_low_rel <- gt_impute_simple(malagasy_low_rel, method = "random")

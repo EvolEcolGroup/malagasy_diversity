@@ -11,14 +11,19 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(ggplot2)
 library(tidypopgen)
+library(grid)
 ```
 
 # Generate gen tibble
 
 ```{r}
-#madagascar <- gen_tibble("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/raw/data_input/Madagascar_full.bed", quiet = TRUE, valid_alleles = c("T","G","A","C","I"))
+if(file.exists(resrepo::path_resrepo("data/raw/data_input/Madagascar_full.gt"))){
+  madagascar <- gt_load(resrepo::path_resrepo("data/raw/data_input/Madagascar_full.gt"))
+} else {
+  madagascar <- gen_tibble("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/raw/data_input/Madagascar_full.bed", quiet = TRUE, valid_alleles = c("T","G","A","C","I"))
+}
 
-madagascar <- gt_load(resrepo::path_resrepo("data/raw/data_input/Madagascar_full.gt"))
+#madagascar <- gt_load(resrepo::path_resrepo("data/raw/data_input/Madagascar_full.gt"))
 
 cat("Number of individuals:",nrow(madagascar),"\n")
 cat("Number of loci:",count_loci(madagascar))
@@ -36,12 +41,13 @@ madagascar <- madagascar %>% select_loci(-all_of(c(remove)))
 count_loci(madagascar)
 ```
 
+
 # Update build
 
 Add a section here with the biomart function/find a better way to do this?
 
 ```{r}
-new_bim_no_NA <- read.table("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Madagascar_full_HG38.bim", header = FALSE)
+new_bim_no_NA <- read.table(resrepo::path_resrepo("data/intermediate/Madagascar_full_HG38.bim"), header = FALSE)
 colnames(new_bim_no_NA) <- c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2")
 
 # select the loci with updated positions
@@ -60,22 +66,38 @@ show_loci(madagascar)$chromosome <- as.character(show_loci(madagascar)$chromosom
 show_loci(madagascar)$chromosome[matching_rows] <- new_bim_no_NA$chromosome[match_indices[matching_rows]]
 
 # update chr_int
-chr_update <- which(show_loci(madagascar)$chr_int == 0)
-show_loci(madagascar)$chr_int[chr_update] <- as.integer(show_loci(madagascar)$chromosome[chr_update])
-
-
+show_loci(madagascar)$chr_int <- as.integer(show_loci(madagascar)$chromosome)
 count_loci(madagascar)
-
 ```
 
-After updating to HG38 we are left with 692673 SNPs.
+
+[Removing autosomal before updating build leaves 674776 SNPs]
+
+[Updating build before filtering down to only autosomes preserves 692673 SNPs.]
 
 # Create loci report
 
 ```{r}
+madagascar <- madagascar %>% group_by(population)
 loci_report_m <- qc_report_loci(madagascar)
+madagascar <- madagascar %>% ungroup()
+
 summary(loci_report_m)
 autoplot(loci_report_m, type = "overview")
+```
+
+We do not want to be too stringent on filter out variants deviating from HWE,  because HWE can indicate processes that we are intending to investigate (assortative mating, stratified population structures etc see Turner et al. 2011). 
+
+The grouped loci report checks hwe within sub-populations:
+
+```{r}
+to_keep <- which(loci_report_m$hwe_p > 0.01)
+
+madagascar <- madagascar %>% select_loci(all_of(to_keep))
+
+madagascar <- madagascar %>% ungroup()
+count_loci(madagascar)
+
 ```
 
 
@@ -103,47 +125,44 @@ madagascar <- madagascar %>% select_loci_if(loci_maf(genotypes)>0.025)
 count_loci(madagascar)
 ```
 
-
-We do not want to be too stringent on filter out variants deviating from HWE,  because HWE can indicate processes that we are intending to investigate (assortative mating, stratified population structures etc see Turner et al. 2011). 
-
-We can check hwe within sub-populations:
-
-```{r}
-hwe_res <- madagascar %>% group_by(population) %>% group_map(.f = ~loci_hwe(.x))
-hwe_res <- do.call("cbind",hwe_res)
-hwe_res <- as.data.frame(hwe_res)
-
-#to_remove <- rownames(hwe_res)[apply(hwe_res,1,function(row) any(row < 0.05))]
-#length(to_remove)
-
-#to_remove <- rownames(hwe_res)[apply(hwe_res,1,function(row) all(row < 0.05))]
-
-# which criteria to use?
-
-to_remove <- rownames(hwe_res)[apply(hwe_res,1,function(row) sum(row < 0.05) >= 3)]
-length(to_remove)
-to_keep <- as.numeric(setdiff(rownames(hwe_res), to_remove))
-```
-
-Removing snps where p<0.05 in 3 or more of the 5 populations
-
-```{r}
-madagascar <- madagascar %>% select_loci(all_of(to_keep))
-count_loci(madagascar)
-```
-
-We also want to remove all non-autosomal SNPs.
+Remove all non-autosomal SNPs.
 
 ```{r}
 madagascar <- madagascar %>% select_loci_if(show_loci(genotypes)$chromosome %in% c(1:22)) 
 count_loci(madagascar)
 ```
 
+# Now save 
+
+```{r}
+if(file.exists(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_v2.gt"))){
+  file.remove(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_v2.gt"))
+  file.remove(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_v2.bk"))
+  file.remove(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_v2.rds"))
+}
+```
+
+```{r}
+testthat::expect_false(is_loci_table_ordered(madagascar, error_on_false = FALSE))
+# reorder the loci
+madagascar <- gt_order_loci(madagascar, use_current_table = FALSE, quiet = TRUE)
+```
+
+```{r}
+# save
+path <- gt_save(madagascar, quiet = TRUE)
+# reload
+madagascar <- gt_load(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_v2.gt"))
+#madagascar <- gt_load(path[1])
+```
+
+
 # Create individual report
 
 ```{r}
 madagascar <- madagascar %>% group_by(population)
 individual_report_m <- qc_report_indiv(madagascar, kings_threshold = 0.177)
+madagascar <- madagascar %>% ungroup()
 summary(individual_report_m)
 autoplot(individual_report_m)
 ```
@@ -157,7 +176,6 @@ autoplot(individual_report_m, type = "relatedness",kings_threshold = 0.177)
 ```
 
 ```{r}
-madagascar <- madagascar %>% ungroup()
 madagascar <- madagascar %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
 ```
 
@@ -175,6 +193,10 @@ count_loci(madagascar)
 Now we have a cleaned dataset, we can save this gt for future use.
 
 ```{r}
+if(file.exists(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_cleaned.gt"))){
+  file.remove(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_cleaned.gt"))
+}
+
 gt_save(madagascar, file = resrepo::path_resrepo("data/raw/data_input/Madagascar_full_cleaned.gt"))
 ```
 
@@ -184,19 +206,40 @@ Next we can read in and clean other Malagasy data ready to merge with.
 # Malagasy Pierron data
 
 ```{r}
-#madagascar_p <- gen_tibble("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/raw/data_input/Pierron_Malagasy.bed", quiet = TRUE)
 
-madagascar_p <- gt_load(resrepo::path_resrepo("data/raw/data_input/Pierron_Malagasy.gt"))
+if(file.exists(resrepo::path_resrepo("data/raw/data_input/Pierron_Malagasy.gt"))){
+  madagascar_p <- gt_load(resrepo::path_resrepo("data/raw/data_input/Pierron_Malagasy.gt"))
+} else {
+  madagascar_p <- gen_tibble("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/raw/data_input/Pierron_Malagasy.bed", quiet = TRUE)
+}
+
+#madagascar_p <- gt_load(resrepo::path_resrepo("data/raw/data_input/Pierron_Malagasy.gt"))
 
 cat("Number of individuals:",nrow(madagascar_p),"\n")
 cat("Number of loci:",count_loci(madagascar_p))
 ```
 
+```{r}
+# append population info
+
+pop_table <- read.table(resrepo::path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
+colnames(pop_table) <- c("IID", "V2","FID","Population","V5","V6","V7")
+
+pop_table_sub <- subset(pop_table,pop_table$IID %in% madagascar_p$id & pop_table$V5 =="Madagascar")
+
+matching_m <- match(madagascar_p$id, pop_table_sub$IID)
+madagascar_p$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], madagascar_p$population)
+```
+
 # Create loci report
 
 ```{r}
+madagascar_p <- madagascar_p %>% group_by(population)
 loci_report_m_p <- qc_report_loci(madagascar_p)
+madagascar_p <- madagascar_p %>% ungroup()
+
 summary(loci_report_m_p)
+
 #autoplot(loci_report_m_p, type = "overview")
 
 #Error in `.rowNamesDF<-`(x, value = value) : 
@@ -205,6 +248,16 @@ summary(loci_report_m_p)
 
 ```{r}
 autoplot(loci_report_m_p, type = "missing")
+```
+
+```{r}
+to_keep <- which(loci_report_m_p$hwe_p > 0.01)
+
+madagascar_p <- madagascar_p %>% select_loci(all_of(to_keep))
+
+madagascar_p <- madagascar_p %>% ungroup()
+count_loci(madagascar_p)
+
 ```
 
 Again, the automatic threshold for missingness (0.01) fits the data quite well, so we will stick to this threshold.
@@ -223,31 +276,6 @@ madagascar_p <- madagascar_p %>% select_loci_if(loci_maf(genotypes)>0.025)
 count_loci(madagascar_p)
 ```
 
-```{r}
-# append population info
-
-pop_table <- read.table(resrepo::path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
-colnames(pop_table) <- c("IID", "V2","FID","Population","V5","V6","V7")
-
-pop_table_sub <- subset(pop_table,pop_table$IID %in% madagascar_p$id & pop_table$V5 =="Madagascar")
-
-matching_m <- match(madagascar_p$id, pop_table_sub$IID)
-madagascar_p$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], madagascar_p$population)
-
-hwe_res <- madagascar_p %>% group_by(population) %>% group_map(.f = ~loci_hwe(.x))
-hwe_res <- do.call("cbind",hwe_res)
-hwe_res <- as.data.frame(hwe_res)
-
-to_remove <- rownames(hwe_res)[apply(hwe_res,1,function(row) sum(row < 0.05) >= 2)]
-length(to_remove)
-to_keep <- as.numeric(setdiff(rownames(hwe_res), to_remove))
-```
-
-```{r}
-madagascar_p <- madagascar_p %>% select_loci(all_of(to_keep))
-count_loci(madagascar_p)
-```
-
 Removing snps where p<0.05 in 2 or more of the 3 populations
 
 ```{r}
@@ -260,6 +288,7 @@ count_loci(madagascar_p)
 ```{r}
 madagascar_p <- madagascar_p %>% group_by(population)
 individual_report_m_p <- qc_report_indiv(madagascar_p, kings_threshold = 0.177)
+madagascar_p <- madagascar_p %>% ungroup()
 summary(individual_report_m_p)
 autoplot(individual_report_m_p)
 ```
@@ -273,7 +302,6 @@ autoplot(individual_report_m_p, type = "relatedness",kings_threshold = 0.177)
 ```
 
 ```{r}
-madagascar_p <- madagascar_p %>% ungroup()
 madagascar_p <- madagascar_p %>% filter(id %in% individual_report_m_p$id & individual_report_m_p$to_keep == TRUE)
 ```
 
@@ -283,6 +311,10 @@ count_loci(madagascar_p)
 ```
 
 ```{r}
+if(file.exists(resrepo::path_resrepo("data/raw/data_input/Pierron_Malagasy_clean.gt"))){
+  file.remove(resrepo::path_resrepo("data/raw/data_input/Pierron_Malagasy_clean.gt"))
+}
+
 gt_save(madagascar_p, file = resrepo::path_resrepo("data/raw/data_input/Pierron_Malagasy_clean.gt"))
 ```
 
@@ -309,19 +341,31 @@ nrow(ambiguous) #looks like all ambiguous have been filtered out
 ```
 
 ```{r}
-malagasy_merged <- rbind(madagascar, madagascar_p, as_is = FALSE, flip_strand = TRUE,
-                       quiet = FALSE, backingfile = "/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/malagasy_merge_master")
+if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master.gt"))){
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master.gt"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master.bk"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master.rds"))
+}
+```
 
-malagasy_merged <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/malagasy_merge_master.gt")
+```{r}
+malagasy_merged <- rbind(madagascar, madagascar_p, as_is = FALSE, flip_strand = TRUE,
+                       quiet = FALSE, backingfile = resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master"))
+
+#malagasy_merged <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master.gt"))
 
 ```
 
 # Borneo
 
 ```{r}
-#borneo <- gen_tibble(resrepo::path_resrepo("data/raw/data_input/Borneo_raw_data.bed"), valid_alleles = c("A","T","C","G","I","N"), quiet = TRUE)
+if(file.exists(resrepo::path_resrepo("data/raw/data_input/Borneo_raw_data.gt"))){
+  borneo <- gt_load(resrepo::path_resrepo("data/raw/data_input/Borneo_raw_data.gt"))
+} else {
+  borneo <- gen_tibble(resrepo::path_resrepo("data/raw/data_input/Borneo_raw_data.bed"), valid_alleles = c("A","T","C","G","I","N"), quiet = TRUE)
+}
 
-borneo <- gt_load(resrepo::path_resrepo("data/raw/data_input/Borneo_raw_data.gt"))
+#borneo <- gt_load(resrepo::path_resrepo("data/raw/data_input/Borneo_raw_data.gt"))
 borneo$population <- "Borneo"
 ```
 
@@ -354,7 +398,13 @@ The Borneo dataset has a strange number of completely monomorphic SNPs. Unsure w
 # Create loci report
 
 ```{r}
+borneo <- borneo %>% group_by(population)
 loci_report_b <- qc_report_loci(borneo)
+borneo <- borneo %>% ungroup()
+```
+
+
+```{r}
 summary(loci_report_b)
 autoplot(loci_report_b, type = "overview")
 ```
@@ -392,6 +442,11 @@ count_loci(borneo)
 ```{r}
 borneo <- borneo %>% group_by(population)
 individual_report_b <- qc_report_indiv(borneo, kings_threshold = 0.177)
+borneo <- borneo %>% ungroup()
+```
+
+
+```{r}
 summary(individual_report_b)
 autoplot(individual_report_b)
 ```
@@ -401,7 +456,6 @@ autoplot(individual_report_b, type = "relatedness",kings_threshold = 0.177)
 ```
 
 ```{r}
-borneo <- borneo %>% ungroup()
 borneo <- borneo %>% filter(id %in% individual_report_b$id & individual_report_b$to_keep == TRUE)
 ```
 
@@ -411,6 +465,10 @@ count_loci(borneo)
 ```
 
 ```{r}
+if(file.exists(resrepo::path_resrepo("data/raw/data_input/Borneo_clean.gt"))){
+  file.remove(resrepo::path_resrepo("data/raw/data_input/Borneo_clean.gt"))
+}
+
 gt_save(borneo, resrepo::path_resrepo("data/raw/data_input/Borneo_clean.gt"))
 ```
 
@@ -418,14 +476,22 @@ gt_save(borneo, resrepo::path_resrepo("data/raw/data_input/Borneo_clean.gt"))
 # Merge
 
 ```{r}
+if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_borneo.gt"))){
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_borneo.gt"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_borneo.bk"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_borneo.rds"))
+}
+```
+
+```{r}
 test <- rbind_dry_run(malagasy_merged,borneo, flip_strand = TRUE)
 ```
 
 ```{r}
-#malagasy_borneo <- rbind(malagasy_merged, borneo, as_is = FALSE, flip_strand = TRUE,
-#                      quiet = FALSE, backingfile = "/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/malagasy_borneo")
+malagasy_borneo <- rbind(malagasy_merged, borneo, as_is = FALSE, flip_strand = TRUE,
+                      quiet = FALSE, backingfile = resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_borneo"))
 
-malagasy_borneo <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/malagasy_borneo.gt")
+#malagasy_borneo <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_borneo.gt"))
 ```
 
 # 1000 G
@@ -433,8 +499,15 @@ malagasy_borneo <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data
 Cutting down to populations of interest
 
 ```{r}
-#g1000 <- gen_tibble(resrepo::path_resrepo("data/raw/data_input/1000_Genomes_b37_clean.bed"), quiet = TRUE)
-g1000 <- gt_load(resrepo::path_resrepo("data/raw/data_input/1000_Genomes_b37_clean.gt"))
+
+if(file.exists(resrepo::path_resrepo("data/raw/data_input/1000_Genomes_b37_clean.gt"))){
+  g1000 <- gt_load(resrepo::path_resrepo("data/raw/data_input/1000_Genomes_b37_clean.gt"))
+} else {
+  g1000 <- gen_tibble(resrepo::path_resrepo("data/raw/data_input/1000_Genomes_b37_clean.bed"), quiet = TRUE)
+
+}
+
+#g1000 <- gt_load(resrepo::path_resrepo("data/raw/data_input/1000_Genomes_b37_clean.gt"))
 
 # append population info
 pop_table <- read.table(resrepo::path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
@@ -465,7 +538,13 @@ nrow(g1000)
 # Create loci report
 
 ```{r}
+g1000 <- g1000 %>% group_by(population)
 loci_report_g_1000 <- qc_report_loci(g1000)
+g1000 <- g1000 %>% ungroup()
+```
+
+
+```{r}
 summary(loci_report_g_1000)
 #autoplot(loci_report_g_1000, type = "overview")
 
@@ -479,26 +558,19 @@ summary(loci_report_g_1000)
 This dataset had already been cleaned - there's no missingness
 
 ```{r}
+to_keep <- which(loci_report_g_1000$hwe_p > 0.01)
+
+g1000 <- g1000 %>% select_loci(all_of(to_keep))
+
+count_loci(g1000)
+```
+
+```{r}
 #autoplot(loci_report_g_1000, type = "maf")
 ```
 
 ```{r}
 g1000 <- g1000 %>% select_loci_if(loci_maf(genotypes)>0.025)
-count_loci(g1000)
-```
-
-```{r}
-hwe_res <- g1000 %>% group_by(population) %>% group_map(.f = ~loci_hwe(.x))
-hwe_res <- do.call("cbind",hwe_res)
-hwe_res <- as.data.frame(hwe_res)
-
-to_remove <- rownames(hwe_res)[apply(hwe_res,1,function(row) sum(row < 0.05) >= 2)]
-length(to_remove)
-to_keep <- as.numeric(setdiff(rownames(hwe_res), to_remove))
-```
-
-```{r}
-g1000 <- g1000 %>% select_loci(all_of(to_keep))
 count_loci(g1000)
 ```
 
@@ -514,6 +586,7 @@ count_loci(g1000)
 ```{r}
 g1000 <- g1000 %>% group_by(population)
 individual_report_g_1000 <- qc_report_indiv(g1000, kings_threshold = 0.177)
+g1000 <- g1000 %>% ungroup()
 summary(individual_report_g_1000)
 #autoplot(individual_report_g_1000)
 ```
@@ -523,12 +596,15 @@ Once again, no missingness
 This is where qc_report_indiv previosuly had an issue and left to_keep CHS, PJL, and KHV all FALSE
 
 ```{r}
-g1000 <- g1000 %>% ungroup()
 g1000 <- g1000 %>% filter(id %in% individual_report_g_1000$id & individual_report_g_1000$to_keep == TRUE)
 ```
 
 ```{r}
-gt_save(borneo, resrepo::path_resrepo("data/raw/data_input/1000_Genomes_b37_clean_sub.gt"))
+if(file.exists(resrepo::path_resrepo("data/raw/data_input/1000_Genomes_b37_clean_sub.gt"))){
+  file.remove(resrepo::path_resrepo("data/raw/data_input/1000_Genomes_b37_clean_sub.gt"))
+}
+
+gt_save(g1000, resrepo::path_resrepo("data/raw/data_input/1000_Genomes_b37_clean_sub.gt"))
 ```
 
 
@@ -541,10 +617,16 @@ test <- rbind_dry_run(malagasy_borneo,g1000, flip_strand = TRUE)
 Significant reduction in number of SNPs, but not as many as HGDP
 
 ```{r}
-#mad_bor_g1000 <- rbind(malagasy_borneo,g1000, as_is = FALSE, flip_strand = TRUE,
-#                      quiet = FALSE, backingfile = "/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/mad_bor_g1000")
+if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000.gt"))){
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000.gt"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000.bk"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000.rds"))
+}
 
-mad_bor_g1000 <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/mad_bor_g1000.gt")
+mad_bor_g1000 <- rbind(malagasy_borneo,g1000, as_is = FALSE, flip_strand = TRUE,
+                      quiet = FALSE, backingfile =resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000"))
+
+#mad_bor_g1000 <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000.gt"))
 
 ```
 
@@ -553,9 +635,15 @@ mad_bor_g1000 <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/i
 # Sumba
 
 ```{r}
-#sumba <- gen_tibble(resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.bed"), quiet = TRUE)
+if(file.exists(resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.gt"))){
+  sumba <- gt_load(resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.gt"))
+} else {
+  sumba <- gen_tibble(resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.bed"), quiet = TRUE)
+}
 
-sumba <- gt_load(resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.gt"))
+
+#sumba <- gt_load(resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.gt"))
+
 sumba$population <- "Sumba"
 
 timor <- read.table(resrepo::path_resrepo("data/raw/data_input/timor"))
@@ -571,7 +659,12 @@ nrow(sumba)
 # Create loci report
 
 ```{r}
+sumba <- sumba %>% group_by(population)
 loci_report_s <- qc_report_loci(sumba)
+sumba <- sumba %>% ungroup()
+```
+
+```{r}
 summary(loci_report_s)
 autoplot(loci_report_s, type = "overview")
 ```
@@ -595,14 +688,7 @@ count_loci(sumba)
 ```
 
 ```{r}
-hwe_res <- sumba %>% group_by(population) %>% group_map(.f = ~loci_hwe(.x))
-hwe_res <- do.call("cbind",hwe_res)
-hwe_res <- as.data.frame(hwe_res)
-
-to_remove <- rownames(hwe_res)[apply(hwe_res,1,function(row) sum(row < 0.05) == 2)]
-length(to_remove)
-to_keep <- as.numeric(setdiff(rownames(hwe_res), to_remove))
-sumba <- sumba %>% select_loci(all_of(to_keep))
+sumba <- sumba %>% select_loci_if(loci_hwe(genotypes)>0.05)
 count_loci(sumba)
 ```
 
@@ -616,6 +702,19 @@ count_loci(sumba)
 ```{r}
 sumba <- sumba %>% group_by(population)
 individual_report_s <- qc_report_indiv(sumba, kings_threshold = 0.177)
+sumba <- sumba %>% ungroup()
+```
+
+```{r}
+autoplot(individual_report_s, type = "relatedness",kings_threshold = 0.177)
+```
+
+```{r}
+sumba <- sumba %>% filter(id %in% individual_report_s$id & individual_report_s$to_keep == TRUE)
+```
+
+
+```{r}
 summary(individual_report_s)
 autoplot(individual_report_s)
 ```
@@ -628,22 +727,15 @@ nrow(sumba)
 ```
 
 ```{r}
-autoplot(individual_report_s, type = "relatedness",kings_threshold = 0.177)
-```
-
-```{r}
-sumba <- sumba %>% ungroup()
-keep <- which(individual_report_s$to_keep == TRUE)
-id_keep <- individual_report_s$id[keep]
-sumba <- sumba %>% filter(id %in% id_keep)
-```
-
-```{r}
 nrow(sumba)
 count_loci(sumba)
 ```
 
 ```{r}
+if(file.exists(resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR_clean.gt"))){
+  file.remove(resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR_clean.gt"))
+}
+
 gt_save(sumba, resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR_clean.gt"))
 ```
 
@@ -653,10 +745,16 @@ test <- rbind_dry_run(mad_bor_g1000,sumba, flip_strand = TRUE)
 ```
 
 ```{r}
-#mad_bor_g1000_sum <- rbind(mad_bor_g1000,sumba, as_is = FALSE, flip_strand = TRUE,
-#                     quiet = FALSE, backingfile = "/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/mad_bor_g1000_sum")
+if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))){
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.bk"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.rds"))
+}
 
-gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/mad_bor_g1000_sum.gt")
+mad_bor_g1000_sum <- rbind(mad_bor_g1000,sumba, as_is = FALSE, flip_strand = TRUE,
+                     quiet = FALSE, backingfile = resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum"))
+
+#gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
 ```
 
 
@@ -671,8 +769,8 @@ gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind
 Huge reduction in SNPs, way more than with 1000 genomes
 
 ```{r}
-hgdp <- gen_tibble("/home/EJC199/Dropbox/data_input/hgdp650.qc.hg19.bed",
-                   quiet = TRUE, backingfile = tempfile())
+#hgdp <- gen_tibble("/home/EJC199/Dropbox/data_input/hgdp650.qc.hg19.bed",
+#                   quiet = TRUE, backingfile = tempfile())
 #hdgp <- gt_load("/home/EJC199/Dropbox/data_input/.gt")
 
 count_loci(hgdp)
