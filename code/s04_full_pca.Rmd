@@ -23,16 +23,6 @@ res_dir <- path_resrepo("results/s04_full_pca/")
 mad_bor_g1000_sum <- gt_load(path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
 ```
 
-# Reorder Loci
-
-```{r}
-#testthat::expect_false(is_loci_table_ordered(mad_bor_g1000_sum, error_on_false = FALSE))
-
-#mad_bor_g1000_sum <- gt_order_loci(mad_bor_g1000_sum, use_current_table = FALSE, quiet = TRUE)
-
-#gt_save(mad_bor_g1000_sum, quiet = TRUE)
-```
-
 # Impute
 
 ```{r}
@@ -40,43 +30,26 @@ mad_bor_g1000_sum <- gt_impute_simple(mad_bor_g1000_sum, method = "random")
 gt_set_imputed(mad_bor_g1000_sum, TRUE)
 ```
 
-
 # LD clumping
 
 ```{r}
-
 to_keep_LD <- loci_ld_clump(mad_bor_g1000_sum, thr_r2 = 0.5, size = 50, return_id = TRUE)
 
 mad_bor_g1000_sum <- mad_bor_g1000_sum%>% select_loci(all_of(to_keep_LD))
 ```
 
-
-Here - we previously had issues with 'Error: 'pos.chr' is not sorted.'
-
-
 # PCA
 
 ```{r}
 random_pca <- gt_pca_randomSVD(mad_bor_g1000_sum)
-
 pcs <- as.data.frame(random_pca$u)
-
-#big_random_pca <- gt_pca_randomSVD(imputed_data)
-#auto_pca <- gt_pca_autoSVD(imputed_data) # there's still an error here...
+variance <- round((random_pca$d^2/sum(random_pca$d^2))*100,1)
 ```
 
 
-```{r}
-main2 <- ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$population)) + geom_point(alpha = 0.5) + #
-  labs(title = "PCA", x = "PC 1", y = "PC 2", colour = NULL)+ 
-  theme(legend.title = element_text(face="bold"),legend.text = element_text(size = 5))
-main2
-```
-
-# Fix pop names
+# Add population metadata
 
 ```{r}
-# read in a file
 pop_names <- read.csv(path_resrepo("data/raw/data_input/igsr-1000-genomes-phase-3-release.tsv"), sep = "\t")
 
 # find matching id in pop_names Sample.name and mad_bor_g1000_sum id, and for the matches, replace the population in mad_bor_g1000_sum with the population in pop_names
@@ -106,9 +79,20 @@ mad_bor_g1000_sum$population <- gsub("_", " ", mad_bor_g1000_sum$population)
 
 ```
 
+# Plot
 
+```{r}
+ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$population)) + geom_point(alpha = 0.5) + 
+  labs(title = NULL, x = paste0("PC 1 (",variance[1],"%)"), y = paste0("PC 2 (",variance[2],"%)"), colour = "Population")+ 
+  theme(legend.text = element_text(size = 5))+
+  guides(colour = guide_legend(ncol = 2, byrow = TRUE))
+```
 
-# Subsample
+This PCA uses the KING relatedness filtering of 0.177, equivalent to a first degree relatives (parent, sibling, or child) filtered within each population. 
+
+Unbalanced sample sizes will cause bias in the dimensions of this first plot. To explore how this might be affecting the PCA, the next dataset will randomly subsample populations with more individuals down to equivalent sizes.
+
+# Create a dataset with broadly equal sample sizes
 
 ```{r}
 set.seed(1)
@@ -129,34 +113,70 @@ mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
   ungroup()
   
 mad_bor_g1000_sum %>% group_by(population) %>% count() 
-
 ```
 
+# PCA
 
 ```{r}
-partial_pca <- gt_pca_partialSVD(mad_bor_g1000_sum)
-
-pcs <- as.data.frame(partial_pca$u)
-
-main2 <- ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$population)) + geom_point(alpha = 0.5) + #
-  labs(title = "PCA", x = "PC 1", y = "PC 2", colour = NULL)+ 
-  theme(legend.title = element_text(face="bold"),legend.text = element_text(size = 5))
-main2
-
-ggsave(paste0(res_dir, "full_pca_subsampled.pdf"), width = 10, height = 10)
+sub_pca <- gt_pca_randomSVD(mad_bor_g1000_sum)
+pcs <- as.data.frame(sub_pca$u)
+variance <- round((sub_pca$d^2/sum(sub_pca$d^2))*100,1)
 ```
+
+# Plot
+
+```{r}
+ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$population)) + geom_point(alpha = 0.5) +
+  labs(title = NULL, x = paste0("PC 1 (",variance[1],"%)"), y = paste0("PC 2 (",variance[2],"%)"), colour = "Population")+ 
+  theme(legend.text = element_text(size = 5))+
+  guides(colour = guide_legend(ncol = 2, byrow = TRUE))
+```
+
+Altering the sample sizes reduces the explained variance of both principal components and increases the dispersion of the data.
+
+# Change legend
 
 ```{r}
 # create a new factor column with Malagasy populations as 1 and others as 0
 mad_bor_g1000_sum$malagasy <-  0
-all_malagasy <- subset(mad_bor_g1000_sum, population %in% c("Central Highland","East Coast","Northern Coast","NorthWestern Coast","Southern Highland","Vezo","Mikea","Temoro"))
+all_malagasy <- subset(mad_bor_g1000_sum, population %in% c("Betsimisaraka", "Merina", "Diego","Sakalava Tsimihety", "Betsileo" ,"Vezo","Mikea","Temoro"))
 mad_bor_g1000_sum[mad_bor_g1000_sum$id %in% all_malagasy$id, "malagasy"] <- 1
-
-main2 <- ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$population,shape = as.factor(mad_bor_g1000_sum$malagasy))) + geom_point(alpha = 0.5) + #
-  labs(title = "PCA", x = "PC 1", y = "PC 2", colour = NULL)+ 
-  theme(legend.title = element_text(face="bold"),legend.text = element_text(size = 5))
-main2
 ```
+
+# Plot
+
+```{r}
+ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$population,shape = as.factor(mad_bor_g1000_sum$malagasy))) + geom_point(alpha = 0.5) + #
+  labs(title = NULL,  x = paste0("PC 1 (",variance[1],"%)"), y = paste0("PC 2 (",variance[2],"%)"), colour = "Population")+ 
+  theme(legend.text = element_text(size = 5))+
+  guides(shape = "none", colour = guide_legend(override.aes = list(shape = c(16, 17,17, 16, 17, 16, 16,16,16,16,17, 17, 16,17, 16, 16, 17, 16, 17,16)), ncol = 2))
+
+ggsave(paste0(res_dir, "pca_subsampled_malagasy_separated.jpg"), width = 7, height = 7, dpi = 300)
+```
+
+```{r}
+# create a new factor column with Malagasy populations as 1 and others as 0
+mad_bor_g1000_sum$mad_vs_global <-  "Other"
+
+fill <- function(x){
+    if(x["malagasy"] == 1){
+    x["mad_vs_global"] <- "Malagasy"
+  } else {
+    x["mad_vs_global"] <- x["population"]
+  }
+}
+
+mad_bor_g1000_sum$mad_vs_global <- apply(mad_bor_g1000_sum, 1, FUN = fill)
+
+ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$mad_vs_global,shape = as.factor(mad_bor_g1000_sum$malagasy))) + geom_point(alpha = 0.5) + #
+  labs(title = NULL,  x = paste0("PC 1 (",variance[1],"%)"), y = paste0("PC 2 (",variance[2],"%)"), colour = "Population")+ 
+  theme(legend.text = element_text(size = 5))+
+  guides(shape = "none", colour = guide_legend(override.aes = list(shape = c(16,16,16,16,16,16,17,16,16,16,16,16,16)), ncol = 2))
+
+ggsave(paste0(res_dir, "pca_subsampled_malagasy_together.jpg"), width = 7, height = 7, dpi = 300)
+```
+
+
 
 ```{r}
 mad_bor_g1000_sum$Region <- "Other"
@@ -165,14 +185,16 @@ mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Borneo","Sumba","Timor"),
 mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Bengali","Punjabi"),"Region"] <- "South Asia"
 mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Southern Han Chinese","Kinh Vietnamese"),"Region"] <- "East Asia"
 #Not really happy about grouping all African samples here though...
-mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Esan","Gambian Mandinka","Luhya","Mende","Yoruba"),"Region"] <- "African"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Esan","Gambian Mandinka","Luhya","Mende","Yoruba"),"Region"] <- "Africa"
+mad_bor_g1000_sum[mad_bor_g1000_sum$malagasy == 1,"Region"] <- "Madagascar"
 
 
 ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$Region, shape = as.factor(mad_bor_g1000_sum$malagasy))) + geom_point(alpha = 0.5) + 
-  labs(title = "Madagascar PCA", x = "PC 1 (%)", y = "PC 2 (%)", colour = "Population")+
-  theme(legend.title = element_text(face="bold"), legend.position = "right")
+  labs(title = NULL,x = paste0("PC 1 (",variance[1],"%)"), y = paste0("PC 2 (",variance[2],"%)"), colour = "Population", shape = "none")+
+  theme(legend.position = "right")+
+  guides(shape = "none", colour = guide_legend(override.aes = list(shape = c(16,16,16,17,16))))
 
-
+ggsave(paste0(res_dir, "pca_subsampled_regions_together.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
 
