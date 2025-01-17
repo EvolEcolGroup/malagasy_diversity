@@ -31,6 +31,28 @@ cat("Number of loci:",count_loci(madagascar))
 
 Our raw dataset has 713014 SNPs and 192 individuals
 
+# Add metadata
+
+```{r}
+#Read in Pierron Malagasy metadata
+pop_table <- read.table(path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
+colnames(pop_table) <- c("IID", "V2","FID","Population","V5","V6","V7")
+
+#Remove the "RR"
+#madagascar$id <- sub("RR.*", "", madagascar$id)
+
+#Add "RR" to pop_table$IID
+pop_table$IID <- paste0(pop_table$IID,"RR")
+
+#Find Malagasy entries 
+pop_table_sub <- subset(pop_table,pop_table$IID %in% madagascar$id & pop_table$V5 =="Madagascar")
+
+#match up the ID's with pop table metadata
+matching_m <- match(madagascar$id, pop_table_sub$IID)
+
+madagascar$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], madagascar$population)
+```
+
 # Remove the random "I" loci
 
 # Check and remove the random "I" loci
@@ -40,7 +62,6 @@ remove <- which(show_loci(madagascar)$allele_ref=="I")
 madagascar <- madagascar %>% select_loci(-all_of(c(remove)))
 count_loci(madagascar)
 ```
-
 
 # Update build
 
@@ -70,7 +91,6 @@ show_loci(madagascar)$chr_int <- as.integer(show_loci(madagascar)$chromosome)
 count_loci(madagascar)
 ```
 
-
 [Removing autosomal before updating build leaves 674776 SNPs]
 
 [Updating build before filtering down to only autosomes preserves 692673 SNPs.]
@@ -86,7 +106,7 @@ summary(loci_report_m)
 autoplot(loci_report_m, type = "overview")
 ```
 
-We do not want to be too stringent on filter out variants deviating from HWE,  because HWE can indicate processes that we are intending to investigate (assortative mating, stratified population structures etc see Turner et al. 2011). 
+We do not want to be too stringent on filter out variants deviating from HWE, because HWE can indicate processes that we are intending to investigate (assortative mating, stratified population structures etc see Turner et al. 2011).
 
 The grouped loci report checks hwe within sub-populations:
 
@@ -99,7 +119,6 @@ madagascar <- madagascar %>% ungroup()
 count_loci(madagascar)
 
 ```
-
 
 The following autoplots help to examine other QC measures in greater detail.
 
@@ -132,7 +151,7 @@ madagascar <- madagascar %>% select_loci_if(show_loci(genotypes)$chromosome %in%
 count_loci(madagascar)
 ```
 
-# Now save 
+# Now save
 
 ```{r}
 if(file.exists(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_v2.gt"))){
@@ -155,7 +174,6 @@ path <- gt_save(madagascar, quiet = TRUE)
 madagascar <- gt_load(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_v2.gt"))
 #madagascar <- gt_load(path[1])
 ```
-
 
 # Create individual report
 
@@ -199,7 +217,6 @@ if(file.exists(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_cleane
 
 gt_save(madagascar, file = resrepo::path_resrepo("data/raw/data_input/Madagascar_full_cleaned.gt"))
 ```
-
 
 Next we can read in and clean other Malagasy data ready to merge with.
 
@@ -276,7 +293,7 @@ madagascar_p <- madagascar_p %>% select_loci_if(loci_maf(genotypes)>0.025)
 count_loci(madagascar_p)
 ```
 
-Removing snps where p<0.05 in 2 or more of the 3 populations
+Removing snps where p\<0.05 in 2 or more of the 3 populations
 
 ```{r}
 madagascar_p <- madagascar_p %>% select_loci_if(show_loci(genotypes)$chromosome %in% c(1:22)) 
@@ -317,7 +334,6 @@ if(file.exists(resrepo::path_resrepo("data/raw/data_input/Pierron_Malagasy_clean
 
 gt_save(madagascar_p, file = resrepo::path_resrepo("data/raw/data_input/Pierron_Malagasy_clean.gt"))
 ```
-
 
 # Merge
 
@@ -376,12 +392,14 @@ remove <- which(show_loci(borneo)$allele_ref=="I")
 borneo <- borneo %>% select_loci(-all_of(c(remove)))
 count_loci(borneo)
 ```
-# Count "N" allele loci 
+
+# Count "N" allele loci
 
 ```{r}
 N <- which(show_loci(borneo)$allele_alt=="N")
 length(N) #that's a lot to remove
 ```
+
 # Check whether they are monomorphic cases
 
 ```{r}
@@ -402,7 +420,6 @@ borneo <- borneo %>% group_by(population)
 loci_report_b <- qc_report_loci(borneo)
 borneo <- borneo %>% ungroup()
 ```
-
 
 ```{r}
 summary(loci_report_b)
@@ -445,7 +462,6 @@ individual_report_b <- qc_report_indiv(borneo, kings_threshold = 0.177)
 borneo <- borneo %>% ungroup()
 ```
 
-
 ```{r}
 summary(individual_report_b)
 autoplot(individual_report_b)
@@ -470,8 +486,9 @@ if(file.exists(resrepo::path_resrepo("data/raw/data_input/Borneo_clean.gt"))){
 }
 
 gt_save(borneo, resrepo::path_resrepo("data/raw/data_input/Borneo_clean.gt"))
-```
 
+borneo <- gt_load(resrepo::path_resrepo("data/raw/data_input/Borneo_clean.gt"))
+```
 
 # Merge
 
@@ -543,7 +560,6 @@ loci_report_g_1000 <- qc_report_loci(g1000)
 g1000 <- g1000 %>% ungroup()
 ```
 
-
 ```{r}
 summary(loci_report_g_1000)
 #autoplot(loci_report_g_1000, type = "overview")
@@ -574,12 +590,10 @@ g1000 <- g1000 %>% select_loci_if(loci_maf(genotypes)>0.025)
 count_loci(g1000)
 ```
 
-
 ```{r}
 g1000 <- g1000 %>% select_loci_if(show_loci(genotypes)$chromosome %in% c(1:22)) 
 count_loci(g1000)
 ```
-
 
 # Create individual report
 
@@ -607,8 +621,7 @@ if(file.exists(resrepo::path_resrepo("data/raw/data_input/1000_Genomes_b37_clean
 gt_save(g1000, resrepo::path_resrepo("data/raw/data_input/1000_Genomes_b37_clean_sub.gt"))
 ```
 
-
-# Merge 
+# Merge
 
 ```{r}
 test <- rbind_dry_run(malagasy_borneo,g1000, flip_strand = TRUE)
@@ -629,8 +642,6 @@ mad_bor_g1000 <- rbind(malagasy_borneo,g1000, as_is = FALSE, flip_strand = TRUE,
 #mad_bor_g1000 <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000.gt"))
 
 ```
-
-
 
 # Sumba
 
@@ -713,7 +724,6 @@ autoplot(individual_report_s, type = "relatedness",kings_threshold = 0.177)
 sumba <- sumba %>% filter(id %in% individual_report_s$id & individual_report_s$to_keep == TRUE)
 ```
 
-
 ```{r}
 summary(individual_report_s)
 autoplot(individual_report_s)
@@ -739,7 +749,6 @@ if(file.exists(resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUM
 gt_save(sumba, resrepo::path_resrepo("data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR_clean.gt"))
 ```
 
-
 ```{r}
 test <- rbind_dry_run(mad_bor_g1000,sumba, flip_strand = TRUE)
 ```
@@ -757,12 +766,7 @@ mad_bor_g1000_sum <- rbind(mad_bor_g1000,sumba, as_is = FALSE, flip_strand = TRU
 #gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
 ```
 
-
-
 ################################################ 
-
-
-
 
 # HGDP
 
@@ -803,15 +807,8 @@ Individual missingness
 hgdp <- hgdp %>% filter(indiv_missingness(genotypes)<0.01)
 ```
 
-
 # Merge
 
 ```{r}
 test <- rbind_dry_run(malagasy_borneo,hgdp, flip_strand = TRUE)
 ```
-
-
-
-
-
-
