@@ -220,24 +220,6 @@ head(tidyq)
 
 
 ```{r}
-#Read in Pierron Malagasy metadata
-#pop_table <- read.table(resrepo::path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
-#colnames(pop_table) <- c("IID", "V2","FID","Population","V5","V6","V7")
-
-#Remove the "RR"
-#tidyq$id <- sub("RR.*", "", tidyq$id)
-
-#Find Malagasy entries 
-#pop_table_sub <- subset(pop_table,pop_table$IID %in% tidyq$id & pop_table$V5 =="Madagascar")
-
-#match up the ID's with pop table metadata
-#matching_m <- match(tidyq$id, pop_table_sub$IID)
-#tidyq$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], tidyq$population)
-#head(tidyq)
-```
-
-
-```{r}
 all_malagasy <- c("Betsimisaraka","Merina","Sakalava_Tsimihety","Betsileo","Diego","Vezo","Mikea","Temoro")
 
 malagasyq <- tidyq %>% filter(population %in% all_malagasy)
@@ -250,7 +232,6 @@ head(malagasyq)
 ```{r}
 #malagasy_all <- left_join(malagasy, malagasyq, by = c("id","population","genotypes"))
 
-#malagasyq$id <- paste0(malagasyq$id,"RR")
 
 malagasy_all <- malagasyq
 
@@ -285,7 +266,7 @@ labs(title = "Runs of homozygosity against ancestry proportion for Malagasy indi
     shape = guide_legend(title = "Population")
   ) 
 
-#ggsave("/home/EJC199/Documents/tidypopgen/ROH_plots/n_roh_ancestry.tiff")
+ggsave(paste0(res_dir, "n_runs_vs_asian_ancestry.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
 ```{r}
@@ -302,6 +283,8 @@ labs(title = "Runs of homozygosity against ancestry proportion for Malagasy indi
     colour = guide_legend(title = "Population"),
     shape = guide_legend(title = "Population")
   ) 
+
+ggsave(paste0(res_dir, "n_runs_vs_african_ancestry.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
 # Ancestry proportion compared to mean length of ROHS
@@ -321,7 +304,7 @@ labs(title = "Runs of homozygosity against ancestry proportion for Malagasy indi
     shape = guide_legend(title = "Population")
   ) 
 
-#ggsave("/home/EJC199/Documents/tidypopgen/ROH_plots/mean_l_roh_ancestry.tiff")
+ggsave(paste0(res_dir, "mean_len_vs_asian_ancestry.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
 ```{r}
@@ -338,6 +321,9 @@ labs(title = "Runs of homozygosity against ancestry proportion for Malagasy indi
     colour = guide_legend(title = "Population"),
     shape = guide_legend(title = "Population")
   ) 
+
+
+ggsave(paste0(res_dir, "mean_len_vs_african_ancestry.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
 # Ancestry proportion compared to total length of ROHS
@@ -357,7 +343,7 @@ labs(title = "Runs of homozygosity against ancestry proportion for Malagasy indi
     shape = guide_legend(title = "Population")
   ) 
 
-#ggsave("/home/EJC199/Documents/tidypopgen/ROH_plots/total_l_roh_ancestry.tiff")
+ggsave(paste0(res_dir, "total_len_vs_asian_ancestry.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
 ```{r}
@@ -374,6 +360,9 @@ labs(title = "Runs of homozygosity against ancestry proportion for Malagasy indi
     colour = guide_legend(title = "Population"),
     shape = guide_legend(title = "Population")
   ) 
+
+
+ggsave(paste0(res_dir, "total_len_vs_african_ancestry.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
 
