@@ -1,0 +1,64 @@
+---
+title: "Fastmixture"
+output: html_document
+date: "2024-11-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidypopgen)
+library(fastmixturer)
+library(tidygenclust)
+library(resrepo)
+```
+
+```{r set-directories}
+res_dir <- path_resrepo("results/s05_fastmixture/")
+```
+
+# Load gt
+
+```{r}
+mad_bor_g1000_sum <- gt_load(path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
+```
+
+
+```{r}
+
+if(file.exists(path_resrepo("data/intermediate/fastmixture/fastmixture_m.RData"))){
+  qmats <- readRDS("~/Dropbox/gitdata/malagasy_diversity/data/intermediate/fastmixture/fastmixture_m.RData")
+} else {
+  tictoc::tic()
+k <- c(2:3)
+qmats <- gt_fastmixture(mad_bor_g1000_sum, k, n_runs=1, threads=1, batches=16, seed=c(42), no_freqs = T)
+saveRDS(qmats, path_resrepo("data/intermediate/fastmixture/fastmixture_m.RData"))
+time <- tictoc::toc()
+}
+
+```
+
+# Plot
+
+```{r}
+autoplot(get_q_matrix(qmats, k = 2, run = 1), data = mad_bor_g1000_sum)
+```
+
+```{r}
+autoplot(get_q_matrix(qmats, k = 3, run = 1), data = mad_bor_g1000_sum)
+```
+
+```{r}
+# check order
+testthat::expect_equal(qmats$id, mad_bor_g1000_sum$id)
+
+qmats$group <- mad_bor_g1000_sum$population
+```
+
+
+
+```{r}
+autoplot(get_q_matrix(qmats, k = 3, run = 1), data = mad_bor_g1000_sum, annotate_group = TRUE, arrange_by_group = TRUE, arrange_by_indiv = TRUE, reorder_within_groups = TRUE)
+
+ggsave(paste0(res_dir, "fastmixture_autoplot.jpg"), width = 7, height = 7, dpi = 300)
+```
+

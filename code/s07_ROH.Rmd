@@ -2,6 +2,8 @@
 title: "Malagasy runs of homozygosity"
 output: html_document
 date: "2024-11-07"
+knit: resrepo::knit_to_results
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -9,12 +11,17 @@ knitr::opts_chunk$set(echo = TRUE)
 library(detectRUNS)
 library(ggplot2)
 library(tidypopgen)
+library(resrepo)
+```
+
+```{r set-directories}
+res_dir <- path_resrepo("results/s07_ROH/")
 ```
 
 # Load gt
 
 ```{r}
-malagasy <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/malagasy_merge_master_v2.gt")
+malagasy <- gt_load(path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_v2.gt"))
 count_loci(malagasy)
 ```
 
@@ -28,27 +35,6 @@ testthat::expect_true(is_loci_table_ordered(malagasy, error_on_false = FALSE))
 
 ```{r}
 malagasy <- gt_impute_simple(malagasy, method = "random")
-```
-
-# Add metadata
-
-```{r}
-#Read in Pierron Malagasy metadata
-
-pop_table <- read.table(resrepo::path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
-colnames(pop_table) <- c("IID", "V2","FID","Population","V5","V6","V7")
-
-#Remove the "RR"
-malagasy$id <- sub("RR.*", "", malagasy$id)
-
-#Find Malagasy entries 
-pop_table_sub <- subset(pop_table,pop_table$IID %in% malagasy$id & pop_table$V5 =="Madagascar")
-
-#match up the ID's with pop table metadata
-matching_m <- match(malagasy$id, pop_table_sub$IID)
-
-malagasy$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], malagasy$population)
-
 ```
 
 # Find ROH
@@ -94,6 +80,9 @@ ggplot(data=malagasy, aes(x=id , y=n, fill=population)) +
   coord_flip()+
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
   labs(x = "Number of runs", y = "ID", fill = "Population")
+
+
+ggsave(paste0(res_dir, "n_runs_per_indiv.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
 
@@ -101,6 +90,7 @@ ggplot(data=malagasy, aes(x=id , y=n, fill=population)) +
 ggplot(malagasy,aes(x=population, y = n, fill = population))+
 geom_violin(trim = FALSE)+
 labs(title = "Number of runs of homozygosity per individual", y = "Number", x = NULL, fill = "Population")
+ggsave(paste0(res_dir, "n_runs_per_indiv_violin.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
 # Total length of runs
@@ -117,6 +107,7 @@ ggplot(data=malagasy, aes(x=id , y=length, fill=population)) +
   coord_flip()+
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
   labs(x = "Total length", y = "ID", fill = "Population")
+ggsave(paste0(res_dir, "total_len_per_indiv.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
 
@@ -124,6 +115,7 @@ ggplot(data=malagasy, aes(x=id , y=length, fill=population)) +
 ggplot(malagasy,aes(x=population, y = length, fill = population))+
 geom_violin(trim = FALSE)+
 labs(title = "Total length of runs of homozygosity per individual", y = "Length (BPs)", x = NULL, fill = "Population")
+ggsave(paste0(res_dir, "total_len_per_indiv_violin.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
 
@@ -141,7 +133,7 @@ ggplot(data=malagasy, aes(x=id , y=mean, fill=population)) +
   coord_flip()+
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
   labs(x = "Mean length", y = "ID", fill = "Population")
-
+ggsave(paste0(res_dir, "mean_len_per_indiv.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
 
@@ -149,6 +141,7 @@ ggplot(data=malagasy, aes(x=id , y=mean, fill=population)) +
 ggplot(malagasy,aes(x=population, y = mean, fill = population))+
 geom_violin(trim = FALSE)+
 labs(title = "Mean length of runs of homozygosity per individual", y = "Length (BPs)", x = NULL, fill = "Population")
+ggsave(paste0(res_dir, "mean_len_per_indiv_violin.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
 
@@ -164,12 +157,13 @@ Error in gzfile(file, "wb") : cannot open the connection
 ```{r}
 ggplot(malagasy,aes(x = n, y= length, color = population, fill = population,shape = population)) +
 geom_point(size = 1.8) +
-labs(title = "Runs of homozygosity per individual", x = "Number of runs", y = "Total length (BPs)")+
+labs(title = "Runs of homozygosity per individual", x = "Number of runs", y = "Total length (BPs)", color = "Population", shape = "Population", fill = "Population")+
   scale_color_brewer(palette = "Dark2")+
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
-  
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
   scale_fill_brewer(palette = "Dark2") 
+
+ggsave(paste0(res_dir, "total_len_vs_n_runs.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
 
@@ -212,135 +206,42 @@ then show that that model alone doesn't account for the inflation in ROH's?
 #plot_StackedRuns(runs = runs)
 ```
 
-# Load workspace from fastmixture 
+# Load q_matrices from fastmixture 
 
 ```{r}
-load("/home/EJC199/Git/fastmixturer/fastmixture_m.RData")
+readRDS(path_resrepo("data/intermediate/fastmixture/fastmixture_m.RData"))
+mad_bor_g1000_sum <- gt_load(path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
 ```
 
 ```{r}
-autoplot(qmats$q_matrices[[1]], data = mad_bor_g1000_sum)
-```
-
-
-```{r}
-autoplot(qmats$q_matrices[[2]],data = mad_bor_g1000_sum)
-```
-
-```{r}
-tidyq <- augment(qmats$q_matrices[[2]], data = mad_bor_g1000_sum)
+tidyq <- augment(get_q_matrix(qmats, k = 3, run = 1), data = mad_bor_g1000_sum)
 head(tidyq)
 ```
 
 
 ```{r}
 #Read in Pierron Malagasy metadata
-pop_table <- read.table(resrepo::path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
-colnames(pop_table) <- c("IID", "V2","FID","Population","V5","V6","V7")
+#pop_table <- read.table(resrepo::path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
+#colnames(pop_table) <- c("IID", "V2","FID","Population","V5","V6","V7")
 
 #Remove the "RR"
-tidyq$id <- sub("RR.*", "", tidyq$id)
+#tidyq$id <- sub("RR.*", "", tidyq$id)
 
 #Find Malagasy entries 
-pop_table_sub <- subset(pop_table,pop_table$IID %in% tidyq$id & pop_table$V5 =="Madagascar")
+#pop_table_sub <- subset(pop_table,pop_table$IID %in% tidyq$id & pop_table$V5 =="Madagascar")
 
 #match up the ID's with pop table metadata
-matching_m <- match(tidyq$id, pop_table_sub$IID)
-tidyq$group <- "NA"
-tidyq$group <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], tidyq$group)
-head(tidyq)
+#matching_m <- match(tidyq$id, pop_table_sub$IID)
+#tidyq$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], tidyq$population)
+#head(tidyq)
 ```
-
 
 
 ```{r}
 all_malagasy <- c("Betsimisaraka","Merina","Sakalava_Tsimihety","Betsileo","Diego","Vezo","Mikea","Temoro")
 
-malagasyq <- tidyq %>% filter(group %in% all_malagasy)
+malagasyq <- tidyq %>% filter(population %in% all_malagasy)
 head(malagasyq)
-```
-
-```{r}
-annotate_group_info <- function(q_tbl){
-  group <- q_tbl %>% dplyr::distinct(id,group) %>% dplyr::pull(group)
-  if (length(rle(group)$values)!=length(unique(group))) {
-    stop("values in 'group' are not ordered (they should be in consecutive blocks, one per group")
-  }
-  group_x <- cumsum(table(forcats::fct_inorder(group)))
-  segment_data = data.frame(
-    x = group_x+0.5,
-    xend = group_x+0.5,
-    y = rep(0,length(group_x)),
-    yend = rep(1, length(group_x))
-  )
-
-  get_mid_points <- function (vec){
-    (vec[-length(vec)] + vec[-1L])/2.
-  }
-
-  list(
-  ggplot2::geom_segment(data = segment_data,
-                        ggplot2::aes(x = .data$x,
-                                     y = .data$y,
-                                     xend = .data$xend,
-                                     yend = .data$yend),
-                        inherit.aes = FALSE),
-    ggplot2::scale_x_discrete(breaks = unique(q_tbl$id)[get_mid_points(c(0,group_x))],
-                                labels = names(group_x)),
-    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, vjust = 1, hjust=1)))
-}
-
-order_plot <- function(q_tbl, data, annotate_group = FALSE){
-    
-  K <- 3
-
-  #q_tbl <- tidy(object, data)
-    q_tbl <- q_tbl %>% tidyr::pivot_longer(cols = dplyr::starts_with(".Q"),
-                                           names_to = "q", values_to = "percentage") %>%
-      dplyr::mutate(percentage = as.numeric(.data$percentage))
-
-    q_tbl <- q_tbl %>%
-      dplyr::group_by(.data$group, .data$id) %>%
-      dplyr::arrange(.data$group, .data$id)
-    
-    
-    levels_q <- unique(q_tbl$id)
-
-    q_tbl <- q_tbl %>%
-      dplyr::mutate(id = factor(.data$id, levels = levels_q))
-    
-    plt <- ggplot2::ggplot(q_tbl,
-                           ggplot2::aes(x = .data$id,
-                                        y = .data$percentage,
-                                        fill = .data$q)) +
-      ggplot2::geom_col(width = 1,
-                        position = "stack")+
-      ggplot2::labs(y = paste("K = ", K))+
-      #ggplot2::scale_fill_manual(values = color_mapping)+
-      scale_fill_distruct()+
-      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1))
-
-    
-    if (annotate_group){
-      if (is.null(data)){
-        warning("no annotation possible if 'gen_tbl' is NULL")
-      } else {
-        plt <- plt + annotate_group_info(q_tbl)
-      }
-    }
-    plt
-  }
-   
-
-```
-
-
-```{r}
-order_plot(malagasyq, data = mad_bor_g1000_sum, annotate_group = TRUE)
-```
-
-```{r}
-#autoplot(malagasyq, data = mad_bor_g1000_sum, annotate_group = TRUE, reorder_within_groups = TRUE)
 ```
 
 
@@ -348,6 +249,8 @@ order_plot(malagasyq, data = mad_bor_g1000_sum, annotate_group = TRUE)
 
 ```{r}
 #malagasy_all <- left_join(malagasy, malagasyq, by = c("id","population","genotypes"))
+
+#malagasyq$id <- paste0(malagasyq$id,"RR")
 
 malagasy_all <- malagasyq
 
