@@ -252,9 +252,9 @@ gen_tbl class is dropped at this point...investigate
 # Ancestry proportion compared to number of ROHS
 
 ```{r}
-ggplot(malagasy_all,aes(x = n, y = .Q1, fill = population, colour = population, shape = population))+
+ggplot(malagasy_all,aes(x = n, y = .Q3, fill = population, colour = population, shape = population))+
 geom_point(size = 1.8) +
-labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Number of Runs", y = ".Q1 proportion (% Asian ancestry)")+
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Number of Runs", y = ".Q3 proportion (% Asian ancestry)")+
   scale_color_brewer(palette = "Dark2")+
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
   theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+ 
@@ -270,9 +270,9 @@ ggsave(paste0(res_dir, "n_runs_vs_asian_ancestry.jpg"), width = 7, height = 7, d
 ```
 
 ```{r}
-ggplot(malagasy_all,aes(x = n, y = .Q2, fill = population, colour = population, shape = population))+
+ggplot(malagasy_all,aes(x = n, y = .Q1, fill = population, colour = population, shape = population))+
 geom_point(size = 1.8) +
-labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Number of Runs", y = ".Q2 proportion (% African ancestry)")+
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Number of Runs", y = ".Q1 proportion (% African ancestry)")+
   scale_color_brewer(palette = "Dark2")+
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
   theme( axis.ticks.x = element_blank(),  axis.ticks.y = element_blank())+
@@ -290,9 +290,9 @@ ggsave(paste0(res_dir, "n_runs_vs_african_ancestry.jpg"), width = 7, height = 7,
 # Ancestry proportion compared to mean length of ROHS
 
 ```{r}
-ggplot(malagasy_all,aes(x = mean, y = .Q1, fill = population, colour = population, shape = population))+
+ggplot(malagasy_all,aes(x = mean, y = .Q3, fill = population, colour = population, shape = population))+
 geom_point(size = 1.8) +
-labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Mean length of Runs (bp)", y = ".Q1 proportion (% Asian ancestry)")+
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Mean length of Runs (bp)", y = ".Q3 proportion (% Asian ancestry)")+
   scale_color_brewer(palette = "Dark2")+
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
   theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+
@@ -308,9 +308,9 @@ ggsave(paste0(res_dir, "mean_len_vs_asian_ancestry.jpg"), width = 7, height = 7,
 ```
 
 ```{r}
-ggplot(malagasy_all,aes(x = mean, y = .Q2, fill = population, colour = population, shape = population))+
+ggplot(malagasy_all,aes(x = mean, y = .Q1, fill = population, colour = population, shape = population))+
 geom_point(size = 1.8) +
-labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Mean length of Runs (bp)", y = ".Q2 proportion (% African ancestry)")+
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Mean length of Runs (bp)", y = ".Q1 proportion (% African ancestry)")+
   scale_color_brewer(palette = "Dark2")+
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
   theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+
@@ -329,9 +329,9 @@ ggsave(paste0(res_dir, "mean_len_vs_african_ancestry.jpg"), width = 7, height = 
 # Ancestry proportion compared to total length of ROHS
 
 ```{r}
-ggplot(malagasy_all,aes(x = length, y = .Q1, fill = population, colour = population, shape = population))+
+ggplot(malagasy_all,aes(x = length, y = .Q3, fill = population, colour = population, shape = population))+
 geom_point(size = 1.8) +
-labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Total length of runs (bp)", y = ".Q1 proportion (% Asian ancestry)")+
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Total length of runs (bp)", y = ".Q3 proportion (% Asian ancestry)")+
   scale_color_brewer(palette = "Dark2")+
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
   theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+
@@ -347,9 +347,9 @@ ggsave(paste0(res_dir, "total_len_vs_asian_ancestry.jpg"), width = 7, height = 7
 ```
 
 ```{r}
-ggplot(malagasy_all,aes(x = length, y = .Q2, fill = population, colour = population, shape = population))+
+ggplot(malagasy_all,aes(x = length, y = .Q1, fill = population, colour = population, shape = population))+
 geom_point(size = 1.8) +
-labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Total length of runs (bp)", y = ".Q2 proportion (% African ancestry) (% African ancestry)")+
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Total length of runs (bp)", y = ".Q1 proportion (% African ancestry) (% African ancestry)")+
   scale_color_brewer(palette = "Dark2")+
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
   theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+
@@ -371,10 +371,10 @@ ggsave(paste0(res_dir, "total_len_vs_african_ancestry.jpg"), width = 7, height =
 
 
 ```{r}
-ggplot(malagasy_all,aes(x = n, y = .Q1, fill = population, colour = population, shape = population))+
+ggplot(malagasy_all,aes(x = n, y = .Q3, fill = population, colour = population, shape = population))+
 geom_point(size = 1.8) +
 geom_smooth(method = "lm")+
-labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Number of runs", y = ".Q1 proportion (% Asian ancestry)")+
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Number of runs", y = ".Q3 proportion (% Asian ancestry)")+
   scale_color_brewer(palette = "Dark2")+
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
   theme(axis.ticks.x = element_blank(),axis.ticks.y = element_blank())+
@@ -389,10 +389,10 @@ labs(title = "Runs of homozygosity against ancestry proportion for Malagasy indi
 
 
 ```{r}
-ggplot(malagasy_all,aes(x = n, y = .Q1, fill = population, colour = population, shape = population))+
+ggplot(malagasy_all,aes(x = n, y = .Q3, fill = population, colour = population, shape = population))+
 geom_point(size = 1.8) +
 geom_smooth(method = "lm", aes(group = 1))+
-labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Number of runs", y = ".Q1 proportion (% Asian ancestry)")+
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Number of runs", y = ".Q3 proportion (% Asian ancestry)")+
   scale_color_brewer(palette = "Dark2")+
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
   theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+
@@ -408,10 +408,10 @@ labs(title = "Runs of homozygosity against ancestry proportion for Malagasy indi
 
 
 ```{r}
-ggplot(malagasy_all,aes(x = mean, y = .Q1, fill = population, colour = population, shape = population))+
+ggplot(malagasy_all,aes(x = mean, y = .Q3, fill = population, colour = population, shape = population))+
 geom_point(size = 1.8) +
 geom_smooth(method = "lm")+
-labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Mean length of runs (bp)", y = ".Q1 proportion (% Asian ancestry)")+
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Mean length of runs (bp)", y = ".Q3 proportion (% Asian ancestry)")+
   scale_color_brewer(palette = "Dark2")+
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
   theme(axis.ticks.x = element_blank(),axis.ticks.y = element_blank())+
@@ -426,10 +426,10 @@ labs(title = "Runs of homozygosity against ancestry proportion for Malagasy indi
 
 
 ```{r}
-ggplot(malagasy_all,aes(x = mean, y = .Q1, fill = population, colour = population, shape = population))+
+ggplot(malagasy_all,aes(x = mean, y = .Q3, fill = population, colour = population, shape = population))+
 geom_point(size = 1.8) +
 geom_smooth(method = "lm", aes(group = 1))+
-labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Mean length of runs (bp)", y = ".Q1 proportion (% Asian ancestry)")+
+labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = "Mean length of runs (bp)", y = ".Q3 proportion (% Asian ancestry)")+
   scale_color_brewer(palette = "Dark2")+
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
   theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+

@@ -62,3 +62,19 @@ autoplot(get_q_matrix(qmats, k = 3, run = 1), data = mad_bor_g1000_sum, annotate
 ggsave(paste0(res_dir, "fastmixture_autoplot.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
+```{r}
+augmented <- augment(get_q_matrix(qmats, k = 3, run = 1), data = mad_bor_g1000_sum)
+
+# filter augmeneted to $population GWD and print head
+augmented_gwd <- augmented %>% filter(population == "GWD")
+head(augmented_gwd)
+
+# filter augmented to $population Borneo and print head
+augmented_borneo <- augmented %>% filter(population == "Borneo")
+head(augmented_borneo)
+
+# .Q3 representing Asian ancestry and .Q1 representing African ancestry
+
+```
+
+
