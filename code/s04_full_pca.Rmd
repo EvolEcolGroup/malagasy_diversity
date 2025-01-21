@@ -186,22 +186,18 @@ mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Bengali","Punjabi"),"Regi
 mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Southern Han Chinese","Kinh Vietnamese"),"Region"] <- "East Asia"
 #Not really happy about grouping all African samples here though...
 mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Esan","Gambian Mandinka","Luhya","Mende","Yoruba"),"Region"] <- "Africa"
-mad_bor_g1000_sum[mad_bor_g1000_sum$malagasy == 1,"Region"] <- "Madagascar"
+mad_bor_g1000_sum[mad_bor_g1000_sum$malagasy == 1,"Region"] <- mad_bor_g1000_sum[mad_bor_g1000_sum$malagasy == 1,"population"]
 
 
 ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$Region, shape = as.factor(mad_bor_g1000_sum$malagasy))) + geom_point(alpha = 0.5) + 
   labs(title = NULL,x = paste0("PC 1 (",variance[1],"%)"), y = paste0("PC 2 (",variance[2],"%)"), colour = "Population", shape = "none")+
   theme(legend.position = "right")+
-  guides(shape = "none", colour = guide_legend(override.aes = list(shape = c(16,16,16,17,16))))
+  guides(shape = "none", colour = guide_legend(override.aes = list(shape = c(16,17,17,17,16,16,17,17,17,16,17,17))))
 
 ggsave(paste0(res_dir, "pca_subsampled_regions_together.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
-
 ```{r}
 
 ```
-
-
-
 
