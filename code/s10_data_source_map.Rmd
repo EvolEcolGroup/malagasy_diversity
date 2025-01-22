@@ -11,8 +11,12 @@ library(rnaturalearth)
 library(sf)
 library(dplyr)
 library(ggrepel)
+library(resrepo)
 ```
 
+```{r set-directories}
+res_dir <- path_resrepo("results/s10_data_source_map/")
+```
 
 # Old maps with ggplot
 
@@ -225,7 +229,35 @@ ggplot()+
   geom_text(data = labels_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3)+
   #geom_text_repel(data = labels_data, aes(x = x, y = y, label = Name), max.overlaps = 10, force = 200)+
   labs(x = NULL, y = NULL)
+
+
+ggsave(paste0(res_dir, "madagascar_map_labels.jpg"), width = 7, height = 7, dpi = 300)
 ```
+
+
+```{r}
+kml_data <- kml_data[order(kml_data$Name),]
+
+kml_data$shape <- c(1,3,7,15,17,17,17,17,17,17,17,19,21,23)
+
+ggplot()+
+  geom_sf(data = Madagascar_dissolved)+
+  geom_sf(data = sf::st_as_sf(kml_data),aes(shape = Name, color = Name), size = 2)+
+  coord_sf(crs = st_crs(29702), xlim = c(-1000000,1800000), ylim = c(1,2000000),expand = FALSE) + # Laborde projection, commonly used for Madagascar
+  theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
+  scale_shape_manual(values = c(1,3,7,15,17,19,21,23)) +
+   labs(shape = NULL) +
+  #geom_text(data = labels_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3)+
+  labs(x = NULL, y = NULL, color = "Population", shape = "Population")+
+  scale_color_brewer(palette = "Dark2")+
+  guides()
+
+
+ggsave(paste0(res_dir, "madagascar_map_pca_symbols.jpg"), width = 7, height = 7, dpi = 300)
+```
+
+
+
 # Data currently merged in: Malagasy, 1000 Genomes, Borneo, Sumba
 
 ```{r}
