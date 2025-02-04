@@ -1,0 +1,6 @@
+genotypename: ../data/intermediate/rbind_data/mad_bor_g1000_sum.geno
+snpname: ../data/intermediate/rbind_data/mad_bor_g1000_sum.snp
+indivname: ../data/intermediate/rbind_data/mad_bor_g1000_sum.ind
+admixpop: Merina
+refpops: Borneo;Esan
+raw_outname: ../results/s11_ALDER/alder.txt

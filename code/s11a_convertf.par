@@ -1,0 +1,9 @@
+#!/bin/bash
+genotypename: ../data/intermediate/rbind_data/mad_bor_g1000_sum.bed
+snpname: ../data/intermediate/rbind_data/mad_bor_g1000_sum.bim
+indivname: ../data/intermediate/rbind_data/mad_bor_g1000_sum.fam
+outputformat: EIGENSTRAT
+genotypeoutname: ../data/intermediate/rbind_data/mad_bor_g1000_sum.geno
+snpoutname: ../data/intermediate/rbind_data/mad_bor_g1000_sum.snp
+indivoutname: ../data/intermediate/rbind_data/mad_bor_g1000_sum.ind
+

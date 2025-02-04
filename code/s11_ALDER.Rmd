@@ -1,0 +1,109 @@
+---
+title: "ALDER"
+output: html_document
+date: "2025-02-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidypopgen)
+library(resrepo)
+library(admixtools)
+```
+
+```{r}
+mad_bor_g1000_sum <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
+```
+
+
+# Add population metadata
+
+```{r}
+# why is class getting dropped here?
+
+pop_names <- read.csv(path_resrepo("data/raw/data_input/igsr-1000-genomes-phase-3-release.tsv"), sep = "\t")
+
+# find matching id in pop_names Sample.name and mad_bor_g1000_sum id, and for the matches, replace the population in mad_bor_g1000_sum with the population in pop_names
+for(i in 1:nrow(pop_names)){
+  if(pop_names$Sample.name[i] %in% mad_bor_g1000_sum$id){
+    mad_bor_g1000_sum[mad_bor_g1000_sum$id == pop_names$Sample.name[i], "population"] <- pop_names$Population.name[i]
+  }
+}
+
+# replace "Luhya,Luhya" with "Luhya"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Luhya,Luhya"] <- "Luhya"
+# replace "Esan,Esan" with "Esan"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Esan,Esan"] <- "Esan"
+# replace "Gambian Mandinka,Gambian" with "Gambian Mandinka"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Gambian Mandinka,Gambian"] <- "Gambian_Mandinka"
+# replace "Mende,Mende" with "Mende"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Mende,Mende"] <- "Mende"
+# replace "Kinh,Kinh Vietnamese" with "Kinh Vietnamese"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Kinh,Kinh Vietnamese"] <- "Kinh_Vietnamese"
+# replcae "Punjabi,Punjabi" with "Punjabi"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Punjabi,Punjabi"] <- "Punjabi"
+# replcae "Benga,Bengali" with "Bengali"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Bengali,Bengali"] <- "Bengali"
+
+# replace any _ with a space
+#mad_bor_g1000_sum$population <- gsub("_", " ", mad_bor_g1000_sum$population)
+
+# replace any " " in $populaiton with a "_"
+mad_bor_g1000_sum$population <- gsub(" ", "_", mad_bor_g1000_sum$population)
+
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
+```
+
+# Remove existing plink files and rewrite
+
+```{r}
+if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.bed"))){
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.bed"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.bim"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.fam"))
+}
+
+gt_as_plink(mad_bor_g1000_sum, resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum"))
+```
+
+# Read the plink file and set 6th col to 1
+
+```{r}
+# read resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.fam")
+mad_bor_g1000_sum_fam <- read.table(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.fam"), header = FALSE, sep = " ")
+mad_bor_g1000_sum_fam$V6 <- 1
+write.table(mad_bor_g1000_sum_fam, resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.fam"), row.names = FALSE, col.names = FALSE, sep = " ")
+```
+
+
+```{r}
+if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.geno"))){
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.geno"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.ind"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.snp"))
+}
+```
+
+
+# Write a bash script to convert plink to eigenstrat
+
+
+
+# Run script
+
+```{bash}
+cd ~/Git/malagasy_diversity/code
+convertf -p s11a_convertf.par
+```
+
+
+# Write a test bash script for ALDER
+
+For now, using defaults, but consider mindis: NUMBER and jackknife: YES
+
+```{bash}
+cd ~/Git/malagasy_diversity/code
+alder -p s11b_alder.par > test1.log
+```
+
+Population problem 
