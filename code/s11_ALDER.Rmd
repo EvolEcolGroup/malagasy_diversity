@@ -20,41 +20,49 @@ mad_bor_g1000_sum <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data
 
 ```{r}
 # why is class getting dropped here?
+# 
+# pop_names <- read.csv(path_resrepo("data/raw/data_input/igsr-1000-genomes-phase-3-release.tsv"), sep = "\t")
+# 
+# # find matching id in pop_names Sample.name and mad_bor_g1000_sum id, and for the matches, replace the population in mad_bor_g1000_sum with the population in pop_names
+# for(i in 1:nrow(pop_names)){
+#   if(pop_names$Sample.name[i] %in% mad_bor_g1000_sum$id){
+#     mad_bor_g1000_sum[mad_bor_g1000_sum$id == pop_names$Sample.name[i], "population"] <- pop_names$Population.name[i]
+#   }
+# }
+# 
+# # replace "Luhya,Luhya" with "Luhya"
+# mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Luhya,Luhya"] <- "Luhya"
+# # replace "Esan,Esan" with "Esan"
+# mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Esan,Esan"] <- "Esan"
+# # replace "Gambian Mandinka,Gambian" with "Gambian Mandinka"
+# mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Gambian Mandinka,Gambian"] <- "Gambian_Mandinka"
+# # replace "Mende,Mende" with "Mende"
+# mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Mende,Mende"] <- "Mende"
+# # replace "Kinh,Kinh Vietnamese" with "Kinh Vietnamese"
+# mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Kinh,Kinh Vietnamese"] <- "Kinh_Vietnamese"
+# # replcae "Punjabi,Punjabi" with "Punjabi"
+# mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Punjabi,Punjabi"] <- "Punjabi"
+# # replcae "Benga,Bengali" with "Bengali"
+# mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Bengali,Bengali"] <- "Bengali"
+# 
+# # replace any _ with a space
+# #mad_bor_g1000_sum$population <- gsub("_", " ", mad_bor_g1000_sum$population)
+# 
+# # replace any " " in $populaiton with a "_"
+# mad_bor_g1000_sum$population <- gsub(" ", "_", mad_bor_g1000_sum$population)
+# 
+# mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
+```
 
-pop_names <- read.csv(path_resrepo("data/raw/data_input/igsr-1000-genomes-phase-3-release.tsv"), sep = "\t")
-
-# find matching id in pop_names Sample.name and mad_bor_g1000_sum id, and for the matches, replace the population in mad_bor_g1000_sum with the population in pop_names
-for(i in 1:nrow(pop_names)){
-  if(pop_names$Sample.name[i] %in% mad_bor_g1000_sum$id){
-    mad_bor_g1000_sum[mad_bor_g1000_sum$id == pop_names$Sample.name[i], "population"] <- pop_names$Population.name[i]
-  }
-}
-
-# replace "Luhya,Luhya" with "Luhya"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Luhya,Luhya"] <- "Luhya"
-# replace "Esan,Esan" with "Esan"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Esan,Esan"] <- "Esan"
-# replace "Gambian Mandinka,Gambian" with "Gambian Mandinka"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Gambian Mandinka,Gambian"] <- "Gambian_Mandinka"
-# replace "Mende,Mende" with "Mende"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Mende,Mende"] <- "Mende"
-# replace "Kinh,Kinh Vietnamese" with "Kinh Vietnamese"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Kinh,Kinh Vietnamese"] <- "Kinh_Vietnamese"
-# replcae "Punjabi,Punjabi" with "Punjabi"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Punjabi,Punjabi"] <- "Punjabi"
-# replcae "Benga,Bengali" with "Bengali"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Bengali,Bengali"] <- "Bengali"
-
-# replace any _ with a space
-#mad_bor_g1000_sum$population <- gsub("_", " ", mad_bor_g1000_sum$population)
-
-# replace any " " in $populaiton with a "_"
-mad_bor_g1000_sum$population <- gsub(" ", "_", mad_bor_g1000_sum$population)
-
+```{r}
+# make $population a copy of $id
+mad_bor_g1000_sum$population <- mad_bor_g1000_sum$id
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
 ```
 
-# Remove existing plink files and rewrite
+
+
+# Remove existing plink .bed files and write .bed
 
 ```{r}
 if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.bed"))){
@@ -66,13 +74,79 @@ if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000
 gt_as_plink(mad_bor_g1000_sum, resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum"))
 ```
 
+# Transform to .ped
+
+```{bash}
+plink --bfile ../data/intermediate/rbind_data/mad_bor_g1000_sum --recode --out ../data/intermediate/rbind_data/mad_bor_g1000_sum
+```
+
+
 # Read the plink file and set 6th col to 1
 
 ```{r}
 # read resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.fam")
 mad_bor_g1000_sum_fam <- read.table(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.fam"), header = FALSE, sep = " ")
-mad_bor_g1000_sum_fam$V6 <- 1
-write.table(mad_bor_g1000_sum_fam, resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.fam"), row.names = FALSE, col.names = FALSE, sep = " ")
+#mad_bor_g1000_sum_fam$V6 <- 1
+
+# colnames of $V1 to "id"
+colnames(mad_bor_g1000_sum_fam)[1] <- "id"
+# colnames of $V6 to "population"
+colnames(mad_bor_g1000_sum_fam)[6] <- "population"
+
+# pop_names <- read.csv(path_resrepo("data/raw/data_input/igsr-1000-genomes-phase-3-release.tsv"), sep = "\t")
+# 
+# # find matching id in pop_names Sample.name and mad_bor_g1000_sum id, and for the matches, replace the population in mad_bor_g1000_sum with the population in pop_names
+# for(i in 1:nrow(pop_names)){
+#   if(pop_names$Sample.name[i] %in% mad_bor_g1000_sum_fam$id){
+#     mad_bor_g1000_sum_fam[mad_bor_g1000_sum_fam$id == pop_names$Sample.name[i], "population"] <- pop_names$Population.name[i]
+#   }
+# }
+# 
+# # replace "Luhya,Luhya" with "Luhya"
+# mad_bor_g1000_sum_fam$population[mad_bor_g1000_sum_fam$population == "Luhya,Luhya"] <- "Luhya"
+# # replace "Esan,Esan" with "Esan"
+# mad_bor_g1000_sum_fam$population[mad_bor_g1000_sum_fam$population == "Esan,Esan"] <- "Esan"
+# # replace "Gambian Mandinka,Gambian" with "Gambian Mandinka"
+# mad_bor_g1000_sum_fam$population[mad_bor_g1000_sum_fam$population == "Gambian Mandinka,Gambian"] <- "Gambian_Mandinka"
+# # replace "Mende,Mende" with "Mende"
+# mad_bor_g1000_sum_fam$population[mad_bor_g1000_sum_fam$population == "Mende,Mende"] <- "Mende"
+# # replace "Kinh,Kinh Vietnamese" with "Kinh Vietnamese"
+# mad_bor_g1000_sum_fam$population[mad_bor_g1000_sum_fam$population == "Kinh,Kinh Vietnamese"] <- "Kinh_Vietnamese"
+# # replcae "Punjabi,Punjabi" with "Punjabi"
+# mad_bor_g1000_sum_fam$population[mad_bor_g1000_sum_fam$population == "Punjabi,Punjabi"] <- "Punjabi"
+# # replcae "Benga,Bengali" with "Bengali"
+# mad_bor_g1000_sum_fam$population[mad_bor_g1000_sum_fam$population == "Bengali,Bengali"] <- "Bengali"
+
+pop_table <- read.table(path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
+colnames(pop_table) <- c("IID", "V2","FID","Population","V5","V6","V7")
+
+#Remove the "RR"
+mad_bor_g1000_sum_fam$id <- sub("RR.*", "", mad_bor_g1000_sum_fam$id)
+mad_bor_g1000_sum_fam$V2 <- sub("RR.*", "", mad_bor_g1000_sum_fam$V2)
+
+#Find Malagasy entries 
+pop_table_sub <- subset(pop_table,pop_table$IID %in% mad_bor_g1000_sum_fam$id)
+
+#match up the ID's with pop table metadata
+matching_m <- match(mad_bor_g1000_sum_fam$id, pop_table_sub$IID)
+
+mad_bor_g1000_sum_fam$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], mad_bor_g1000_sum_fam$population)
+
+
+# replace any _ with a space
+#mad_bor_g1000_sum_fam$population <- gsub("_", " ", mad_bor_g1000_sum_fam$population)
+
+# replace any " " in $populaiton with a "_"
+mad_bor_g1000_sum_fam$population <- gsub(" ", "_", mad_bor_g1000_sum_fam$population)
+
+# any $id begining GRC has $population "Sumba"
+mad_bor_g1000_sum_fam$population[grepl("^GRC", mad_bor_g1000_sum_fam$id)] <- "Sumba"
+
+#mad_bor_g1000_sum_fam$id <- as.numeric(rownames(mad_bor_g1000_sum_fam))
+mad_bor_g1000_sum_fam$population <- as.factor(mad_bor_g1000_sum_fam$population)
+
+#mad_bor_g1000_sum_fam$V6 <- mad_bor_g1000_sum_fam$population
+write.table(mad_bor_g1000_sum_fam, resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.fam"), row.names = FALSE, col.names = FALSE, sep = " ", quote = FALSE)
 ```
 
 
@@ -85,10 +159,7 @@ if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000
 ```
 
 
-# Write a bash script to convert plink to eigenstrat
-
-
-
+# Write a bash scripts to convert plink to eigenstrat
 # Run script
 
 ```{bash}
@@ -96,14 +167,65 @@ cd ~/Git/malagasy_diversity/code
 convertf -p s11a_convertf.par
 ```
 
+# Population to Status column as described here 
+
+https://reich.hms.harvard.edu/software/InputFileFormats 
+
+
 
 # Write a test bash script for ALDER
 
-For now, using defaults, but consider mindis: NUMBER and jackknife: YES
+mindis: 0.005 - minimum genetic distance (in Morgans) at which to start curve fitting (default: determined using LD correlation). 
+https://comppopgenworkshop2019.readthedocs.io/en/latest/contents/06_alder/alder.html 
+States that the default calculates the correlation in LD decay between the target and each reference, and uses 'the minimum distance that shows no correlation in both references.' 
+'If it continues beyond 2 cM (due to either a strong bottleneck or admixture in a reference), the program aborts.'
+In example with Merina as Target and Esan and Borneo as reference, setting mindis to default causes the program to abort.
+jackknife: YES - outputs results from leave-one-chromosome-out jackknifing
+
+For now, using checkmap: NO - why does our map have an issue?
+binsize: 0.0005 default - genetic distance resolution (in Morgans) - the size of bins that ALDER splits the genome up into, used to calculate the distance between the bins of two snps as opposed to the distance between the each individual pair of snps, for computational efficiency 
+
+# Run bash script
 
 ```{bash}
 cd ~/Git/malagasy_diversity/code
-alder -p s11b_alder.par > test1.log
+alder -p s11b_alder_merina.par > s11b_alder_merina.log
 ```
 
-Population problem 
+# Example plot 
+
+Using https://comppopgenworkshop2019.readthedocs.io/en/latest/contents/06_alder/alder.html 
+
+E[Y] = M times e^-nd + K
+
+```{r}
+fn1 = "../results/s11_ALDER/alder_merina.txt"
+
+n = 25.17    ## decay parameter - the estimate for admixture date
+M = 0.00153897  ## amp_exp
+K = 0.00040424  ## amp_aff
+
+d1 = read.table(fn1, header = F)
+d1 <- d1[-nrow(d1),]
+colnames(d1) = c("Dist", "weightedLD", "npairs")
+xv = as.vector(d1$Dist)        ## distance between SNP bins (cM)
+yv = as.vector(d1$weightedLD)  ## Weighted LD
+#fv = as.vector(d1$use) == "Y"  ## a boolean vector marking if each bin is used in fitting
+prdv = M * exp(-1 * n * xv / 100) + K # E[Y] = M times e^-nd + K
+
+dev.new()
+plot(xv, yv, xlab="Genetic distance (cM)", ylab = "weighted LD", pch=4, col="blue")
+points(xv, prdv, type="l", lwd=1.5, col="red")
+```
+
+The middle and right columns show the date estimate (B, E, H) and amplitude (C, F, I) as a function of d0.
+
+
+How can I loop through multiple target populations?
+What does mindis do to the results?
+
+
+```{r}
+
+```
+
