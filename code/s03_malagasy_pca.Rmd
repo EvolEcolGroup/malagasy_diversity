@@ -23,6 +23,12 @@ res_dir <- path_resrepo("results/s03_malagasy_pca/")
 malagasy_merged <- gt_load(path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_v2.gt"))
 ```
 
+```{r}
+count_loci(malagasy_merged)
+nrow(malagasy_merged)
+```
+
+
 # Impute
 
 ```{r}
@@ -32,22 +38,27 @@ malagasy_merged <- gt_impute_simple(malagasy_merged, method = "random")
 # PCA
 
 ```{r}
-random_pca <- gt_pca_randomSVD(malagasy_merged)
+random_pca <- gt_pca_randomSVD(malagasy_merged, total_var = TRUE)
 pcs <- as.data.frame(random_pca$u)
-variance <- round((random_pca$d^2/sum(random_pca$d^2))*100,1)
+variance <- tidy(random_pca)
 ```
 
 # Plot
 
 ```{r}
 ggplot(pcs, aes(x = V1, y = V2, group = malagasy_merged$population, colour = malagasy_merged$population, shape = malagasy_merged$population, fill = malagasy_merged$population)) +
-  geom_point(size = 2) +
+  geom_point(size = 2, alpha = 0.6) +
   scale_shape_manual(values = c(1,3,7,15,17,19,21,23))+
-  labs(title = NULL, x = paste0("PC 1 (",variance[1],"%)"), y = paste0("PC 2 (",variance[2],"%)"), colour = "Population", shape = "Population", fill = "Population") +
+  labs(title = NULL, x = paste0("PC 1 (",round(variance$percent[1],2),"%)"), y = paste0("PC 2 (",round(variance$percent[2],2),"%)"), colour = "Population", shape = "Population", fill = "Population") +
   theme(legend.position = "right")+
-  scale_color_brewer(palette = "Dark2")
+  scale_color_brewer(palette = "Dark2")+
+  scale_fill_brewer(palette = "Dark2")
 
 ggsave(paste0(res_dir, "madagascar_pca.jpg"), width = 7, height = 7, dpi = 300)
+```
+
+```{r}
+autoplot(random_pca, type = "scree")
 ```
 
 
@@ -67,7 +78,14 @@ madagascar <- madagascar %>% group_by(population)
 individual_report_m <- qc_report_indiv(madagascar, kings_threshold = 0.0442)
 madagascar_p <- madagascar_p %>% group_by(population)
 individual_report_m_p <- qc_report_indiv(madagascar_p, kings_threshold = 0.0442)
+```
 
+```{r}
+autoplot(individual_report_m, type = "relatedness", kings_threshold = 0.0442)
+```
+
+
+```{r}
 #find relatives
 madagascar <- madagascar %>% ungroup()
 madagascar_p <- madagascar_p %>% ungroup()
@@ -107,9 +125,9 @@ nrow(malagasy_low_rel)
 # PCA 
 
 ```{r}
-random_pca2 <- gt_pca_randomSVD(malagasy_low_rel)
+random_pca2 <- gt_pca_autoSVD(malagasy_low_rel, total_var = TRUE)
 pcs <- as.data.frame(random_pca2$u)
-variance <- round((random_pca2$d^2/sum(random_pca2$d^2))*100,1)
+variance <- tidy(random_pca2)
 ```
 
 # Plot
@@ -118,81 +136,21 @@ variance <- round((random_pca2$d^2/sum(random_pca2$d^2))*100,1)
 ggplot(pcs, aes(x = V1, y = V2, group = malagasy_low_rel$population, colour = malagasy_low_rel$population, shape = malagasy_low_rel$population, fill = malagasy_low_rel$population)) +
   geom_point(size = 2) +
   scale_shape_manual(values = c(1,3,7,15,17,19,21,23))+
-  labs(title = NULL, x = paste0("PC 1 (",variance[1],"%)") , y =  paste0("PC 2 (",variance[2],"%)"), colour = "Population", shape = "Population", fill = "Population") +
+  labs(title = NULL, x = paste0("PC 1 (",round(variance$percent[1],2),"%)") , y =  paste0("PC 2 (",round(variance$percent[2],2),"%)"), colour = "Population", shape = "Population", fill = "Population") +
   theme(legend.position = "right")+
-  scale_color_brewer(palette = "Dark2")
+  scale_color_brewer(palette = "Dark2")+
+  scale_fill_brewer(palette = "Dark2")
 
 ggsave(paste0(res_dir, "madagascar_pca_king_0442.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
-Altering the relatedness filtering reduced the sample size from 243 to 189. The PCA plot shows a similar distribution of the Malagasy samples, but with a slightly different spread and slightly reduced explained variance. It therefore appears that the relatedness filtering has a small effect on the PCA, but the overall structure of the Malagasy samples is maintained.
 
-Here, relatedness filtering was applied within populations using %>% group_by(population). Below, the relatedness filtering is applied across all samples.
+Altering the relatedness filtering reduced the sample size from X to Y. The PCA plot shows a similar distribution of the Malagasy samples, but with a slightly different spread and slightly reduced explained variance. It therefore appears that the relatedness filtering has a small effect on the PCA, but the overall structure of the Malagasy samples is maintained. 
 
-# Create a dataset with relatedness filtering across all samples
 
 ```{r}
-madagascar <- gt_load(path_resrepo("data/raw/data_input/Madagascar_full_cleaned.gt"))
-madagascar_p <- gt_load(path_resrepo("data/raw/data_input/Pierron_Malagasy_clean.gt"))
-
-individual_report_m <- qc_report_indiv(madagascar, kings_threshold = 0.0442)
-individual_report_m_p <- qc_report_indiv(madagascar_p, kings_threshold = 0.0442)
-
-madagascar_low_rel <- madagascar %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
-madagascar_p_low_rel<- madagascar_p %>% filter(id %in% individual_report_m_p$id & individual_report_m_p$to_keep == TRUE)
-
-if(file.exists(path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_low_kin_original.gt"))){
-  file.remove(path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_low_kin_original.gt"))
-  file.remove(path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_low_kin_original.bk"))
-  file.remove(path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_low_kin_original.rds"))
-}
-
-#merge again
-malagasy_low_rel_original <- rbind(madagascar_low_rel,madagascar_p_low_rel,as_is = FALSE, flip_strand = TRUE, quiet = FALSE, backingfile = path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_low_kin_original"))
-
-#malagasy_low_rel <- gt_load(path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_low_kin_original.gt"))
-
-# impute 
-malagasy_low_rel_original <- gt_impute_simple(malagasy_low_rel_original, method = "random")
-
-# ld clumping
-to_keep_LD <- loci_ld_clump(malagasy_low_rel_original, thr_r2 = 0.5, size = 50, return_id = TRUE)
-
-#remove out of LD
-malagasy_low_rel_original <- malagasy_low_rel_original %>% select_loci(all_of(to_keep_LD))
-
+autoplot(random_pca2, type = "scree")
 ```
-
-# Difference in sample size
-
-```{r}
-nrow(malagasy_low_rel)
-nrow(malagasy_low_rel_original)
-```
-
-# PCA
-
-```{r}
-random_pca3 <- gt_pca_randomSVD(malagasy_low_rel_original)
-pcs <- as.data.frame(random_pca3$u)
-variance <- round((random_pca3$d^2/sum(random_pca3$d^2))*100,1)
-```
-
-# Plot
-
-```{r}
-ggplot(pcs, aes(x = V1, y = V2, group = malagasy_low_rel_original$population, colour = malagasy_low_rel_original$population, shape = malagasy_low_rel_original$population, fill = malagasy_low_rel_original$population)) +
-  geom_point(size = 2) +
-  scale_shape_manual(values = c(1,3,7,15,17,19,21,23))+
-  labs(title = NULL, x = paste0("PC 1 (",variance[1],"%)") , y =  paste0("PC 2 (",variance[2],"%)"), colour = "Population", shape = "Population", fill = "Population") +
-  theme(legend.position = "right")+
-  scale_color_brewer(palette = "Dark2")
-
-ggsave(paste0(res_dir, "madagascar_pca_king_0442_ungrouped_filtering.jpg"), width = 7, height = 7, dpi = 300)
-```
-
-Altering the relatedness filtering reduced the sample size from 189 to 181. Removing these 8 individuals has a signficant affect on the PCA structure. The samples are now more dispersed, with a reduced explained variance for both PC's.
-
 
 ```{r}
 

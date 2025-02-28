@@ -43,7 +43,7 @@ mad_bor_g1000_sum <- mad_bor_g1000_sum%>% select_loci(all_of(to_keep_LD))
 ```{r}
 random_pca <- gt_pca_randomSVD(mad_bor_g1000_sum)
 pcs <- as.data.frame(random_pca$u)
-variance <- round((random_pca$d^2/sum(random_pca$d^2))*100,1)
+variance <- tidy(random_pca)
 ```
 
 
@@ -83,7 +83,7 @@ mad_bor_g1000_sum$population <- gsub("_", " ", mad_bor_g1000_sum$population)
 
 ```{r}
 ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$population)) + geom_point(alpha = 0.5) + 
-  labs(title = NULL, x = paste0("PC 1 (",variance[1],"%)"), y = paste0("PC 2 (",variance[2],"%)"), colour = "Population")+ 
+  labs(title = NULL, x = paste0("PC 1 (",round(variance$percent[1],2),"%)"), y = paste0("PC 2 (",round(variance$percent[2],2),"%)"), colour = "Population")+ 
   theme(legend.text = element_text(size = 5))+
   guides(colour = guide_legend(ncol = 2, byrow = TRUE))
 ```
@@ -120,14 +120,14 @@ mad_bor_g1000_sum %>% group_by(population) %>% count()
 ```{r}
 sub_pca <- gt_pca_randomSVD(mad_bor_g1000_sum)
 pcs <- as.data.frame(sub_pca$u)
-variance <- round((sub_pca$d^2/sum(sub_pca$d^2))*100,1)
+variance <- tidy(sub_pca)
 ```
 
 # Plot
 
 ```{r}
 ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$population)) + geom_point(alpha = 0.5) +
-  labs(title = NULL, x = paste0("PC 1 (",variance[1],"%)"), y = paste0("PC 2 (",variance[2],"%)"), colour = "Population")+ 
+  labs(title = NULL, x = paste0("PC 1 (",round(variance$percent[1],2),"%)"), y = paste0("PC 2 (",round(variance$percent[2],2),"%)"), colour = "Population")+ 
   theme(legend.text = element_text(size = 5))+
   guides(colour = guide_legend(ncol = 2, byrow = TRUE))
 ```
@@ -147,7 +147,7 @@ mad_bor_g1000_sum[mad_bor_g1000_sum$id %in% all_malagasy$id, "malagasy"] <- 1
 
 ```{r}
 ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$population,shape = as.factor(mad_bor_g1000_sum$malagasy))) + geom_point(alpha = 0.5) + #
-  labs(title = NULL,  x = paste0("PC 1 (",variance[1],"%)"), y = paste0("PC 2 (",variance[2],"%)"), colour = "Population")+ 
+  labs(title = NULL,  x = paste0("PC 1 (",round(variance$percent[1],2),"%)"), y = paste0("PC 2 (",round(variance$percent[2],2),"%)"), colour = "Population")+ 
   theme(legend.text = element_text(size = 5))+
   guides(shape = "none", colour = guide_legend(override.aes = list(shape = c(16, 17,17, 16, 17, 16, 16,16,16,16,17, 17, 16,17, 16, 16, 17, 16, 17,16)), ncol = 2))
 
@@ -169,7 +169,7 @@ fill <- function(x){
 mad_bor_g1000_sum$mad_vs_global <- apply(mad_bor_g1000_sum, 1, FUN = fill)
 
 ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$mad_vs_global,shape = as.factor(mad_bor_g1000_sum$malagasy))) + geom_point(alpha = 0.5) + #
-  labs(title = NULL,  x = paste0("PC 1 (",variance[1],"%)"), y = paste0("PC 2 (",variance[2],"%)"), colour = "Population")+ 
+  labs(title = NULL,  x = paste0("PC 1 (",round(variance$percent[1],2),"%)"), y = paste0("PC 2 (",round(variance$percent[2],2),"%)"), colour = "Population")+ 
   theme(legend.text = element_text(size = 5))+
   guides(shape = "none", colour = guide_legend(override.aes = list(shape = c(16,16,16,16,16,16,17,16,16,16,16,16,16)), ncol = 2))
 
@@ -190,11 +190,41 @@ mad_bor_g1000_sum[mad_bor_g1000_sum$malagasy == 1,"Region"] <- mad_bor_g1000_sum
 
 
 ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$Region, shape = as.factor(mad_bor_g1000_sum$malagasy))) + geom_point(alpha = 0.5) + 
-  labs(title = NULL,x = paste0("PC 1 (",variance[1],"%)"), y = paste0("PC 2 (",variance[2],"%)"), colour = "Population", shape = "none")+
+  labs(title = NULL,x = paste0("PC 1 (",round(variance$percent[1],2),"%)"), y = paste0("PC 2 (",round(variance$percent[2],2),"%)"), colour = "Population", shape = "none")+
   theme(legend.position = "right")+
   guides(shape = "none", colour = guide_legend(override.aes = list(shape = c(16,17,17,17,16,16,17,17,17,16,17,17))))
 
 ggsave(paste0(res_dir, "pca_subsampled_regions_together.jpg"), width = 7, height = 7, dpi = 300)
+```
+
+
+```{r}
+mad_bor_g1000_sum$Region <- factor(mad_bor_g1000_sum$Region, levels = c("Africa","Island southeast Asia","South Asia","East Asia", "Betsileo","Betsimisaraka","Diego","Merina","Mikea","Sakalava Tsimihety","Temoro","Vezo"))
+
+ggplot(pcs, aes(x = V1, y= V2, colour = mad_bor_g1000_sum$Region, shape = as.factor(mad_bor_g1000_sum$malagasy))) + geom_point(alpha = 0.5) + 
+  labs(title = NULL,x = paste0("PC 1 (",round(variance$percent[1],2),"%)"), y = paste0("PC 2 (",round(variance$percent[2],2),"%)"), colour = "Population", shape = "none")+
+  theme(legend.position = "right")+
+  guides(shape = "none", colour = guide_legend(override.aes = list(shape = c(16,16,16,16,17,17,17,17,17,17,17,17),size = 2)))+
+  theme(plot.title  = element_text(size = 16), axis.text = element_text(size = 13), legend.title = element_text(size = 16), legend.text = element_text(size = 11))+
+  scale_colour_manual(
+    values = c(
+      "Africa" = "#F8766D",
+      "East Asia" = "#00BA38",
+      "South Asia" = "#C77CFF",
+      "Island southeast Asia" = "#00C08B",
+      "Betsileo" =  "#DE8C00",
+      "Betsimisaraka" = "#B79F00",
+      "Diego" = "#7CAE00",
+      "Merina" = "#00BFC4",
+      "Mikea" = "#00B4F0",
+      "Sakalava Tsimihety" = "#619CFF",
+      "Temoro" = "#F564E3",
+      "Vezo" = "#FF64B0"
+    ))
+
+
+ggsave(paste0(res_dir, "pca_subsampled_regions_together_large_legend.jpg"), width = 7, height = 7, dpi = 300)
+
 ```
 
 ```{r}

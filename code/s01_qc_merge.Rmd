@@ -12,6 +12,7 @@ library(dplyr)
 library(ggplot2)
 library(tidypopgen)
 library(grid)
+library(resrepo)
 ```
 
 # Generate gen tibble
@@ -27,6 +28,14 @@ if(file.exists(resrepo::path_resrepo("data/raw/data_input/Madagascar_full.gt")))
 
 cat("Number of individuals:",nrow(madagascar),"\n")
 cat("Number of loci:",count_loci(madagascar))
+```
+
+
+```{r}
+# if(file.exists(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_v2.bk"))){
+#   file.remove(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_v2.bk"))
+#   file.remove(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_v2.rds"))
+# }
 ```
 
 Our raw dataset has 713014 SNPs and 192 individuals
@@ -67,6 +76,7 @@ count_loci(madagascar)
 
 Add a section here with the biomart function/find a better way to do this?
 
+
 ```{r}
 new_bim_no_NA <- read.table(resrepo::path_resrepo("data/intermediate/Madagascar_full_HG38.bim"), header = FALSE)
 colnames(new_bim_no_NA) <- c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2")
@@ -79,17 +89,45 @@ madagascar <- madagascar %>% select_loci_if(loci_names(genotypes) %in% new_bim_n
 match_indices <- match(show_loci(madagascar)$name, new_bim_no_NA$snp_id)
 matching_rows <- !is.na(match_indices)
 
-# update position
+# update position in gt
 show_loci(madagascar)$position[matching_rows] <- new_bim_no_NA$physical_pos[match_indices[matching_rows]]
 
-# update chromosome
+# update chromosome in gt
 show_loci(madagascar)$chromosome <- as.character(show_loci(madagascar)$chromosome)
 show_loci(madagascar)$chromosome[matching_rows] <- new_bim_no_NA$chromosome[match_indices[matching_rows]]
 
-# update chr_int
+# update chr_int in gt
 show_loci(madagascar)$chr_int <- as.integer(show_loci(madagascar)$chromosome)
 count_loci(madagascar)
+
+# update genetic distance in gt
+show_loci(madagascar)$genetic_dist[matching_rows] <- new_bim_no_NA$genetic_dist[match_indices[matching_rows]]
+
+# remove entries with genetic distance == 0
+no_dist <- which(show_loci(madagascar)$genetic_dist==0)
+madagascar <- madagascar %>% select_loci(-no_dist) 
+
+testthat::expect_false(is_loci_table_ordered(madagascar, error_on_false = FALSE))
+
 ```
+
+# Update the backingfiles
+
+```{r}
+
+#backing_dist_before <- attr(madagascar$genotypes,"bigsnp")$map$genetic.dist
+
+# update backingfile
+#madagascar <- gt_update_backingfile(madagascar, ignore_genetic_dist = FALSE)
+
+#backing_dist_after <- attr(madagascar$genotypes,"bigsnp")$map$genetic.dist
+
+#testthat::expect_false(identical(backing_dist_before, backing_dist_after))
+
+# update genetic distance in bigsnp
+#attr(madagascar$genotypes,"bigsnp")$map$genetic.dist[matching_rows] <- new_bim_no_NA$genetic_dist[match_indices[matching_rows]]
+```
+
 
 [Removing autosomal before updating build leaves 674776 SNPs]
 
@@ -164,7 +202,8 @@ if(file.exists(resrepo::path_resrepo("data/raw/data_input/Madagascar_full_v2.gt"
 ```{r}
 testthat::expect_false(is_loci_table_ordered(madagascar, error_on_false = FALSE))
 # reorder the loci
-madagascar <- gt_order_loci(madagascar, use_current_table = FALSE, quiet = TRUE)
+
+madagascar <- gt_order_loci(madagascar, use_current_table = FALSE, quiet = TRUE, ignore_genetic_dist = TRUE)
 ```
 
 ```{r}
