@@ -9,113 +9,64 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidypopgen)
 library(resrepo)
 library(admixtools)
+library(ggplot2)
+library(testthat)
+```
+
+```{r set-directories}
+res_dir <- path_resrepo("results/s11_ALDER/")
 ```
 
 ```{r}
-mad_bor_g1000_sum <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
+mad_bor_g1000_sum <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.gt"))
 ```
 
-
-# Add population metadata
-
-```{r}
-# why is class getting dropped here?
-# 
-# pop_names <- read.csv(path_resrepo("data/raw/data_input/igsr-1000-genomes-phase-3-release.tsv"), sep = "\t")
-# 
-# # find matching id in pop_names Sample.name and mad_bor_g1000_sum id, and for the matches, replace the population in mad_bor_g1000_sum with the population in pop_names
-# for(i in 1:nrow(pop_names)){
-#   if(pop_names$Sample.name[i] %in% mad_bor_g1000_sum$id){
-#     mad_bor_g1000_sum[mad_bor_g1000_sum$id == pop_names$Sample.name[i], "population"] <- pop_names$Population.name[i]
-#   }
-# }
-# 
-# # replace "Luhya,Luhya" with "Luhya"
-# mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Luhya,Luhya"] <- "Luhya"
-# # replace "Esan,Esan" with "Esan"
-# mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Esan,Esan"] <- "Esan"
-# # replace "Gambian Mandinka,Gambian" with "Gambian Mandinka"
-# mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Gambian Mandinka,Gambian"] <- "Gambian_Mandinka"
-# # replace "Mende,Mende" with "Mende"
-# mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Mende,Mende"] <- "Mende"
-# # replace "Kinh,Kinh Vietnamese" with "Kinh Vietnamese"
-# mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Kinh,Kinh Vietnamese"] <- "Kinh_Vietnamese"
-# # replcae "Punjabi,Punjabi" with "Punjabi"
-# mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Punjabi,Punjabi"] <- "Punjabi"
-# # replcae "Benga,Bengali" with "Bengali"
-# mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Bengali,Bengali"] <- "Bengali"
-# 
-# # replace any _ with a space
-# #mad_bor_g1000_sum$population <- gsub("_", " ", mad_bor_g1000_sum$population)
-# 
-# # replace any " " in $populaiton with a "_"
-# mad_bor_g1000_sum$population <- gsub(" ", "_", mad_bor_g1000_sum$population)
-# 
-# mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
-```
+# Make $population a copy of $id
 
 ```{r}
-# make $population a copy of $id
 mad_bor_g1000_sum$population <- mad_bor_g1000_sum$id
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
 ```
 
+# Check the original gt
+
+```{r}
+is_loci_table_ordered(mad_bor_g1000_sum, error_on_false = TRUE, ignore_genetic_dist = FALSE)
+```
 
 
 # Remove existing plink .bed files and write .bed
 
 ```{r}
-if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.bed"))){
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.bed"))
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.bim"))
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.fam"))
+if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.bed"))){
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.bed"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.bim"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.fam"))
 }
 
-gt_as_plink(mad_bor_g1000_sum, resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum"))
+gt_as_plink(mad_bor_g1000_sum, resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum"))
 ```
 
 # Transform to .ped
 
 ```{bash}
-plink --bfile ../data/intermediate/rbind_data/mad_bor_g1000_sum --recode --out ../data/intermediate/rbind_data/mad_bor_g1000_sum
+plink --bfile ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum --recode --out ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum
 ```
 
 
 # Read the plink file and set 6th col to 1
 
+check and remove any snps without a map position
+
 ```{r}
-# read resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.fam")
-mad_bor_g1000_sum_fam <- read.table(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.fam"), header = FALSE, sep = " ")
+# read resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.fam")
+mad_bor_g1000_sum_fam <- read.table(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.fam"), header = FALSE, sep = " ")
 #mad_bor_g1000_sum_fam$V6 <- 1
 
 # colnames of $V1 to "id"
 colnames(mad_bor_g1000_sum_fam)[1] <- "id"
 # colnames of $V6 to "population"
 colnames(mad_bor_g1000_sum_fam)[6] <- "population"
-
-# pop_names <- read.csv(path_resrepo("data/raw/data_input/igsr-1000-genomes-phase-3-release.tsv"), sep = "\t")
-# 
-# # find matching id in pop_names Sample.name and mad_bor_g1000_sum id, and for the matches, replace the population in mad_bor_g1000_sum with the population in pop_names
-# for(i in 1:nrow(pop_names)){
-#   if(pop_names$Sample.name[i] %in% mad_bor_g1000_sum_fam$id){
-#     mad_bor_g1000_sum_fam[mad_bor_g1000_sum_fam$id == pop_names$Sample.name[i], "population"] <- pop_names$Population.name[i]
-#   }
-# }
-# 
-# # replace "Luhya,Luhya" with "Luhya"
-# mad_bor_g1000_sum_fam$population[mad_bor_g1000_sum_fam$population == "Luhya,Luhya"] <- "Luhya"
-# # replace "Esan,Esan" with "Esan"
-# mad_bor_g1000_sum_fam$population[mad_bor_g1000_sum_fam$population == "Esan,Esan"] <- "Esan"
-# # replace "Gambian Mandinka,Gambian" with "Gambian Mandinka"
-# mad_bor_g1000_sum_fam$population[mad_bor_g1000_sum_fam$population == "Gambian Mandinka,Gambian"] <- "Gambian_Mandinka"
-# # replace "Mende,Mende" with "Mende"
-# mad_bor_g1000_sum_fam$population[mad_bor_g1000_sum_fam$population == "Mende,Mende"] <- "Mende"
-# # replace "Kinh,Kinh Vietnamese" with "Kinh Vietnamese"
-# mad_bor_g1000_sum_fam$population[mad_bor_g1000_sum_fam$population == "Kinh,Kinh Vietnamese"] <- "Kinh_Vietnamese"
-# # replcae "Punjabi,Punjabi" with "Punjabi"
-# mad_bor_g1000_sum_fam$population[mad_bor_g1000_sum_fam$population == "Punjabi,Punjabi"] <- "Punjabi"
-# # replcae "Benga,Bengali" with "Bengali"
-# mad_bor_g1000_sum_fam$population[mad_bor_g1000_sum_fam$population == "Bengali,Bengali"] <- "Bengali"
 
 pop_table <- read.table(path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
 colnames(pop_table) <- c("IID", "V2","FID","Population","V5","V6","V7")
@@ -142,19 +93,61 @@ mad_bor_g1000_sum_fam$population <- gsub(" ", "_", mad_bor_g1000_sum_fam$populat
 # any $id begining GRC has $population "Sumba"
 mad_bor_g1000_sum_fam$population[grepl("^GRC", mad_bor_g1000_sum_fam$id)] <- "Sumba"
 
+# Load fastmixture results
+mad_bor_g1000_sum <- gt_load(path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
+#qmats <- readRDS(path_resrepo("data/intermediate/fastmixture/fastmixture_m.RData"))
+qmats <- readRDS("~/Dropbox/gitdata/malagasy_diversity/data/intermediate/fastmixture/fastmixture_m.RData")
+# tidy with the gt
+mad_bor_g1000_sum <- augment(get_q_matrix(qmats, k = 3, run = 1), data = mad_bor_g1000_sum)
+# filter to merina
+merina <- mad_bor_g1000_sum %>% filter(population == "Merina")
+# split groups
+merina$population <- ifelse(merina$.Q3 > 0.5, "MerinaA", "MerinaB")
+merina <- merina[,c("id","population")]
+merina$id <- sub("RR.*", "", merina$id)
+
+# match mad_bor_g1000_sum_fam$id to merina$id
+#merina_matches <-which(mad_bor_g1000_sum_fam$id == merina$id)
+# add $population to mad_bor_g1000_sum_fam
+#mad_bor_g1000_sum_fam[c(merina_matches),]$population <- merina$population
+
+# match V2 and merina$id and replace the population column in merina_fam with the population column in merina
+matching_m <- match(mad_bor_g1000_sum_fam$id, merina$id)
+mad_bor_g1000_sum_fam$population <- ifelse(!is.na(matching_m), merina$population[matching_m], mad_bor_g1000_sum_fam$population)
+
 #mad_bor_g1000_sum_fam$id <- as.numeric(rownames(mad_bor_g1000_sum_fam))
 mad_bor_g1000_sum_fam$population <- as.factor(mad_bor_g1000_sum_fam$population)
 
 #mad_bor_g1000_sum_fam$V6 <- mad_bor_g1000_sum_fam$population
-write.table(mad_bor_g1000_sum_fam, resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.fam"), row.names = FALSE, col.names = FALSE, sep = " ", quote = FALSE)
+write.table(mad_bor_g1000_sum_fam, resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.fam"), row.names = FALSE, col.names = FALSE, sep = " ", quote = FALSE)
+```
+
+# Check the bim file
+
+```{r}
+#mad_bor_g1000_sum_bim <- read.table(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.bim"), header = FALSE, sep = " ")
+
+# # check there are no NA or empty V1 or V4 values
+# expect_false(any(is.na(mad_bor_g1000_sum_bim$V1)))
+# expect_false(any(mad_bor_g1000_sum_bim$V1 == ""))
+# expect_false(any(is.na(mad_bor_g1000_sum_bim$V4)))
+# expect_false(any(mad_bor_g1000_sum_bim$V4 == ""))
+# # check that $V1 is in ascending order
+# expect_equal(rle(mad_bor_g1000_sum_bim$V1)$value, c(1:22))
+# expect_true(!is.unsorted(mad_bor_g1000_sum_bim$V1))
+# # check that $V4 is in ascending order
+# expect_true(!is.unsorted(mad_bor_g1000_sum_bim$V4))
+# # check that $V3 is in ascending order
+# expect_true(!is.unsorted(mad_bor_g1000_sum_bim$V3))
+
 ```
 
 
 ```{r}
-if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.geno"))){
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.geno"))
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.ind"))
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.snp"))
+if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.geno"))){
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.geno"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.ind"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.snp"))
 }
 ```
 
@@ -166,6 +159,46 @@ if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000
 cd ~/Git/malagasy_diversity/code
 convertf -p s11a_convertf.par
 ```
+
+# Check the .snp file
+
+```{r}
+# mad_bor_g1000_sum_snp <- read.table(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.snp"), header = FALSE, sep = "")
+# # check V2 is in ascending order
+# expect_true(!is.unsorted(mad_bor_g1000_sum_snp$V2))
+# # check V3 is in ascending order
+# expect_true(!is.unsorted(mad_bor_g1000_sum_snp$V3))
+# # check V4 is in ascending order
+# expect_true(!is.unsorted(mad_bor_g1000_sum_snp$V4))
+```
+
+# Sort the .snp file
+
+```{r}
+# # add column names
+# colnames(mad_bor_g1000_sum_snp) <- c("rs","Chromosome", "Genetic_Distance","Physical_Position", "allele_a", "allele_b")
+# 
+# mad_bor_g1000_sum_snp <- mad_bor_g1000_sum_snp %>%
+#   arrange(Chromosome, Physical_Position, Genetic_Distance)
+# 
+# 
+# # check V2 is in ascending order
+# #expect_true(!is.unsorted(mad_bor_g1000_sum_snp$Chromosome))
+# # check V3 is in ascending order
+# #expect_true(!is.unsorted(mad_bor_g1000_sum_snp$Physical_Position))
+# # check V4 is in ascending order
+# #expect_true(!is.unsorted(mad_bor_g1000_sum_snp$Genetic_Distance))
+# 
+# sum(is.na(mad_bor_g1000_sum_snp$Genetic_Distance))
+# #unique(mad_bor_g1000_sum_snp$Genetic_Distance[!is.finite(mad_bor_g1000_sum_snp$Genetic_Distance)])
+# 
+# 
+# #any(diff(mad_bor_g1000_sum_snp$Genetic_Distance) < 0)
+# 
+# 
+# write.table(mad_bor_g1000_sum_snp, resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.snp"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+```
+
 
 # Population to Status column as described here 
 
@@ -180,16 +213,28 @@ https://comppopgenworkshop2019.readthedocs.io/en/latest/contents/06_alder/alder.
 States that the default calculates the correlation in LD decay between the target and each reference, and uses 'the minimum distance that shows no correlation in both references.' 
 'If it continues beyond 2 cM (due to either a strong bottleneck or admixture in a reference), the program aborts.'
 In example with Merina as Target and Esan and Borneo as reference, setting mindis to default causes the program to abort.
+What does mindis do to the results?
+
+
 jackknife: YES - outputs results from leave-one-chromosome-out jackknifing
 
 For now, using checkmap: NO - why does our map have an issue?
+
 binsize: 0.0005 default - genetic distance resolution (in Morgans) - the size of bins that ALDER splits the genome up into, used to calculate the distance between the bins of two snps as opposed to the distance between the each individual pair of snps, for computational efficiency 
 
-# Run bash script
+# Run bash scripts
 
 ```{bash}
 cd ~/Git/malagasy_diversity/code
-alder -p s11b_alder_merina.par > s11b_alder_merina.log
+alder -p s11b_alder_merina_a.par > s11b_alder_merina_a.log
+alder -p s11b_alder_merina_b.par > s11b_alder_merina_b.log
+alder -p s11b_alder_mikea.par > s11b_alder_mikea.log
+alder -p s11b_alder_vezo.par > s11b_alder_vezo.log
+alder -p s11b_alder_temoro.par > s11b_alder_temoro.log
+alder -p s11b_alder_betsileo.par > s11b_alder_betsileo.log
+alder -p s11b_alder_betsimisaraka.par > s11b_alder_betsimisaraka.log
+alder -p s11b_alder_diego.par > s11b_alder_diego.log
+alder -p s11b_alder_sakalava_tsimihety.par > s11b_alder_sakalava_tsimihety.log
 ```
 
 # Example plot 
@@ -214,18 +259,281 @@ yv = as.vector(d1$weightedLD)  ## Weighted LD
 prdv = M * exp(-1 * n * xv / 100) + K # E[Y] = M times e^-nd + K
 
 dev.new()
-plot(xv, yv, xlab="Genetic distance (cM)", ylab = "weighted LD", pch=4, col="blue")
+plot(xv, yv, xlab="Genetic distance (cM)", ylab = "weighted LD", main = "Merina", pch=4, col="blue")
 points(xv, prdv, type="l", lwd=1.5, col="red")
 ```
 
-The middle and right columns show the date estimate (B, E, H) and amplitude (C, F, I) as a function of d0.
 
+```{r}
+fn1 = "../results/s11_ALDER/alder_merina_a.txt"
 
-How can I loop through multiple target populations?
-What does mindis do to the results?
+n = 25.17    ## decay parameter - the estimate for admixture date
+M = 0.00153897  ## amp_exp
+K = 0.00040424  ## amp_aff
+
+d1 = read.table(fn1, header = F)
+d1 <- d1[-nrow(d1),]
+colnames(d1) = c("Dist", "weightedLD", "npairs")
+xv = as.vector(d1$Dist)        ## distance between SNP bins (cM)
+yv = as.vector(d1$weightedLD)  ## Weighted LD
+#fv = as.vector(d1$use) == "Y"  ## a boolean vector marking if each bin is used in fitting
+prdv = M * exp(-1 * n * xv / 100) + K # E[Y] = M times e^-nd + K
+
+dev.new()
+plot(xv, yv, xlab="Genetic distance (cM)", ylab = "weighted LD", main = "Merina A", pch=4, col="blue")
+points(xv, prdv, type="l", lwd=1.5, col="red")
+```
+
 
 
 ```{r}
+fn1 = "../results/s11_ALDER/alder_merina_b.txt"
+
+n = 25.17    ## decay parameter - the estimate for admixture date
+M = 0.00153897  ## amp_exp
+K = 0.00040424  ## amp_aff
+
+d1 = read.table(fn1, header = F)
+d1 <- d1[-nrow(d1),]
+colnames(d1) = c("Dist", "weightedLD", "npairs")
+xv = as.vector(d1$Dist)        ## distance between SNP bins (cM)
+yv = as.vector(d1$weightedLD)  ## Weighted LD
+#fv = as.vector(d1$use) == "Y"  ## a boolean vector marking if each bin is used in fitting
+prdv = M * exp(-1 * n * xv / 100) + K # E[Y] = M times e^-nd + K
+
+dev.new()
+plot(xv, yv, xlab="Genetic distance (cM)", ylab = "weighted LD", main = "Merina B", pch=4, col="blue")
+points(xv, prdv, type="l", lwd=1.5, col="red")
+```
+
+```{r}
+fn1 = "../results/s11_ALDER/alder_mikea.txt"
+
+n = 28.07    ## decay parameter - the estimate for admixture date
+M = 0.00158452  ## amp_exp
+K = 0.00000098  ## amp_aff
+
+d1 = read.table(fn1, header = F)
+d1 <- d1[-nrow(d1),]
+colnames(d1) = c("Dist", "weightedLD", "npairs")
+xv = as.vector(d1$Dist)        ## distance between SNP bins (cM)
+yv = as.vector(d1$weightedLD)  ## Weighted LD
+#fv = as.vector(d1$use) == "Y"  ## a boolean vector marking if each bin is used in fitting
+prdv = M * exp(-1 * n * xv / 100) + K # E[Y] = M times e^-nd + K
+
+dev.new()
+plot(xv, yv, xlab="Genetic distance (cM)", ylab = "weighted LD", main = "Mikea",pch=4, col="blue")
+points(xv, prdv, type="l", lwd=1.5, col="red")
+```
+
+```{r}
+fn1 = "../results/s11_ALDER/alder_vezo.txt"
+
+n = 28.07    ## decay parameter - the estimate for admixture date
+M = 0.00158452  ## amp_exp
+K = 0.00000098  ## amp_aff
+
+d1 = read.table(fn1, header = F)
+d1 <- d1[-nrow(d1),]
+colnames(d1) = c("Dist", "weightedLD", "npairs")
+xv = as.vector(d1$Dist)        ## distance between SNP bins (cM)
+yv = as.vector(d1$weightedLD)  ## Weighted LD
+#fv = as.vector(d1$use) == "Y"  ## a boolean vector marking if each bin is used in fitting
+prdv = M * exp(-1 * n * xv / 100) + K # E[Y] = M times e^-nd + K
+
+dev.new()
+plot(xv, yv, xlab="Genetic distance (cM)", ylab = "weighted LD", main = "Vezo",pch=4, col="blue")
+points(xv, prdv, type="l", lwd=1.5, col="red")
+```
+
+```{r}
+fn1 = "../results/s11_ALDER/alder_temoro.txt"
+
+n = 28.07    ## decay parameter - the estimate for admixture date
+M = 0.00158452  ## amp_exp
+K = 0.00000098  ## amp_aff
+
+d1 = read.table(fn1, header = F)
+d1 <- d1[-nrow(d1),]
+colnames(d1) = c("Dist", "weightedLD", "npairs")
+xv = as.vector(d1$Dist)        ## distance between SNP bins (cM)
+yv = as.vector(d1$weightedLD)  ## Weighted LD
+#fv = as.vector(d1$use) == "Y"  ## a boolean vector marking if each bin is used in fitting
+prdv = M * exp(-1 * n * xv / 100) + K # E[Y] = M times e^-nd + K
+
+dev.new()
+plot(xv, yv, xlab="Genetic distance (cM)", ylab = "weighted LD", main = "Temoro",pch=4, col="blue")
+points(xv, prdv, type="l", lwd=1.5, col="red")
+```
+
+```{r}
+fn1 = "../results/s11_ALDER/alder_betsileo.txt"
+
+n = 28.07    ## decay parameter - the estimate for admixture date
+M = 0.00158452  ## amp_exp
+K = 0.00000098  ## amp_aff
+
+d1 = read.table(fn1, header = F)
+d1 <- d1[-nrow(d1),]
+colnames(d1) = c("Dist", "weightedLD", "npairs")
+xv = as.vector(d1$Dist)        ## distance between SNP bins (cM)
+yv = as.vector(d1$weightedLD)  ## Weighted LD
+#fv = as.vector(d1$use) == "Y"  ## a boolean vector marking if each bin is used in fitting
+prdv = M * exp(-1 * n * xv / 100) + K # E[Y] = M times e^-nd + K
+
+dev.new()
+plot(xv, yv, xlab="Genetic distance (cM)", ylab = "weighted LD", main = "Betsileo",pch=4, col="blue")
+points(xv, prdv, type="l", lwd=1.5, col="red")
+```
+
+```{r}
+fn1 = "../results/s11_ALDER/alder_betsimisaraka.txt"
+
+n = 28.07    ## decay parameter - the estimate for admixture date
+M = 0.00158452  ## amp_exp
+K = 0.00000098  ## amp_aff
+
+d1 = read.table(fn1, header = F)
+d1 <- d1[-nrow(d1),]
+colnames(d1) = c("Dist", "weightedLD", "npairs")
+xv = as.vector(d1$Dist)        ## distance between SNP bins (cM)
+yv = as.vector(d1$weightedLD)  ## Weighted LD
+#fv = as.vector(d1$use) == "Y"  ## a boolean vector marking if each bin is used in fitting
+prdv = M * exp(-1 * n * xv / 100) + K # E[Y] = M times e^-nd + K
+
+dev.new()
+plot(xv, yv, xlab="Genetic distance (cM)", ylab = "weighted LD", main = "Betsimisaraka",pch=4, col="blue")
+points(xv, prdv, type="l", lwd=1.5, col="red")
+```
+
+```{r}
+fn1 = "../results/s11_ALDER/alder_diego.txt"
+
+n = 28.07    ## decay parameter - the estimate for admixture date
+M = 0.00158452  ## amp_exp
+K = 0.00000098  ## amp_aff
+
+d1 = read.table(fn1, header = F)
+d1 <- d1[-nrow(d1),]
+colnames(d1) = c("Dist", "weightedLD", "npairs")
+xv = as.vector(d1$Dist)        ## distance between SNP bins (cM)
+yv = as.vector(d1$weightedLD)  ## Weighted LD
+#fv = as.vector(d1$use) == "Y"  ## a boolean vector marking if each bin is used in fitting
+prdv = M * exp(-1 * n * xv / 100) + K # E[Y] = M times e^-nd + K
+
+dev.new()
+plot(xv, yv, xlab="Genetic distance (cM)", ylab = "weighted LD", main = "Diego",pch=4, col="blue")
+points(xv, prdv, type="l", lwd=1.5, col="red")
+```
+
+```{r}
+fn1 = "../results/s11_ALDER/alder_sakalava_tsimihety.txt"
+
+n = 28.07    ## decay parameter - the estimate for admixture date
+M = 0.00158452  ## amp_exp
+K = 0.00000098  ## amp_aff
+
+d1 = read.table(fn1, header = F)
+d1 <- d1[-nrow(d1),]
+colnames(d1) = c("Dist", "weightedLD", "npairs")
+xv = as.vector(d1$Dist)        ## distance between SNP bins (cM)
+yv = as.vector(d1$weightedLD)  ## Weighted LD
+#fv = as.vector(d1$use) == "Y"  ## a boolean vector marking if each bin is used in fitting
+prdv = M * exp(-1 * n * xv / 100) + K # E[Y] = M times e^-nd + K
+
+dev.new()
+plot(xv, yv, xlab="Genetic distance (cM)", ylab = "weighted LD", main = "Sakalava_Tsimihety",pch=4, col="blue")
+points(xv, prdv, type="l", lwd=1.5, col="red")
+```
+
+# Boxplot
+
+```{r}
+files <- list.files(
+    resrepo::path_resrepo("code"),
+    pattern = ".log",
+    full.names = TRUE
+)
+
+# use readLines to read each of files
+logs <- lapply(files, readLines)
+
+
+# Extract "DATA:" lines from each log file in the list
+data_lines <- lapply(logs, function(log_file) log_file[grepl("^DATA:", log_file, ignore.case = TRUE)])
+
+# create a dataframe 
+
+# Extract the first line from each element in data_lines
+first_lines <- sapply(data_lines, function(x) if (length(x) > 0) x[1] else NA)
+
+# Split each first "DATA:" line by backslash "\\"
+split_data <- lapply(first_lines, function(x) strsplit(x, "\t")[[1]])
+
+result <- do.call(rbind, split_data)
+result <- as.data.frame(result, stringsAsFactors = FALSE)
+# remove NA row
+result <- result[complete.cases(result),]
+print(result)
+```
+
+```{r}
+
+# split $V11 into 3 columns 
+
+split_dates <- do.call(rbind,strsplit(result$V11, " "))
+#remove the middle column
+split_dates <- split_dates[,-2]
+# add column names
+colnames(split_dates) <- c("admixture_date", "CI")
+# turn into a dataframe
+split_dates <- as.data.frame(split_dates)
+# make numeric
+split_dates$admixture_date <- as.numeric(split_dates$admixture_date)
+split_dates$CI <- as.numeric(split_dates$CI)
+result <- cbind(result,split_dates)
+```
+
+
+```{r}
+result$V4 <- factor(result$V4,  levels=c("Temoro","Betsimisaraka","MerinaA","Betsileo","Mikea","Merina","MerinaB","Sakalava_Tsimihety","Vezo","Diego"))
+
+ggplot(result,aes(x = V4, y = admixture_date, colour = V4)) + 
+  geom_boxplot() + 
+  scale_y_continuous(
+    "Admixture date (generations ago)", 
+    sec.axis = sec_axis(~ . * 25, name = "Admixture date (years BP)")
+  ) + 
+  geom_errorbar(aes(ymin = admixture_date - CI, ymax = admixture_date + CI), width = 0.2) + 
+  theme(axis.text.x = element_blank())+
+  labs(x = "Population", y = "Admixture date (generations ago)", colour = "Population")#+
+  #scale_color_brewer(palette = "Dark2")
+
+ggsave(paste0(res_dir, "alder_results.jpg"), width = 7, height = 7, dpi = 300)
+```
+
+# Analysis splitting Merina
+
+```{r}
+mad_bor_g1000_sum <- gt_load(path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
+#qmats <- readRDS(path_resrepo("data/intermediate/fastmixture/fastmixture_m.RData"))
+
+qmats <- readRDS("~/Dropbox/gitdata/malagasy_diversity/data/intermediate/fastmixture/fastmixture_m.RData")
+# match the qmats to the gt by $id
+
+# tidy with the gt
+mad_bor_g1000_sum <- augment(get_q_matrix(qmats, k = 3, run = 1), data = mad_bor_g1000_sum)
+
+# filter to merina
+merina <- mad_bor_g1000_sum %>% filter(population == "Merina")
+
+# split groups
+merina$group <- ifelse(merina$.Q3 > 0.5, "Social group A", "Social group B")
+merina_a <- merina %>% filter(group == "Social group A")
+merina_b <- merina %>% filter(group == "Social group B")
 
 ```
+
+
+
 
