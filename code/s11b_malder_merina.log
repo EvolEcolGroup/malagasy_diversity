@@ -1,0 +1,87 @@
+
+        |                          
+        |      [M]ALDER,   v1.0
+     \..|./                        
+    \ \  /       Admixture         
+     \ |/ /      Linkage           
+      \| /       Disequilibrium for
+       |/        Evolutionary      
+       |         Relationships     
+       |                           
+
+  +--------------------------------------------------------------------------+
+  |  ALDER computes weighted LD decay curves, performs curve-fitting to      |
+  |  infer admixture dates, and uses the results to test for admixture.      |
+  |  For full details about options and parameters, please see the README    |
+  |  file included with this software.                                       |
+  +--------------------------------------------------------------------------+
+
+---------- contents of parameter file: s11b_malder_merina.par ----------
+genotypename: ../data/intermediate/rbind_data/mad_bor_g1000_sum.geno
+snpname: ../data/intermediate/rbind_data/mad_bor_g1000_sum.snp
+indivname: ../data/intermediate/rbind_data/mad_bor_g1000_sum.ind
+checkmap: NO
+mindis: 0.005
+admixpop: Merina
+refpops: Borneo;Esan
+raw_outname: ../results/s11_ALDER/malder_merina.txt
+---------- parameter settings used (with defaults for unspecified) ----------
+
+Input data files:
+        genotypename: ../data/intermediate/rbind_data/mad_bor_g1000_sum.geno
+             snpname: ../data/intermediate/rbind_data/mad_bor_g1000_sum.snp
+           indivname: ../data/intermediate/rbind_data/mad_bor_g1000_sum.ind
+
+Admixed population:
+            admixpop: Merina
+
+Reference populations/weights:
+             refpops: Borneo;Esan
+
+Raw weighted LD curve output:
+         raw_outname: ../results/s11_ALDER/malder_merina.txt
+           jackknife: NO
+
+Data filtering:
+            mincount: 4
+
+Curve fitting:
+             binsize: 0.000500
+              mindis: 0.005000
+              maxdis: 0.500000
+           bootstrap: NO
+
+Input checks:
+       fast_snp_read: NO
+            checkmap: NO
+
+Computational options:
+         num_threads: 1
+      approx_ld_corr: YES
+      use_naive_algo: NO
+
+-------------------------------------------------------------------------------
+
+                        *** Processing data ***
+
+num indivs in full data set: 1377
+parsing refpops string (semicolon-delimited; no spaces): Borneo;Esan
+  admixed pop: Merina (34 indivs)
+  ref pop 0: Borneo (39 indivs)
+  ref pop 1: Esan (99 indivs)
+using 305947 of 305947 snps in data set
+reading genotype data................... done
+number of reference populations: 2
+number of chromosomes (with data) used: 22
+
+Form of ALDER to run: 2-reference weighted LD
+
+==> Time to process data: 0.503015
+
+-------------------------------------------------------------------------------
+
+     *** Determining extent of correlated LD between test and ref pops ***
+
+WARNING: skipping LD correlation computation: 'mindis' param is set
+decay curves will be fit starting at d = 0.005 Morgans, as specified
+

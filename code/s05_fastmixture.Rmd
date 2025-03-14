@@ -39,6 +39,7 @@ time <- tictoc::toc()
 
 # Plot
 
+
 ```{r}
 autoplot(get_q_matrix(qmats, k = 2, run = 1), data = mad_bor_g1000_sum)
 ```
@@ -62,9 +63,159 @@ autoplot(get_q_matrix(qmats, k = 3, run = 1), data = mad_bor_g1000_sum, annotate
 ggsave(paste0(res_dir, "fastmixture_autoplot.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
-```{r}
-augmented <- augment(get_q_matrix(qmats, k = 3, run = 1), data = mad_bor_g1000_sum)
 
+
+```{r}
+pop_names <- read.csv(path_resrepo("data/raw/data_input/igsr-1000-genomes-phase-3-release.tsv"), sep = "\t")
+
+# find matching id in pop_names Sample.name and mad_bor_g1000_sum id, and for the matches, replace the population in mad_bor_g1000_sum with the population in pop_names
+for(i in 1:nrow(pop_names)){
+  if(pop_names$Sample.name[i] %in% mad_bor_g1000_sum$id){
+    mad_bor_g1000_sum[mad_bor_g1000_sum$id == pop_names$Sample.name[i], "population"] <- pop_names$Population.name[i]
+  }
+}
+
+# replace "Luhya,Luhya" with "Luhya"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Luhya,Luhya"] <- "Luhya"
+# replace "Esan,Esan" with "Esan"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Esan,Esan"] <- "Esan"
+# replace "Gambian Mandinka,Gambian" with "Gambian Mandinka"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Gambian Mandinka,Gambian"] <- "Gambian Mandinka"
+# replace "Mende,Mende" with "Mende"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Mende,Mende"] <- "Mende"
+# replace "Kinh,Kinh Vietnamese" with "Kinh Vietnamese"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Kinh,Kinh Vietnamese"] <- "Kinh Vietnamese"
+# replcae "Punjabi,Punjabi" with "Punjabi"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Punjabi,Punjabi"] <- "Punjabi"
+# replcae "Benga,Bengali" with "Bengali"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Bengali,Bengali"] <- "Bengali"
+
+# replace any _ with a space
+mad_bor_g1000_sum$population <- gsub("_", " ", mad_bor_g1000_sum$population)
+```
+
+```{r}
+# reorder
+mad_bor_g1000_sum$Region <- "Other"
+
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Borneo","Sumba","Timor"),"Region"] <- "Island southeast Asia"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Bengali","Punjabi"),"Region"] <- "South Asia"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Southern Han Chinese","Kinh Vietnamese"),"Region"] <- "East Asia"
+#Not really happy about grouping all African samples here though...
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Esan","Gambian Mandinka","Luhya","Mende","Yoruba"),"Region"] <- "Africa"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Betsimisaraka", "Merina", "Diego","Sakalava Tsimihety", "Betsileo" ,"Vezo","Mikea","Temoro"),"Region"] <- "Malagasy"
+
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% arrange(Region, population)
+```
+
+```{r}
+# # reorder
+# mad_bor_g1000_sum$Region <- "Other"
+# 
+# mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Borneo","Sumba","Timor"),"Region"] <- "Island southeast Asia"
+# mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("BEB","PJL"),"Region"] <- "South Asia"
+# mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("CHS","KHV"),"Region"] <- "East Asia"
+# #Not really happy about grouping all African samples here though...
+# mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("ESN","GWD","LWK","MSL","YRI"),"Region"] <- "Africa"
+# mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Betsimisaraka", "Merina", "Diego","Sakalava Tsimihety", "Betsileo" ,"Vezo","Mikea","Temoro"),"Region"] <- "Malagasy"
+
+
+```
+
+
+```{r}
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% arrange(Region, population)
+pop_levels <- unique(mad_bor_g1000_sum$population)
+
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% filter(.data$id %in% qmats$id)
+mad_bor_g1000_sum <- mad_bor_g1000_sum[match(qmats$id, mad_bor_g1000_sum$id),]
+pops <- mad_bor_g1000_sum$population
+pops <- factor(pops, levels = pop_levels)
+
+qmats <- gt_admix_reorder_q(qmats, group = pops)
+
+autoplot(get_q_matrix(qmats, k = 3, run = 1), annotate_group = TRUE, arrange_by_group = TRUE, arrange_by_indiv = TRUE, reorder_within_groups = TRUE)
+
+
+#mad_bor_g1000_sum <- augment(get_q_matrix(qmats, k = 3, run = 1), data = mad_bor_g1000_sum)
+# 
+# tidy_q <- tidy(get_q_matrix(qmats, k = 3, run = 1), mad_bor_g1000_sum)
+# head(tidy_q)
+# 
+# tidy_q <- tidy_q %>%
+#   dplyr::group_by(id) %>%
+#   dplyr::mutate(dominant_q = max(percentage)) %>%
+#   dplyr::ungroup() %>%
+#   dplyr::arrange(group, dplyr::desc(dominant_q)) %>%
+#   dplyr::mutate(
+#     plot_order = dplyr::row_number(),
+#     id = factor(id, levels = unique(id))
+#   )
+# 
+# plt <- ggplot2::ggplot(tidy_q, ggplot2::aes(x = id, y = percentage, fill = q)) +
+#   ggplot2::geom_col(
+#     width = 1,
+#     position = ggplot2::position_stack(reverse = TRUE)
+#   ) +
+#   ggplot2::labs(
+#     y = "Population Structure for K = 3",
+#     title = "Clustering at K = 3 using fastMIXTURE algorithm"
+#   ) +
+#   theme_distruct() +
+#   scale_fill_distruct()
+# 
+# group <- tidy_q %>%
+#     dplyr::distinct(id, group) %>%
+#     dplyr::pull(group)
+# 
+# #group <- as.factor(group)
+# 
+#   group_x <- cumsum(table(forcats::fct_inorder(group)))
+#   segment_data <- data.frame(
+#     x = group_x + 0.5,
+#     xend = group_x + 0.5,
+#     y = rep(0, length(group_x)),
+#     yend = rep(1, length(group_x))
+#   )
+# 
+#   get_mid_points <- function(vec) {
+#     (vec[-length(vec)] + vec[-1L]) / 2.
+#   }
+# 
+# res <-  list(
+#     ggplot2::geom_segment(
+#       data = segment_data,
+#       ggplot2::aes(
+#         x = .data$x,
+#         y = .data$y,
+#         xend = .data$xend,
+#         yend = .data$yend
+#       ),
+#       inherit.aes = FALSE
+#     ),
+#     ggplot2::scale_x_discrete(
+#       breaks = unique(tidy_q$id)[get_mid_points(c(0, group_x))],
+#       labels = names(group_x)
+#     ),
+#     ggplot2::theme(axis.text.x = ggplot2::element_text(
+#       angle = 90,
+#       vjust = 1, hjust = 1
+#     ))
+#   )
+# 
+# plt + res
+# 
+# 
+
+
+
+```
+
+
+
+
+
+```{r}
 # filter augmeneted to $population GWD and print head
 augmented_gwd <- augmented %>% filter(population == "GWD")
 head(augmented_gwd)
@@ -77,4 +228,7 @@ head(augmented_borneo)
 
 ```
 
+```{r}
+
+```
 

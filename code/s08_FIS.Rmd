@@ -28,14 +28,16 @@ malagasy <- gt_load(path_resrepo("data/intermediate/rbind_data/malagasy_merge_ma
 Calculate FIS for each Malagasy population.
 
 ```{r}
-fis <- malagasy %>% group_by(population) %>% pop_fis(method = "WG17", by_locus = FALSE, include_global=FALSE, allele_sharing_mat = NULL)
+fis <- malagasy %>%
+  group_by(population) %>%
+  pop_fis(method = "WG17", by_locus = FALSE, include_global = FALSE, allele_sharing_mat = NULL)
 
 # create dataframe for plotting
 fis <- as.data.frame(fis)
 fis$population <- rownames(fis)
 
 # rearrange fis column fis in descending order
-fis <- fis[order(fis$fis, decreasing = TRUE),]
+fis <- fis[order(fis$fis, decreasing = TRUE), ]
 
 # Reorder the population variable as a factor based on the descending order of FIS
 fis$population <- factor(fis$population, levels = fis$population)
@@ -45,18 +47,18 @@ fis$population <- factor(fis$population, levels = fis$population)
 # Plot
 
 ```{r}
-ggplot(fis, aes(x = population, y = fis, fill = population, colour = population, shape = population))+
+ggplot(fis, aes(x = population, y = fis, fill = population, colour = population, shape = population)) +
   geom_point(size = 1.8) +
-labs(title = expression("Population specific F"[IS]), x = NULL, y = expression("F"[IS]~"(Weir and Goudet 2017)"))+
-  scale_color_brewer(palette = "Dark2")+
+  labs(title = expression("Population specific F"[IS]), x = NULL, y = expression("F"[IS] ~ "(Weir and Goudet 2017)")) +
+  scale_color_brewer(palette = "Dark2") +
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8)) +
-    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())+
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
   scale_fill_brewer(palette = "Dark2") +
   guides(
     fill = guide_legend(title = "Population"),
     colour = guide_legend(title = "Population"),
     shape = guide_legend(title = "Population")
-  ) 
+  )
 
 ggsave(paste0(res_dir, "pop_fis.jpg"), width = 7, height = 7, dpi = 300)
 ```
@@ -76,8 +78,8 @@ tidyq <- augment(get_q_matrix(qmats, k = 3, run = 1), data = mad_bor_g1000_sum)
 ```
 
 ```{r}
-# subset to only malagasy 
-all_malagasy <- c("Betsimisaraka","Merina","Sakalava_Tsimihety","Betsileo","Diego","Vezo","Mikea","Temoro")
+# subset to only malagasy
+all_malagasy <- c("Betsimisaraka", "Merina", "Sakalava_Tsimihety", "Betsileo", "Diego", "Vezo", "Mikea", "Temoro")
 
 malagasyq <- tidyq %>% filter(population %in% all_malagasy)
 ```
@@ -87,8 +89,9 @@ malagasyq <- tidyq %>% filter(population %in% all_malagasy)
 merina <- malagasyq %>% filter(population == "Merina")
 
 # plot column .Q3 for the merina
-ggplot(merina, aes(x = .Q3))+
-  geom_histogram()+labs(y = "Count of Individuals")+
+ggplot(merina, aes(x = .Q3)) +
+  geom_histogram() +
+  labs(y = "Count of Individuals") +
   geom_vline(xintercept = 0.5, linetype = "dashed", color = "blue")
 
 ggsave(paste0(res_dir, "merina_q3.jpg"), width = 7, height = 7, dpi = 300)
@@ -106,7 +109,9 @@ merina$group <- ifelse(merina$.Q3 > 0.5, "Social group A", "Social group B")
 This time, grouping merina by the new column $group.
 
 ```{r}
-fis_merina <- merina %>% group_by(group) %>% pop_fis(method = "WG17", by_locus = FALSE, include_global=FALSE, allele_sharing_mat = NULL)#
+fis_merina <- merina %>%
+  group_by(group) %>%
+  pop_fis(method = "WG17", by_locus = FALSE, include_global = FALSE, allele_sharing_mat = NULL) #
 
 # change fis_merina to a dataframe and make a column $population corresponding to group
 fis_merina <- as.data.frame(fis_merina)
@@ -117,7 +122,7 @@ colnames(fis_merina) <- c("fis", "population")
 fis <- rbind(fis, fis_merina)
 
 # rearrange fis column fis in descending order
-fis <- fis[order(fis$fis, decreasing = TRUE),]
+fis <- fis[order(fis$fis, decreasing = TRUE), ]
 
 # Reorder the population variable as a factor based on the descending order of FIS
 fis$population <- factor(fis$population, levels = fis$population)
@@ -126,19 +131,18 @@ fis$population <- factor(fis$population, levels = fis$population)
 # Plot
 
 ```{r}
-ggplot(fis, aes(x = population, y = fis, fill = population, colour = population, shape = population))+
+ggplot(fis, aes(x = population, y = fis, fill = population, colour = population, shape = population)) +
   geom_point(size = 1.8) +
-labs(title =  expression("Population specific F"[IS]), x = NULL, y = expression("F"[IS]~"(Weir and Goudet 2017)"))+
-  #scale_color_brewer(palette = "Dark2")+
+  labs(title = expression("Population specific F"[IS]), x = NULL, y = expression("F"[IS] ~ "(Weir and Goudet 2017)")) +
+  # scale_color_brewer(palette = "Dark2")+
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8, 2, 1)) +
-    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())+
-  #scale_fill_brewer(palette = "Dark2") +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  # scale_fill_brewer(palette = "Dark2") +
   guides(
     fill = guide_legend(title = "Population"),
     colour = guide_legend(title = "Population"),
     shape = guide_legend(title = "Population")
-  ) 
-
+  )
 ```
 
 Here, we can see that Merina Social group A has a higher Fis value than Social group B.
@@ -161,13 +165,15 @@ malagasy <- malagasy %>% mutate(fis_indiv = indiv_inbreeding(malagasy, method = 
 
 ```{r}
 # plot $F for each individual IID coloured by FID
-ggplot(malagasy, aes(x = population, y = fis_indiv))+
-  geom_violin(aes(fill = population))+
-  labs(x = NULL, y = expression("F"[IS]~"(Weir and Goudet 2017)"), fill = "Population") +
-    scale_fill_brewer(palette = "Dark2")+
-    theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank())
+ggplot(malagasy, aes(x = population, y = fis_indiv)) +
+  geom_violin(aes(fill = population)) +
+  labs(x = NULL, y = expression("F"[IS] ~ "(Weir and Goudet 2017)"), fill = "Population") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
 
 ggsave(paste0(res_dir, "indiv_fis_grouped.jpg"), width = 7, height = 7, dpi = 300)
 ```
@@ -178,17 +184,19 @@ ggsave(paste0(res_dir, "indiv_fis_grouped.jpg"), width = 7, height = 7, dpi = 30
 total_count <- table(malagasy$population)
 malagasy$count <- total_count[malagasy$population]
 
-# add total_count number to the top right corner of each facet plot 
-ggplot(malagasy, aes(x = fis_indiv, fill = population))+
-  geom_histogram()+
-  facet_wrap(~population)+
-  labs(y = "Count of Individuals", x = expression("F"[IS]~"(Weir and Goudet 2017)")) +
+# add total_count number to the top right corner of each facet plot
+ggplot(malagasy, aes(x = fis_indiv, fill = population)) +
+  geom_histogram() +
+  facet_wrap(~population) +
+  labs(y = "Count of Individuals", x = expression("F"[IS] ~ "(Weir and Goudet 2017)")) +
   guides(fill = "none") +
-  scale_fill_brewer(palette = "Dark2")+
-  geom_text(data = malagasy %>%
-              distinct(population, count),  # Extract unique population and count
-            aes(x = Inf, y = Inf, label = paste0("Total Individuals: ", count)), 
-            size = 3, hjust = 1.1, vjust = 1.5, inherit.aes = FALSE)
+  scale_fill_brewer(palette = "Dark2") +
+  geom_text(
+    data = malagasy %>%
+      distinct(population, count), # Extract unique population and count
+    aes(x = Inf, y = Inf, label = paste0("Total Individuals: ", count)),
+    size = 3, hjust = 1.1, vjust = 1.5, inherit.aes = FALSE
+  )
 
 
 ggsave(paste0(res_dir, "indiv_fis_hist.jpg"), width = 7, height = 7, dpi = 300)
@@ -197,7 +205,7 @@ ggsave(paste0(res_dir, "indiv_fis_hist.jpg"), width = 7, height = 7, dpi = 300)
 # Run glm
 
 ```{r}
-glm(malagasy$fis_indiv ~ malagasy$population) 
+glm(malagasy$fis_indiv ~ malagasy$population)
 ```
 
 
@@ -210,19 +218,19 @@ malagasy$.Q2 <- malagasyq$.Q2
 malagasy$.Q3 <- malagasyq$.Q3
 
 # now plot $.Q3 vs inbreed_df$F
-ggplot(malagasy, aes(x = fis_indiv, y = .Q3, fill = population, shape = population, color = population))+
+ggplot(malagasy, aes(x = fis_indiv, y = .Q3, fill = population, shape = population, color = population)) +
   geom_point(size = 1.8) +
-  labs(title = "F"[IS]~" against ancestry proportion for Malagasy individuals", x = expression("F"[IS]~"(Weir and Goudet 2017)"), y = ".Q3 proportion (% Asian ancestry)")+
-  scale_fill_brewer(palette = "Dark2")+
-  scale_color_brewer(palette = "Dark2")+
-  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8))+
-  theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+
-  scale_fill_brewer(palette = "Dark2")    +
+  labs(title = "F"[IS] ~ " against ancestry proportion for Malagasy individuals", x = expression("F"[IS] ~ "(Weir and Goudet 2017)"), y = ".Q3 proportion (% Asian ancestry)") +
+  scale_fill_brewer(palette = "Dark2") +
+  scale_color_brewer(palette = "Dark2") +
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8)) +
+  theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank()) +
+  scale_fill_brewer(palette = "Dark2") +
   guides(
     fill = guide_legend(title = "Population"),
     colour = guide_legend(title = "Population"),
     shape = guide_legend(title = "Population")
-  ) 
+  )
 
 
 ggsave(paste0(res_dir, "indiv_fis_vs_q3.jpg"), width = 7, height = 7, dpi = 300)
@@ -236,13 +244,13 @@ merina <- malagasy %>% filter(population == "Merina")
 merina$group <- ifelse(merina$.Q3 > 0.5, "Social group A", "Social group B")
 
 # plot merina$.Q3 vs merina$F
-ggplot(merina, aes(x = fis_indiv, y = .Q3, fill = group, color = group))+
+ggplot(merina, aes(x = fis_indiv, y = .Q3, fill = group, color = group)) +
   geom_point(size = 1.8, shape = 21) +
-  labs(title = "F"[IS]~" against ancestry proportion for Merina individuals", x = expression("F"[IS]~"(Weir and Goudet 2017)"), y = ".Q3 proportion (% Asian ancestry)", fill = "Social Group", color = "Social Group")+
-  scale_color_brewer(palette = "Dark2")+
-  scale_shape_manual(values = c(21, 22))+
-  theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())+
-  scale_fill_brewer(palette = "Dark2") 
+  labs(title = "F"[IS] ~ " against ancestry proportion for Merina individuals", x = expression("F"[IS] ~ "(Weir and Goudet 2017)"), y = ".Q3 proportion (% Asian ancestry)", fill = "Social Group", color = "Social Group") +
+  scale_color_brewer(palette = "Dark2") +
+  scale_shape_manual(values = c(21, 22)) +
+  theme(axis.ticks.x = element_blank(), axis.title.x = element_text(size = 16), axis.title.y = element_text(size = 16), axis.ticks.y = element_blank(), plot.title = element_text(size = 16), legend.title = element_text(size = 16), legend.text = element_text(size = 13)) +
+  scale_fill_brewer(palette = "Dark2")
 
 
 ggsave(paste0(res_dir, "indiv_fis_vs_q3_merina.jpg"), width = 7, height = 7, dpi = 300)
@@ -250,15 +258,15 @@ ggsave(paste0(res_dir, "indiv_fis_vs_q3_merina.jpg"), width = 7, height = 7, dpi
 
 ```{r}
 ggplot(merina, aes(x = fis_indiv, fill = group)) +
-  geom_histogram(binwidth = 0.005, color = "black", size = 0.2) +  # Adjust binwidth as needed
+  geom_histogram(binwidth = 0.005, color = "black", size = 0.2) + # Adjust binwidth as needed
   labs(
-    title = "Distribution of F"[IS]~" by inferred Social Group for Merina Individuals", 
-    x = expression("F"[IS]~"(Weir and Goudet 2017)"), 
+    title = "Distribution of F"[IS] ~ " by inferred Social Group for Merina Individuals",
+    x = expression("F"[IS] ~ "(Weir and Goudet 2017)"),
     y = "Count",
     fill = "Social Group"
   ) +
   scale_fill_brewer(palette = "Dark2") +
-  facet_wrap(~group) +  # Creates separate histograms for each 'group'
+  facet_wrap(~group) + # Creates separate histograms for each 'group'
   theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
 
 
@@ -270,7 +278,7 @@ ggsave(paste0(res_dir, "indiv_fis_hist_merina_social_group.jpg"), width = 7, hei
 ```{r}
 merina$population <- factor(merina$group)
 
-glm(merina$fis_indiv ~ merina$group) 
+glm(merina$fis_indiv ~ merina$group)
 ```
 
 ## Recalculate individual FIS in tidypopgen, this time separating the inferred social groups
@@ -295,9 +303,9 @@ merina <- left_join(merina, merina_fis_indiv, by = "id")
 ```
 
 ```{r}
-ggplot(merina, aes(x = group, y = merina_fis_indiv))+
-  geom_violin(aes(fill = group))+
-  labs(y = expression("F"[IS]~"(Weir and Goudet 2017)"), x = NULL, fill = "Social Group") +
+ggplot(merina, aes(x = group, y = merina_fis_indiv)) +
+  geom_violin(aes(fill = group)) +
+  labs(y = expression("F"[IS] ~ "(Weir and Goudet 2017)"), x = NULL, fill = "Social Group") +
   scale_fill_brewer(palette = "Dark2")
 
 ggsave(paste0(res_dir, "indiv_fis_merina_grouped.jpg"), width = 7, height = 7, dpi = 300)
@@ -306,7 +314,4 @@ ggsave(paste0(res_dir, "indiv_fis_merina_grouped.jpg"), width = 7, height = 7, d
 
 
 ```{r}
-
 ```
-
-
