@@ -46,7 +46,7 @@ count_loci(malagasy_merged)
 ```
 
 ```{r}
-if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_v2.gt"))){
+if (file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_v2.gt"))) {
   file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_v2.gt"))
   file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_v2.bk"))
   file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_v2.rds"))
@@ -60,48 +60,21 @@ malagasy_merged <- gt_order_loci(malagasy_merged, use_current_table = FALSE, qui
 rle(show_loci(malagasy_merged)$chromosome)$values
 rle(show_loci(malagasy_merged)$chr_int)$values
 # save
-gt_save(malagasy_merged, quiet = TRUE)
+gt_save(malagasy_merged)
 # reload
 malagasy_merged <- gt_load("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/malagasy_merge_master_v2.gt")
 rle(show_loci(malagasy_merged)$chromosome)$values
 rle(show_loci(malagasy_merged)$chr_int)$values
 ```
 
-
-# Update the backingfile and save the gt
-
-Loci are ordered and some have been removed through LD, backingfiles should be updated to reflect this.
-
-```{r}
-#This step avoids error in gt_roh_window where the .gt and .fbm have different numbers of rows.
-#malagasy_merged <- gt_update_backingfile(malagasy_merged)
-#gt_save(malagasy_merged)
-#malagasy_merged <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_v2.gt"))
-```
-
-```{r}
-if(file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_v3.bk"))){
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_v3.bk"))
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_v3.rds"))
-}
-```
-
-```{r}
-show_loci(malagasy_merged)$genetic_dist <- 0
-gt_update_backingfile(malagasy_merged)
-```
-
-
 # Write cleaned version out to a plink file
 
-This file can be used for FIS through plink. 
+This file can be used to compare for FIS to plink. 
 
 ```{r}
-gt_as_plink(malagasy_merged,"/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Malagasy_all_clean", type = "bed", overwrite = TRUE, chromosomes_as_int = TRUE)
+gt_as_plink(malagasy_merged, "/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/Malagasy_all_clean", type = "bed", overwrite = TRUE, chromosomes_as_int = TRUE)
 ```
 
 
 ```{r}
-
 ```
-

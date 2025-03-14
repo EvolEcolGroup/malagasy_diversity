@@ -1,0 +1,252 @@
+---
+title: "s01_qc_merge_genetic_dist"
+output: html_document
+date: "2025-03-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(tidypopgen)
+library(grid)
+library(resrepo)
+```
+
+This script repeats the steps in s01a_qc_merge to merge malagasy data, while retaining and ordering the genetic distance of SNPs, for ALDER analysis.
+
+# Generate gen tibble
+
+```{r}
+if (file.exists(resrepo::path_resrepo("data/raw/data_input/Madagascar_full.gt"))) {
+  madagascar <- gt_load(resrepo::path_resrepo("data/raw/data_input/Madagascar_full.gt"))
+} else {
+  madagascar <- gen_tibble("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/raw/data_input/Madagascar_full.bed", quiet = TRUE, valid_alleles = c("T", "G", "A", "C", "I"))
+}
+
+cat("Number of individuals:", nrow(madagascar), "\n")
+cat("Number of loci:", count_loci(madagascar))
+```
+
+
+Our raw dataset has 713014 SNPs and 192 individuals
+
+# Add metadata
+
+```{r}
+# Read in Pierron Malagasy metadata
+pop_table <- read.table(path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
+colnames(pop_table) <- c("IID", "V2", "FID", "Population", "V5", "V6", "V7")
+
+# Add "RR" to pop_table$IID
+pop_table$IID <- paste0(pop_table$IID, "RR")
+
+# Find Malagasy entries
+pop_table_sub <- subset(pop_table, pop_table$IID %in% madagascar$id & pop_table$V5 == "Madagascar")
+
+# match up the ID's with pop table metadata
+matching_m <- match(madagascar$id, pop_table_sub$IID)
+
+madagascar$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], madagascar$population)
+```
+
+# Remove the random "I" loci
+
+# Check and remove the random "I" loci
+
+```{r}
+remove <- which(show_loci(madagascar)$allele_ref == "I")
+madagascar <- madagascar %>% select_loci(-all_of(c(remove)))
+count_loci(madagascar)
+```
+
+# Update build
+
+Add a section here with the biomart function/find a better way to do this?
+
+First, new bim
+```{r}
+new_bim_no_NA <- read.table(resrepo::path_resrepo("data/intermediate/Madagascar_full_HG38.bim"), header = FALSE)
+colnames(new_bim_no_NA) <- c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2")
+
+nrow(new_bim_no_NA)
+new_bim_no_NA <- as_tibble(new_bim_no_NA)
+
+# subset to only autosomes
+new_bim_no_NA <- new_bim_no_NA %>% filter(chromosome %in% c(1:22))
+
+# order by chromosome
+new_bim_no_NA$chromosome <- as.integer(new_bim_no_NA$chromosome)
+new_bim_no_NA <- new_bim_no_NA %>% arrange(chromosome, physical_pos)
+
+# remove any entries where genetic_dist = 0
+new_bim_no_NA <- new_bim_no_NA %>% filter(genetic_dist != 0)
+
+# check for duplicated genetic_dist within each chromosome
+duplicates <- new_bim_no_NA %>%
+  group_by(chromosome) %>%
+  group_map(~ duplicated(.x$genetic_dist))
+
+dups <- unlist(duplicates)
+
+# remove duplicates
+new_bim_no_NA <- new_bim_no_NA %>% filter(!dups)
+
+find_order <- function(x) {
+  # store the first value in x$genetic_dist
+  j <- x$genetic_dist[1]
+  problematic <- c()
+
+  for (i in 2:length(x$genetic_dist)) {
+    if (x$genetic_dist[i] >= j) {
+      j <- x$genetic_dist[i]
+    } else {
+      problematic <- c(problematic, x$snp_id[i])
+    }
+  }
+  return(problematic)
+}
+
+# apply find_order to each chromosome
+grouped_bim <- new_bim_no_NA %>%
+  group_by(chromosome) %>%
+  group_map(~ find_order(.x))
+
+# remove problematic SNPs
+remove <- unlist(grouped_bim)
+new_bim_no_NA <- new_bim_no_NA %>% filter(!snp_id %in% remove)
+
+# check sorting again
+# new_bim_no_NA %>%
+#  group_by(chromosome) %>%
+#  group_map(~ is.unsorted(.x$genetic_dist)) #14 of 22 are still not sorted?
+```
+
+
+```{r}
+# select only the loci with updated positions
+madagascar <- madagascar %>% select_loci_if(loci_names(genotypes) %in% new_bim_no_NA$snp_id)
+
+# find matching indices
+match_indices <- match(show_loci(madagascar)$name, new_bim_no_NA$snp_id)
+matching_rows <- !is.na(match_indices)
+
+# update position in gt
+show_loci(madagascar)$position[matching_rows] <- new_bim_no_NA$physical_pos[match_indices[matching_rows]]
+
+# update chromosome in gt
+show_loci(madagascar)$chromosome <- as.character(show_loci(madagascar)$chromosome)
+show_loci(madagascar)$chromosome[matching_rows] <- new_bim_no_NA$chromosome[match_indices[matching_rows]]
+
+# update chr_int in gt
+show_loci(madagascar)$chr_int <- as.integer(show_loci(madagascar)$chromosome)
+count_loci(madagascar)
+
+# update genetic distance in gt
+show_loci(madagascar)$genetic_dist[matching_rows] <- new_bim_no_NA$genetic_dist[match_indices[matching_rows]]
+
+# remove entries with genetic distance == 0
+no_dist <- which(show_loci(madagascar)$genetic_dist == 0)
+madagascar <- madagascar %>% select_loci(-no_dist)
+
+testthat::expect_false(is_loci_table_ordered(madagascar, error_on_false = FALSE, ignore_genetic_dist = FALSE))
+```
+
+
+# Malagasy Pierron data
+
+```{r}
+if (file.exists(resrepo::path_resrepo("data/raw/data_input/Pierron_Malagasy.gt"))) {
+  madagascar_p <- gt_load(resrepo::path_resrepo("data/raw/data_input/Pierron_Malagasy.gt"))
+} else {
+  madagascar_p <- gen_tibble("/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/raw/data_input/Pierron_Malagasy.bed", quiet = TRUE)
+}
+
+cat("Number of individuals:", nrow(madagascar_p), "\n")
+cat("Number of loci:", count_loci(madagascar_p))
+```
+
+```{r}
+# append population info
+
+pop_table <- read.table(resrepo::path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
+colnames(pop_table) <- c("IID", "V2", "FID", "Population", "V5", "V6", "V7")
+
+pop_table_sub <- subset(pop_table, pop_table$IID %in% madagascar_p$id & pop_table$V5 == "Madagascar")
+
+matching_m <- match(madagascar_p$id, pop_table_sub$IID)
+madagascar_p$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], madagascar_p$population)
+```
+
+```{r}
+if (file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_master.gt"))) {
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_master.gt"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_master.bk"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_master.rds"))
+}
+```
+
+```{r}
+if (file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_master_v2.bk"))) {
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_master_v2.gt"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_master_v2.bk"))
+  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_master_v2.rds"))
+}
+```
+
+# Merge the two datasets
+
+```{r}
+malagasy_merged <- rbind(madagascar, madagascar_p,
+  as_is = FALSE, flip_strand = TRUE,
+  quiet = FALSE, backingfile = resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_master")
+)
+
+```
+
+# Sort the order
+```{r}
+testthat::expect_false(is_loci_table_ordered(malagasy_merged, error_on_false = FALSE))
+# reorder the loci
+malagasy_merged <- gt_order_loci(malagasy_merged, use_current_table = FALSE, ignore_genetic_dist = FALSE)
+```
+
+# Filter the merged dataset
+
+```{r}
+malagasy_merged <- malagasy_merged %>% group_by(population)
+loci_report_m <- qc_report_loci(malagasy_merged)
+malagasy_merged <- malagasy_merged %>% ungroup()
+```
+
+# Loci
+
+```{r}
+to_keep <- which(loci_report_m$hwe_p > 0.01)
+malagasy_merged <- malagasy_merged %>% select_loci(all_of(to_keep))
+count_loci(malagasy_merged)
+malagasy_merged <- malagasy_merged %>% select_loci_if(loci_missingness(genotypes) < 0.01)
+count_loci(malagasy_merged)
+malagasy_merged <- malagasy_merged %>% select_loci_if(loci_maf(genotypes) > 0.025)
+count_loci(malagasy_merged)
+malagasy_merged <- malagasy_merged %>% select_loci_if(show_loci(genotypes)$chromosome %in% c(1:22))
+count_loci(malagasy_merged)
+```
+
+# Indiv
+
+```{r}
+malagasy_merged <- malagasy_merged %>% group_by(population)
+individual_report_m <- qc_report_indiv(malagasy_merged, kings_threshold = 0.177)
+malagasy_merged <- malagasy_merged %>% ungroup()
+malagasy_merged <- malagasy_merged %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
+nrow(malagasy_merged)
+count_loci(malagasy_merged)
+```
+
+```{r}
+gt_save(malagasy_merged, file_name = path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_master_v2"))
+```
+
+```{r}
+```
