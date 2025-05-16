@@ -1,6 +1,5 @@
 ---
 title: "Full dataset PCA"
-output: html_document
 date: "2024-11-06"
 knit: resrepo::knit_to_results
 output: pdf_document
@@ -10,35 +9,33 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(tidypopgen)
-library(resrepo)
 ```
 
-```{r set-directories}
-res_dir <- path_resrepo("results/s04_full_pca/")
+```{r set-directories, include=FALSE}
+res_dir <- "../results/s04_full_pca/"
 ```
 
 # Load gt
 
 ```{r}
-mad_bor_g1000_sum <- gt_load(path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
+mad_bor_g1000_sum <- gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean_ld.gt")
+```
+
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum)
+count_loci(mad_bor_g1000_sum)
 ```
 
 # Impute
 
 ```{r}
-mad_bor_g1000_sum <- gt_impute_simple(mad_bor_g1000_sum, method = "random")
 gt_set_imputed(mad_bor_g1000_sum, TRUE)
 ```
 
-# LD clumping
 
-```{r}
-to_keep_LD <- loci_ld_clump(mad_bor_g1000_sum, thr_r2 = 0.5, size = 50, return_id = TRUE)
-
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% select_loci(all_of(to_keep_LD))
-```
-
-# PCA
+# Compute PCA
 
 ```{r}
 random_pca <- gt_pca_randomSVD(mad_bor_g1000_sum)
@@ -46,11 +43,10 @@ pcs <- as.data.frame(random_pca$u)
 variance <- tidy(random_pca)
 ```
 
-
 # Add population metadata
 
 ```{r}
-pop_names <- read.csv(path_resrepo("data/raw/data_input/igsr-1000-genomes-phase-3-release.tsv"), sep = "\t")
+pop_names <- read.csv("../data/raw/data_input/igsr-1000-genomes-phase-3-release.tsv", sep = "\t")
 
 # find matching id in pop_names Sample.name and mad_bor_g1000_sum id, and for the matches, replace the population in mad_bor_g1000_sum with the population in pop_names
 for (i in seq_len(nrow(pop_names))) {
@@ -78,7 +74,7 @@ mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Bengali,Bengali"] 
 mad_bor_g1000_sum$population <- gsub("_", " ", mad_bor_g1000_sum$population)
 ```
 
-# Plot
+# Plot PCA
 
 ```{r}
 ggplot(pcs, aes(x = V1, y = V2, colour = mad_bor_g1000_sum$population)) +
@@ -88,7 +84,7 @@ ggplot(pcs, aes(x = V1, y = V2, colour = mad_bor_g1000_sum$population)) +
   guides(colour = guide_legend(ncol = 2, byrow = TRUE))
 ```
 
-This PCA uses the KING relatedness filtering of 0.177, equivalent to a first degree relatives (parent, sibling, or child) filtered within each population. 
+This PCA uses the KING relatedness filtering of 0.088, equivalent to second degree relatives, filtered within each population. 
 
 Unbalanced sample sizes will cause bias in the dimensions of this first plot. To explore how this might be affecting the PCA, the next dataset will randomly subsample populations with more individuals down to equivalent sizes.
 
@@ -105,17 +101,37 @@ subsample <- function(x) {
   }
 }
 
+# mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+#   group_by(population) %>%
+#   group_modify(~ subsample(.x)) %>%
+#   ungroup()
+
+
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
   group_by(population) %>%
-  group_modify(~ subsample(.x)) %>%
+  group_modify(~ {
+    if (!(.y$population %in% c("Betsimisaraka", "Merina", "Diego", "Sakalava Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro"))) {
+      subsample(.x)
+    } else {
+      .x
+    }
+  }) %>%
   ungroup()
+
 
 mad_bor_g1000_sum %>%
   group_by(population) %>%
   count()
 ```
 
-# PCA
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum)
+count_loci(mad_bor_g1000_sum)
+```
+
+# Compute PCA
 
 ```{r}
 sub_pca <- gt_pca_randomSVD(mad_bor_g1000_sum)
@@ -123,7 +139,7 @@ pcs <- as.data.frame(sub_pca$u)
 variance <- tidy(sub_pca)
 ```
 
-# Plot
+# Plot PCA
 
 ```{r}
 ggplot(pcs, aes(x = V1, y = V2, colour = mad_bor_g1000_sum$population)) +
@@ -144,7 +160,7 @@ all_malagasy <- subset(mad_bor_g1000_sum, population %in% c("Betsimisaraka", "Me
 mad_bor_g1000_sum[mad_bor_g1000_sum$id %in% all_malagasy$id, "malagasy"] <- 1
 ```
 
-# Plot
+# Plot PCA
 
 ```{r}
 ggplot(pcs, aes(x = V1, y = V2, colour = mad_bor_g1000_sum$population, shape = as.factor(mad_bor_g1000_sum$malagasy))) +
@@ -187,7 +203,6 @@ mad_bor_g1000_sum$Region <- "Other"
 mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Borneo", "Sumba", "Timor"), "Region"] <- "Island southeast Asia"
 mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Bengali", "Punjabi"), "Region"] <- "South Asia"
 mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Southern Han Chinese", "Kinh Vietnamese"), "Region"] <- "East Asia"
-# Not really happy about grouping all African samples here though...
 mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Esan", "Gambian Mandinka", "Luhya", "Mende", "Yoruba"), "Region"] <- "Africa"
 mad_bor_g1000_sum[mad_bor_g1000_sum$malagasy == 1, "Region"] <- mad_bor_g1000_sum[mad_bor_g1000_sum$malagasy == 1, "population"]
 

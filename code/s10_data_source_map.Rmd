@@ -11,11 +11,10 @@ library(rnaturalearth)
 library(sf)
 library(dplyr)
 library(ggrepel)
-library(resrepo)
 ```
 
 ```{r set-directories}
-res_dir <- path_resrepo("results/s10_data_source_map/")
+res_dir <- "../results/s10_data_source_map/"
 ```
 
 # Old maps with ggplot
@@ -28,7 +27,7 @@ world <- map_data("world")
 # Took a kml from google maps 
 #kml_data <- sf::st_read(dsn = resrepo::path_resrepo("/data/intermediate/biomart/Data.kml"))
 
-kml_data <- sf::st_read(dsn = resrepo::path_resrepo("/data/raw/data_input/Data_with_pierron.kml"))
+kml_data <- sf::st_read(dsn = "../data/raw/data_input/Data_with_pierron.kml")
 
 names <- kml_data$Name
 
@@ -164,7 +163,7 @@ ggplot() +
 
 
 ```{r}
-kml_data <- sf::st_read(dsn = resrepo::path_resrepo("/data/raw/data_input/Data_with_pierron.kml"))
+kml_data <- sf::st_read(dsn = "../data/raw/data_input/Data_with_pierron.kml")
 kml_data <- sf::st_transform(kml_data, crs = 29702)
 
 #Add names
@@ -228,6 +227,34 @@ ggplot()+
 
 ggsave(paste0(res_dir, "madagascar_map_pca_symbols.jpg"), width = 7, height = 7, dpi = 300)
 ```
+
+# Extra map for poster
+
+
+```{r}
+# filter kml data to only betsileo, merina, betsimisaraka, and sakalava
+kml_data_subset <- kml_data[kml_data$Name %in% c("Betsileo","Merina","Betsimisaraka","Sakalava"),]
+# rename "sakalava" to "sakalava_tsimihety
+kml_data_subset$Name[kml_data_subset$Name == "Sakalava"] <- "Sakalava_Tsimihety"
+ggplot()+
+  geom_sf(data = Madagascar_dissolved)+
+  geom_sf(data = sf::st_as_sf(kml_data_subset),aes(shape = Name, color = Name, fill = Name), size = 2)+
+  coord_sf(crs = st_crs(29702), xlim = c(-1000000,1800000), ylim = c(1,2000000),expand = FALSE) + # Laborde projection, commonly used for Madagascar
+  theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
+  scale_shape_manual(values = c(1,3,15,19)) +
+   labs(shape = NULL) +
+  #geom_text(data = labels_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3)+
+  labs(x = NULL, y = NULL, color = "Population", shape = "Population", fill = "Population")+
+  #scale_color_brewer(palette = "Dark2")+
+  scale_color_manual(values = c("Betsileo" = "#1B9E77", "Merina" = "#7570B3", "Betsimisaraka" = "#D95F02", "Sakalava_Tsimihety" = "#E7298A")) +
+  #scale_fill_brewer(palette = "Dark2")+
+  scale_fill_manual(values = c("Betsileo" = "#1B9E77", "Merina" = "#7570B3", "Betsimisaraka" = "#D95F02", "Sakalava_Tsimihety" = "#E7298A")) +
+  guides()
+
+
+#ggsave("/home/EJC199/Dropbox/malagasy_assortative_mating/map.jpg", width = 7, height = 5, dpi = 500)
+```
+
 
 
 

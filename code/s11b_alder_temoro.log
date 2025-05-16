@@ -65,19 +65,19 @@ Computational options:
 
                         *** Processing data ***
 
-num indivs in full data set: 1404
+num indivs in full data set: 1178
 parsing refpops string (semicolon-delimited; no spaces): Borneo;Esan
   admixed pop: Temoro (24 indivs)
   ref pop 0: Borneo (39 indivs)
   ref pop 1: Esan (99 indivs)
-initial filtering: using 425374 of 425374 snps in data set
-reading genotype data.......................... done
+initial filtering: using 161618 of 161618 snps in data set
+reading genotype data.......... done
 number of reference populations: 2
 number of chromosomes (with data) used: 22
 
 Form of ALDER to run: 2-reference weighted LD
 
-==> Time to process data: 0.856547
+==> Time to process data: 0.280007
 
 -------------------------------------------------------------------------------
 
@@ -92,104 +92,104 @@ decay curves will be fit starting at d = 0.005 Morgans, as specified
 
 analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
 
-==> Time to run alder: 0.097182
+==> Time to run alder: 0.0567
 
-     0.050	 0.00346953	      4643523
-     0.100	 0.00261283	      4175259
-     0.150	 0.00229909	      3902262
-     0.200	 0.00213970	      3692925
-     0.250	 0.00200087	      3570497
-     0.300	 0.00191658	      3479385
-     0.350	 0.00186484	      3407296
-     0.400	 0.00179398	      3343214
-     0.450	 0.00175778	      3281385
-     0.500	 0.00170771	      3238707
-     0.550	 0.00166616	      3199118
-     0.600	 0.00160627	      3170014
-     0.650	 0.00159554	      3151966
-     0.700	 0.00156047	      3116345
-     0.750	 0.00154647	      3098052
-     0.800	 0.00151762	      3093847
-     0.850	 0.00147418	      3067322
-     0.900	 0.00143713	      3052675
-     0.950	 0.00143424	      3022818
+     0.050	 0.00129114	       656071
+     0.100	 0.00123910	       590362
+     0.150	 0.00118201	       551650
+     0.200	 0.00112683	       522168
+     0.250	 0.00109333	       503208
+     0.300	 0.00105329	       487142
+     0.350	 0.00104792	       476981
+     0.400	 0.00102302	       469989
+     0.450	 0.00099141	       460487
+     0.500	 0.00098847	       455897
+     0.550	 0.00096778	       448916
+     0.600	 0.00093543	       443139
+     0.650	 0.00092624	       442716
+     0.700	 0.00091505	       436689
+     0.750	 0.00089730	       433763
+     0.800	 0.00089617	       435108
+     0.850	 0.00086981	       429787
+     0.900	 0.00084356	       428478
+     0.950	 0.00085430	       424562
          .	          .	            .
          .	          .	            .
          .	          .	            .
-    49.600	 0.00000849	      1968066
-    49.650	 0.00001865	      1967247
-    49.700	 0.00002097	      1962320
-    49.750	 0.00001250	      1969903
-    49.800	 0.00001708	      1966206
-    49.850	 0.00001729	      1964195
-    49.900	-0.00000974	      1974897
-    49.950	-0.00000832	      1971207
-       inf	 0.00001666	 165190878718   (inter-chrom snp pairs)
+    49.600	-0.00000023	       276458
+    49.650	 0.00002702	       275755
+    49.700	 0.00000039	       273675
+    49.750	 0.00001098	       274886
+    49.800	-0.00000075	       275153
+    49.850	 0.00001851	       273555
+    49.900	 0.00000788	       276530
+    49.950	 0.00001315	       276015
+       inf	 0.00001043	  -1914724442   (inter-chrom snp pairs)
 
-+1.8e-03
++1.1e-03
+|                                                                              
 |                                                                              
 |    x                                                                         
-|     x                                                                        
-|      x                                                                       
+|                                                                              
+|     xx                                                                       
 |       x                                                                      
 |        x                                                                     
 |         xx                                                                   
 |           xx                                                                 
-|             x                                                                
-|              xx                                                              
-|                xx                                                            
+|             xx                                                               
+|               xxx                                                            
 |                  x                                                           
-|                   xxxx                                                       
-|                       xx                                                     
-|                         xx                                                   
-|                           xxx                                                
-|                              xx                                              
-|                                xxx                                           
+|                   xx                                                         
+|                     xxx                                                      
+|                        xx                                                    
+|                          xxxx                                                
+|                              x                                               
+|                               xxxx                                           
 |                                   xxx                                        
 |                                      xxxx                                    
 |                                          xxxx                                
 |                                              xxxx                            
-|                                                  xxxx                        
-|                                                      xxxxxxx                 
+|                                                  xxxxx                       
+|                                                       xxxxxx                 
 |                                                             xxxxxxx          
-|                                                                    xxxxxxxx  
-|                                                                            xx
+|                                                                    xxxxxx xx 
+|                                                                          x  x
 |                                                                              
 |                                                                              
 +---------+---------+---------+---------+---------+---------+---------+--------
 |         1         2         3         4         5         6         7      cM
 
 ---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
-d>0.30       decay:       29.75 +/- 0.97         z = 30.70 *
-d>0.30     amp_tot:  0.00193832 +/- 0.00008359
-d>0.30     amp_exp:  0.00192999 +/- 0.00008249   z = 23.40 *
-d>0.30     amp_aff:  0.00001666 +/- 0.00000425
+d>0.30       decay:       28.42 +/- 0.80         z = 35.58 *
+d>0.30     amp_tot:  0.00111610 +/- 0.00003898
+d>0.30     amp_exp:  0.00111088 +/- 0.00003831   z = 29.00 *
+d>0.30     amp_aff:  0.00001043 +/- 0.00000237
 
 ---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
-d>0.40       decay:       29.49 +/- 0.99         z = 29.93 *
-d>0.40     amp_tot:  0.00191983 +/- 0.00008337
-d>0.40     amp_exp:  0.00191150 +/- 0.00008225   z = 23.24 *
-d>0.40     amp_aff:  0.00001666 +/- 0.00000425
+d>0.40       decay:       28.33 +/- 0.83         z = 34.26 *
+d>0.40     amp_tot:  0.00111219 +/- 0.00003938
+d>0.40     amp_exp:  0.00110697 +/- 0.00003869   z = 28.61 *
+d>0.40     amp_aff:  0.00001043 +/- 0.00000237
 
 ---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
-d>0.50       decay:       29.33 +/- 1.01         z = 28.96 *
-d>0.50     amp_tot:  0.00190827 +/- 0.00008404
-d>0.50     amp_exp:  0.00189994 +/- 0.00008292   z = 22.91 *
-d>0.50     amp_aff:  0.00001666 +/- 0.00000425
+d>0.50       decay:       28.27 +/- 0.86         z = 32.87 *
+d>0.50     amp_tot:  0.00110984 +/- 0.00004013
+d>0.50     amp_exp:  0.00110462 +/- 0.00003945   z = 28.00 *
+d>0.50     amp_aff:  0.00001043 +/- 0.00000237
 
 ---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
-d>0.60       decay:       29.24 +/- 1.04         z = 28.21 *
-d>0.60     amp_tot:  0.00190137 +/- 0.00008430
-d>0.60     amp_exp:  0.00189304 +/- 0.00008318   z = 22.76 *
-d>0.60     amp_aff:  0.00001666 +/- 0.00000425
+d>0.60       decay:       28.22 +/- 0.89         z = 31.65 *
+d>0.60     amp_tot:  0.00110740 +/- 0.00004080
+d>0.60     amp_exp:  0.00110218 +/- 0.00004012   z = 27.47 *
+d>0.60     amp_aff:  0.00001043 +/- 0.00000237
 
 ---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
-d>0.70       decay:       29.22 +/- 1.06         z = 27.66 *
-d>0.70     amp_tot:  0.00190018 +/- 0.00008460
-d>0.70     amp_exp:  0.00189185 +/- 0.00008344   z = 22.67 *
-d>0.70     amp_aff:  0.00001666 +/- 0.00000425
+d>0.70       decay:       28.23 +/- 0.92         z = 30.57 *
+d>0.70     amp_tot:  0.00110798 +/- 0.00004153
+d>0.70     amp_exp:  0.00110276 +/- 0.00004084   z = 27.00 *
+d>0.70     amp_aff:  0.00001043 +/- 0.00000237
 
-==> Time to run fits: 0.0892451
+==> Time to run fits: 0.119461
 
 -------------------------------------------------------------------------------
 
@@ -201,39 +201,39 @@ d>0.70     amp_aff:  0.00001666 +/- 0.00000425
 
 analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
 
-==> Time to run alder: 0.55048
+==> Time to run alder: 0.382905
 
 ---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
-d>0.30       decay:       29.78 +/- 1.18         z = 25.19 *
-d>0.30     amp_tot:  0.00078953 +/- 0.00003735
-d>0.30     amp_exp:  0.00078646 +/- 0.00003698   z = 21.27 *
-d>0.30     amp_aff:  0.00000614 +/- 0.00000165
+d>0.30       decay:       28.57 +/- 0.90         z = 31.58 *
+d>0.30     amp_tot:  0.00045427 +/- 0.00001764
+d>0.30     amp_exp:  0.00045236 +/- 0.00001743   z = 25.95 *
+d>0.30     amp_aff:  0.00000383 +/- 0.00000093
 
 ---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
-d>0.40       decay:       29.49 +/- 1.19         z = 24.74 *
-d>0.40     amp_tot:  0.00078122 +/- 0.00003719
-d>0.40     amp_exp:  0.00077815 +/- 0.00003682   z = 21.14 *
-d>0.40     amp_aff:  0.00000614 +/- 0.00000165
+d>0.40       decay:       28.44 +/- 0.93         z = 30.55 *
+d>0.40     amp_tot:  0.00045210 +/- 0.00001799
+d>0.40     amp_exp:  0.00045018 +/- 0.00001778   z = 25.33 *
+d>0.40     amp_aff:  0.00000383 +/- 0.00000093
 
 ---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
-d>0.50       decay:       29.28 +/- 1.21         z = 24.27 *
-d>0.50     amp_tot:  0.00077499 +/- 0.00003717
-d>0.50     amp_exp:  0.00077191 +/- 0.00003679   z = 20.98 *
-d>0.50     amp_aff:  0.00000614 +/- 0.00000165
+d>0.50       decay:       28.34 +/- 0.96         z = 29.67 *
+d>0.50     amp_tot:  0.00045031 +/- 0.00001832
+d>0.50     amp_exp:  0.00044840 +/- 0.00001811   z = 24.76 *
+d>0.50     amp_aff:  0.00000383 +/- 0.00000093
 
 ---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
-d>0.60       decay:       29.15 +/- 1.22         z = 23.90 *
-d>0.60     amp_tot:  0.00077124 +/- 0.00003712
-d>0.60     amp_exp:  0.00076817 +/- 0.00003673   z = 20.91 *
-d>0.60     amp_aff:  0.00000614 +/- 0.00000165
+d>0.60       decay:       28.26 +/- 0.97         z = 29.15 *
+d>0.60     amp_tot:  0.00044883 +/- 0.00001860
+d>0.60     amp_exp:  0.00044692 +/- 0.00001839   z = 24.30 *
+d>0.60     amp_aff:  0.00000383 +/- 0.00000093
 
 ---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
-d>0.70       decay:       29.09 +/- 1.23         z = 23.69 *
-d>0.70     amp_tot:  0.00076926 +/- 0.00003710
-d>0.70     amp_exp:  0.00076619 +/- 0.00003670   z = 20.88 *
-d>0.70     amp_aff:  0.00000614 +/- 0.00000165
+d>0.70       decay:       28.22 +/- 0.99         z = 28.45 *
+d>0.70     amp_tot:  0.00044804 +/- 0.00001880
+d>0.70     amp_exp:  0.00044612 +/- 0.00001858   z = 24.01 *
+d>0.70     amp_aff:  0.00000383 +/- 0.00000093
 
-==> Time to run fits: 0.09654
+==> Time to run fits: 0.105694
 
 -------------------------------------------------------------------------------
 
@@ -241,68 +241,68 @@ d>0.70     amp_aff:  0.00000614 +/- 0.00000165
 
 analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
 
-==> Time to run alder: 0.533833
+==> Time to run alder: 0.402732
 
 ---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
-d>0.30       decay:       29.82 +/- 1.08         z = 27.60 *
-d>0.30     amp_tot:  0.00026669 +/- 0.00001148
-d>0.30     amp_exp:  0.00026543 +/- 0.00001134   z = 23.41 *
-d>0.30     amp_aff:  0.00000252 +/- 0.00000063
+d>0.30       decay:       28.56 +/- 0.93         z = 30.81 *
+d>0.30     amp_tot:  0.00015707 +/- 0.00000616
+d>0.30     amp_exp:  0.00015625 +/- 0.00000608   z = 25.70 *
+d>0.30     amp_aff:  0.00000164 +/- 0.00000035
 
 ---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
-d>0.40       decay:       29.53 +/- 1.10         z = 26.96 *
-d>0.40     amp_tot:  0.00026390 +/- 0.00001143
-d>0.40     amp_exp:  0.00026264 +/- 0.00001128   z = 23.27 *
-d>0.40     amp_aff:  0.00000252 +/- 0.00000063
+d>0.40       decay:       28.47 +/- 0.93         z = 30.59 *
+d>0.40     amp_tot:  0.00015655 +/- 0.00000613
+d>0.40     amp_exp:  0.00015573 +/- 0.00000605   z = 25.72 *
+d>0.40     amp_aff:  0.00000164 +/- 0.00000035
 
 ---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
-d>0.50       decay:       29.35 +/- 1.13         z = 25.90 *
-d>0.50     amp_tot:  0.00026214 +/- 0.00001157
-d>0.50     amp_exp:  0.00026088 +/- 0.00001143   z = 22.83 *
-d>0.50     amp_aff:  0.00000252 +/- 0.00000063
+d>0.50       decay:       28.39 +/- 0.96         z = 29.59 *
+d>0.50     amp_tot:  0.00015609 +/- 0.00000623
+d>0.50     amp_exp:  0.00015527 +/- 0.00000615   z = 25.25 *
+d>0.50     amp_aff:  0.00000164 +/- 0.00000035
 
 ---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
-d>0.60       decay:       29.27 +/- 1.17         z = 25.02 *
-d>0.60     amp_tot:  0.00026122 +/- 0.00001159
-d>0.60     amp_exp:  0.00025996 +/- 0.00001145   z = 22.70 *
-d>0.60     amp_aff:  0.00000252 +/- 0.00000063
+d>0.60       decay:       28.36 +/- 1.00         z = 28.40 *
+d>0.60     amp_tot:  0.00015589 +/- 0.00000631
+d>0.60     amp_exp:  0.00015507 +/- 0.00000623   z = 24.89 *
+d>0.60     amp_aff:  0.00000164 +/- 0.00000035
 
 ---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
-d>0.70       decay:       29.29 +/- 1.22         z = 24.07 *
-d>0.70     amp_tot:  0.00026145 +/- 0.00001159
-d>0.70     amp_exp:  0.00026019 +/- 0.00001144   z = 22.74 *
-d>0.70     amp_aff:  0.00000252 +/- 0.00000063
+d>0.70       decay:       28.44 +/- 1.05         z = 27.08 *
+d>0.70     amp_tot:  0.00015638 +/- 0.00000636
+d>0.70     amp_exp:  0.00015556 +/- 0.00000628   z = 24.78 *
+d>0.70     amp_aff:  0.00000164 +/- 0.00000035
 
-==> Time to run fits: 0.089169
+==> Time to run fits: 0.115959
 
 -------------------------------------------------------------------------------
 
                *** Comparing curves to test for admixture ***
 
 ---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
-d>0.30  decay diff:        0.03 +/- 0.50      1-ref Borneo - 2-ref
-d>0.30  decay diff:        0.07 +/- 0.78      1-ref Esan - 2-ref
-d>0.30  decay diff:        0.04 +/- 1.26      1-ref Esan - 1-ref Borneo
+d>0.30  decay diff:        0.15 +/- 0.42      1-ref Borneo - 2-ref
+d>0.30  decay diff:        0.14 +/- 0.69      1-ref Esan - 2-ref
+d>0.30  decay diff:       -0.01 +/- 1.07      1-ref Esan - 1-ref Borneo
 
 ---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
-d>0.40  decay diff:       -0.00 +/- 0.50      1-ref Borneo - 2-ref
-d>0.40  decay diff:        0.04 +/- 0.78      1-ref Esan - 2-ref
-d>0.40  decay diff:        0.04 +/- 1.27      1-ref Esan - 1-ref Borneo
+d>0.40  decay diff:        0.11 +/- 0.41      1-ref Borneo - 2-ref
+d>0.40  decay diff:        0.14 +/- 0.69      1-ref Esan - 2-ref
+d>0.40  decay diff:        0.03 +/- 1.06      1-ref Esan - 1-ref Borneo
 
 ---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
-d>0.50  decay diff:       -0.05 +/- 0.49      1-ref Borneo - 2-ref
-d>0.50  decay diff:        0.02 +/- 0.79      1-ref Esan - 2-ref
-d>0.50  decay diff:        0.08 +/- 1.27      1-ref Esan - 1-ref Borneo
+d>0.50  decay diff:        0.07 +/- 0.42      1-ref Borneo - 2-ref
+d>0.50  decay diff:        0.12 +/- 0.69      1-ref Esan - 2-ref
+d>0.50  decay diff:        0.05 +/- 1.07      1-ref Esan - 1-ref Borneo
 
 ---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
-d>0.60  decay diff:       -0.08 +/- 0.50      1-ref Borneo - 2-ref
-d>0.60  decay diff:        0.03 +/- 0.79      1-ref Esan - 2-ref
-d>0.60  decay diff:        0.11 +/- 1.28      1-ref Esan - 1-ref Borneo
+d>0.60  decay diff:        0.04 +/- 0.42      1-ref Borneo - 2-ref
+d>0.60  decay diff:        0.14 +/- 0.69      1-ref Esan - 2-ref
+d>0.60  decay diff:        0.10 +/- 1.07      1-ref Esan - 1-ref Borneo
 
 ---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
-d>0.70  decay diff:       -0.13 +/- 0.51      1-ref Borneo - 2-ref
-d>0.70  decay diff:        0.06 +/- 0.80      1-ref Esan - 2-ref
-d>0.70  decay diff:        0.20 +/- 1.29      1-ref Esan - 1-ref Borneo
+d>0.70  decay diff:       -0.02 +/- 0.43      1-ref Borneo - 2-ref
+d>0.70  decay diff:        0.21 +/- 0.70      1-ref Esan - 2-ref
+d>0.70  decay diff:        0.22 +/- 1.09      1-ref Esan - 1-ref Borneo
 
 -------------------------------------------------------------------------------
 
@@ -311,28 +311,28 @@ d>0.70  decay diff:        0.20 +/- 1.29      1-ref Esan - 1-ref Borneo
 Weighted LD curves are fit starting at 0.5 cM
 
 Pre-test: Does Temoro have a 1-ref weighted LD curve with Borneo?
-   1-ref decay z-score:   24.27
-   1-ref amp_exp z-score: 20.98
+   1-ref decay z-score:   29.67
+   1-ref amp_exp z-score: 24.76
                                   YES: curve is significant
 
 Pre-test: Does Temoro have a 1-ref weighted LD curve with Esan?
-   1-ref decay z-score:   25.90
-   1-ref amp_exp z-score: 22.83
+   1-ref decay z-score:   29.59
+   1-ref amp_exp z-score: 25.25
                                   YES: curve is significant
 
 Does Temoro have a 2-ref weighted LD curve with Borneo and Esan?
-   2-ref decay z-score:   28.96
-   2-ref amp_exp z-score: 22.91
+   2-ref decay z-score:   32.87
+   2-ref amp_exp z-score: 28.00
                                   YES: curve is significant
 
 Do 2-ref and 1-ref curves have consistent decay rates?
-   1-ref Borneo - 2-ref z-score:                      -0.11   ( -0%)
-   1-ref Esan - 2-ref z-score:                         0.03   (  0%)
-   1-ref Esan - 1-ref Borneo z-score:                  0.06   (  0%)
+   1-ref Borneo - 2-ref z-score:                       0.16   (  0%)
+   1-ref Esan - 2-ref z-score:                         0.18   (  0%)
+   1-ref Esan - 1-ref Borneo z-score:                  0.05   (  0%)
                                   YES: decay rates are consistent
 
-Test SUCCEEDS (z=22.91, p=3.5e-116) for Temoro with {Borneo, Esan} weights
+Test SUCCEEDS (z=28.00, p=1.5e-172) for Temoro with {Borneo, Esan} weights
 
-DATA:	success	3.5e-116	Temoro	Borneo	Esan	22.91	20.98	22.83	0%	29.33 +/- 1.01	0.00189994 +/- 0.00008292	29.28 +/- 1.21	0.00077191 +/- 0.00003679	29.35 +/- 1.13	0.00026088 +/- 0.00001143
+DATA:	success	1.5e-172	Temoro	Borneo	Esan	28.00	24.76	25.25	0%	28.27 +/- 0.86	0.00110462 +/- 0.00003945	28.34 +/- 0.96	0.00044840 +/- 0.00001811	28.39 +/- 0.96	0.00015527 +/- 0.00000615
 
 DATA:	test status	p-value	test pop	ref A	ref B	2-ref z-score	1-ref z-score A	1-ref z-score B	max decay diff %	2-ref decay	2-ref amp_exp	1-ref decay A	1-ref amp_exp A	1-ref decay B	1-ref amp_exp B

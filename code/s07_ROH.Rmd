@@ -11,19 +11,21 @@ knitr::opts_chunk$set(echo = TRUE)
 library(detectRUNS)
 library(ggplot2)
 library(tidypopgen)
-library(resrepo)
+library(mclust)
 ```
 
 ```{r set-directories}
-res_dir <- path_resrepo("results/s07_ROH/")
+res_dir <- "../results/s07_ROH/"
 ```
 
 # Load gt
 
 ```{r}
-malagasy <- gt_load(path_resrepo("data/intermediate/rbind_data/malagasy_merge_master_v2.gt"))
+malagasy <- gt_load("../data/intermediate/rbind_data/malagasy_merge_clean_no_maf_1st_degree.gt")
 count_loci(malagasy)
 ```
+
+This script is for the analysis of runs of homozygosity (ROH) in the Malagasy population, using the Malagasy only dataset containing `r nrow(malagasy)` individuals and `r ncol(malagasy)` loci. 
 
 # Check Loci Order
 
@@ -34,10 +36,20 @@ testthat::expect_true(is_loci_table_ordered(malagasy, error_on_false = FALSE))
 # Impute
 
 ```{r}
-malagasy <- gt_impute_simple(malagasy, method = "random")
+# malagasy <- gt_impute_simple(malagasy, method = "random")
 ```
 
 # Find ROH
+
+```{r}
+density <- show_loci(malagasy) %>%
+  group_by(chromosome, window = floor(position / 1000)) %>%
+  summarise(n = n(), .groups = "drop")
+
+min_snp_coverage <- min(density$n)
+median_snp_coverage <- median(density$n)
+mean_snp_coverage <- mean(density$n)
+```
 
 Kirin et al 2010 plink methods: 
 window of 5000 Kb
@@ -48,21 +60,194 @@ maximum gap between two snps set to 100 Kb
 minimum length of 500 Kb (particularly stringent)
 minimum density 50Kb/snp
 
+Kourunes et al 2022 GARLIC methods:
+
+window of 50 snps
+'Using a 3-component Gaussian mixture model, GARLIC classified ROH into 3 length groups: small/class A, medium/class B, and long/class C ROH. Across all populations, class A/B and class B/C size boundaries were inferred as approximately 300kb and 1Mb, respectively'
+
+'Since levels of ROH partitioned by size class are dependent on the size classification cutoffs, we assessed concordance of our results by repeating size classification using the –size-bounds flag in GARLIC to impose 4 additional sets of size class boundaries. We first classified ROH based on the commonly used rule of thumb that a time depth of m meioses is expected to give a mean IBD segment length of 100/m cM (Thompson 2013). In this case, common ancestors within the past 20 generations (postadmixture) would give an expected IBD segment length of approximately 2.5 Mb or longer, so we applied 2.5 Mb as the shorter/long ROH boundary. We also collected the population-specific length classification cutoffs from the 64 worldwide populations provided by Pemberton et al. (2012), which represents an extensive range of classification schemes. We repeated ROH-calling with GARLIC using the minimum, mean, and maximum of the 64 population-specific boundaries reported in Pemberton et al. (2012).'
 
 ```{r}
+window_size <- 100
+
 malagasy <- malagasy %>% group_by(population)
 runs <- gt_roh_window(malagasy,
-  window_size = 100, #
+  window_size = window_size, #
   threshold = 0.05,
-  min_snp = 10, #
+  min_snp = 10, # our average SNP coverage is about 1 per Kb, so this is approx 10Kb
   heterozygosity = FALSE, #
   max_opp_window = 1, #
   max_miss_window = 5, #
   max_gap = 10^5, #
-  min_length_bps = 1000, #
+  min_length_bps = 50000, #
   min_density = 0.05
 ) #
 ```
+
+```{r}
+# Load fastmixture Q matrix
+qmats <- readRDS("../data/intermediate/fastmixture/fastmixture_m.RData")
+mad_bor_g1000_sum <- gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean.gt")
+# subset to only malagasy
+all_malagasy <- c("Betsimisaraka", "Merina", "Sakalava_Tsimihety", "Betsileo", "Diego", "Vezo", "Mikea", "Temoro")
+# tidy with the gt
+tidyq <- augment(get_q_matrix(qmats, k = 3, run = 1), data = mad_bor_g1000_sum)
+malagasyq <- tidyq %>% filter(population %in% all_malagasy)
+# subset the malagasyq dataframe to only the "Merina"
+merina <- malagasyq %>% filter(population == "Merina")
+# group the merina
+merina$group <- ifelse(merina$.Q3 > 0.5, "Social group A", "Social group B")
+merinaA <- merina %>% filter(group == "Social group A")
+merinaB <- merina %>% filter(group == "Social group B")
+
+# match the runs$Individual and malagasy$id
+matches <- match(runs$id, malagasy$id)
+# add $population to runs
+runs$Population <- malagasy$population[matches]
+runs$Population <- as.character(malagasy$population[matches])
+# if $Individual is in merinaA$id, add "merina_a" to runs$Population
+runs$Population <- ifelse(runs$id %in% merinaA$id, "Merina_A", runs$Population)
+# if $Individual is in merinaB$id, add "merina_b" to runs$Population
+runs$Population <- ifelse(runs$id %in% merinaB$id, "Merina_B", runs$Population)
+```
+
+
+# Classify the runs
+
+Use mclust 3-way Gaussian mixed-model to classify runs into 3 categories by length, similar to GALRIC method, as a test.
+
+modelname V automatically chosen fora univariate model with variable/unequal variance
+
+```{r}
+head(runs)
+classes <- mclust::Mclust(data = runs$lengthBps, G = 3) # creates the model
+runs$classification <- as.factor(classes$classification)
+classes$BIC # BIC values for the model, when given G = 3
+```
+
+```{r}
+classes$parameters # gives details of each class
+```
+
+Now examine BIC values for 1-10 clusters, and use the clustCombiOptim function to find the optimum number of clusters.
+
+https://rdrr.io/cran/mclust/man/clustCombi.html 
+
+```{r}
+BIC <- mclust::mclustBIC(data = runs$lengthBps, G = 1:10, modelNames = "V")
+plot(BIC) # shows BIC values for G 1:10, plateaux at 3 clusters
+summary(BIC)
+
+classes_optimum <- mclust::Mclust(data = runs$lengthBps, G = 1:10, modelNames = "V") # this time G varies
+
+clust_classes <- clustCombi(object = classes_optimum, data = runs$lengthBps) #
+
+optimum <- clustCombiOptim(clust_classes) # returns optimum number of clusters
+optimum$numClusters.combi
+```
+
+
+```{r}
+classes <- mclust::Mclust(data = runs$lengthBps, G = optimum$numClusters.combi) # creates the model
+runs$classification <- as.factor(classes$classification)
+classes$BIC # BIC values for the model, when given G
+classes$parameters # gives details of each class
+```
+
+
+# Plot runs by class
+
+```{r}
+runs_per_indiv <- runs %>%
+  group_by(id, classification) %>%
+  count()
+
+# runs_per_indiv$population <- malagasy$population[match(runs_per_indiv$id, malagasy$id)]
+
+# add runs$population to runs_per_indiv
+runs_per_indiv$population <- runs$Population[match(runs_per_indiv$id, runs$id)]
+
+
+ggplot(runs_per_indiv, aes(x = population, y = n, fill = classification)) +
+  geom_bar(stat = "identity", position = "stack") + # Stack bars instead of dodging
+  labs(
+    title = "Stacked Bar Plot of Run Lengths by Population",
+    x = "Individual ID",
+    y = "Count",
+    fill = "Run Type"
+  ) +
+  # 90 degree hjust on axis text
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+runs_per_indiv$population <- ifelse(runs_per_indiv$id %in% merina$id, "Merina", runs_per_indiv$population)
+
+ggplot(runs_per_indiv, aes(x = population, y = n, fill = classification)) +
+  geom_bar(stat = "identity", position = "stack") + # Stack bars instead of dodging
+  labs(
+    title = "Stacked Bar Plot of Run Lengths by Population",
+    x = "Individual ID",
+    y = "Count",
+    fill = "Run Type"
+  ) +
+  # 90 degree hjust on axis text
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+ggplot(runs_per_indiv, aes(x = id, y = n, fill = classification)) +
+  geom_bar(stat = "identity", position = "stack") + # Stack bars instead of dodging
+  labs(
+    title = "Stacked Bar Plot of Run Lengths by Individual",
+    x = "Individual ID",
+    y = "Count",
+    fill = "Run Type"
+  ) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+```
+
+```{r}
+lengths_per_indiv <- runs %>%
+  group_by(id, classification) %>%
+  summarise(length = sum(lengthBps), .groups = "drop")
+
+lengths_per_indiv$population <- runs$Population[match(lengths_per_indiv$id, runs$id)]
+
+ggplot(lengths_per_indiv, aes(x = population, y = length, fill = classification)) +
+  geom_bar(stat = "identity", position = "stack") + # Stack bars instead of dodging
+  labs(
+    title = "Stacked Bar Plot of Run Lengths by Population",
+    x = "Individual ID",
+    y = "Length",
+    fill = "Run Type"
+  ) +
+  # 90 degree hjust on axis text
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+lengths_per_indiv$population <- ifelse(lengths_per_indiv$id %in% merina$id, "Merina", lengths_per_indiv$population)
+
+ggplot(lengths_per_indiv, aes(x = population, y = length, fill = classification)) +
+  geom_bar(stat = "identity", position = "stack") + # Stack bars instead of dodging
+  labs(
+    title = "Stacked Bar Plot of Run Lengths by Population",
+    x = "Individual ID",
+    y = "Length",
+    fill = "Run Type"
+  ) +
+  # 90 degree hjust on axis text
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+ggplot(lengths_per_indiv, aes(x = id, y = length, fill = classification)) +
+  geom_bar(stat = "identity", position = "stack") + # Stack bars instead of dodging
+  labs(
+    title = "Stacked Bar Plot of Total Run Lengths (BPs) by Individual",
+    x = "Individual ID",
+    y = "Length (BPs)",
+    fill = "Run Type"
+  ) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+```
+
+
+
 
 # Total number of runs
 
@@ -140,7 +325,6 @@ ggplot(data = malagasy, aes(x = id, y = mean, fill = population)) +
 ggsave(paste0(res_dir, "mean_len_per_indiv.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
-
 ```{r}
 ggplot(malagasy, aes(x = population, y = mean, fill = population)) +
   geom_violin(trim = FALSE) +
@@ -148,6 +332,45 @@ ggplot(malagasy, aes(x = population, y = mean, fill = population)) +
   scale_x_discrete(guide = guide_axis(n.dodge = 2))
 ggsave(paste0(res_dir, "mean_len_per_indiv_violin.jpg"), width = 7, height = 7, dpi = 300)
 ```
+
+# Median length of runs per individual
+
+```{r}
+avg_length_per_indiv <- aggregate(runs$lengthBps, by = list(id = runs$id), FUN = median)
+colnames(avg_length_per_indiv) <- c("id", "median")
+malagasy <- left_join(malagasy, avg_length_per_indiv, by = "id")
+```
+
+
+```{r}
+ggplot(data = malagasy, aes(x = id, y = median, fill = population)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank()) +
+  labs(x = "Median length", y = "ID", fill = "Population")
+ggsave(paste0(res_dir, "mean_len_per_indiv.jpg"), width = 7, height = 7, dpi = 300)
+```
+
+# For an individual 
+
+```{r}
+CH01RR <- runs %>% filter(id %in% "CH01RR")
+
+ggplot(data = CH01RR, aes(x = lengthBps)) +
+  geom_histogram() +
+  labs(title = "Runs of homozygosity for individual CH01RR", x = "Length (BPs)", y = "Count")
+
+# calculate median
+```
+```{r}
+CH13RR <- runs %>% filter(id %in% "CH13RR")
+
+ggplot(data = CH13RR, aes(x = lengthBps)) +
+  geom_histogram() +
+  labs(title = "Runs of homozygosity for individual CH13RR", x = "Length (BPs)", y = "Count")
+```
+
+
 
 
 This warning pops up sometimes? 
@@ -190,6 +413,24 @@ ggplot(malagasy, aes(x = n, y = length, color = merina, fill = merina, shape = p
 ggsave(paste0(res_dir, "total_len_vs_n_runs_merina.jpg"), width = 9, height = 7, dpi = 300)
 ```
 
+```{r}
+#
+malagasy_subset <- malagasy[malagasy$population %in% c("Betsileo", "Merina", "Betsimisaraka", "Sakalava_Tsimihety"), ]
+
+ggplot(malagasy_subset, aes(x = n, y = length, color = merina, fill = merina, shape = population)) +
+  geom_point(size = 2.2) +
+  labs(title = "Runs of homozygosity per individual", x = "Number of runs", y = "Total length (BPs)", color = NULL, shape = "Population", fill = NULL) +
+  scale_fill_manual(values = c("Merina" = "#7570B3", "Other" = "grey")) +
+  scale_color_manual(values = c("Merina" = "#7570B3", "Other" = "grey")) +
+  # scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8)) +
+  scale_shape_manual(values = c(1, 3, 15, 19)) +
+  guides(fill = "none", color = "none", shape = guide_legend(override.aes = list(fill = c("grey", "grey", "#7570B3", "grey"), color = c("grey", "grey", "#7570B3", "grey")))) +
+  theme(plot.title = element_text(size = 16), axis.title.x = element_text(size = 16), axis.title.y = element_text(size = 16)) # , legend.title = element_text(size = 16), legend.text = element_text(size = 13)
+# axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+
+
+ggsave("/home/EJC199/Dropbox/malagasy_assortative_mating/ROH.jpg", width = 7, height = 5, dpi = 500)
+```
 
 
 We could test using Kruskal-wallis whether there is a significant diff between 
@@ -228,8 +469,8 @@ then show that that model alone doesn't account for the inflation in ROH's?
 # Load q_matrices from fastmixture 
 
 ```{r}
-qmats <- readRDS(path_resrepo("data/intermediate/fastmixture/fastmixture_m.RData"))
-mad_bor_g1000_sum <- gt_load(path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
+qmats <- readRDS("../data/intermediate/fastmixture/fastmixture_m.RData")
+mad_bor_g1000_sum <- gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean.gt")
 ```
 
 ```{r}
@@ -259,6 +500,7 @@ malagasy_all$mean <- "NA"
 malagasy_all$n <- ifelse(!is.na(matching_m), malagasy$n[matching_m], malagasy_all$n)
 malagasy_all$length <- ifelse(!is.na(matching_m), malagasy$length[matching_m], malagasy_all$length)
 malagasy_all$mean <- ifelse(!is.na(matching_m), malagasy$mean[matching_m], malagasy_all$mean)
+malagasy_all$median <- ifelse(!is.na(matching_m), malagasy$median[matching_m], malagasy_all$median)
 head(malagasy_all)
 ```
 
@@ -285,9 +527,9 @@ ggsave(paste0(res_dir, "n_runs_vs_asian_ancestry.jpg"), width = 7, height = 7, d
 ```
 
 ```{r}
-ggplot(malagasy_all, aes(x = .Q1, y = n, fill = population, colour = population, shape = population)) +
+ggplot(malagasy_all, aes(x = .Q2, y = n, fill = population, colour = population, shape = population)) +
   geom_point(size = 1.8) +
-  labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = ".Q1 proportion (% African ancestry)", y = "Number of Runs") +
+  labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = ".Q2 proportion (% African ancestry)", y = "Number of Runs") +
   scale_color_brewer(palette = "Dark2") +
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8)) +
   theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank()) +
@@ -322,10 +564,19 @@ ggplot(malagasy_all, aes(x = .Q3, y = mean, fill = population, colour = populati
 ggsave(paste0(res_dir, "mean_len_vs_asian_ancestry.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
+Two Vezo individuals are clear outliers in the above plot. If we remove these individuals what happens?
+
 ```{r}
-ggplot(malagasy_all, aes(x = .Q1, y = mean, fill = population, colour = population, shape = population)) +
+nrow(malagasy_all)
+malagasy_all <- malagasy_all %>% filter(mean < 2000000)
+nrow(malagasy_all)
+```
+
+
+```{r}
+ggplot(malagasy_all, aes(x = .Q2, y = mean, fill = population, colour = population, shape = population)) +
   geom_point(size = 1.8) +
-  labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = ".Q1 proportion (% African ancestry)", y = "Mean length of Runs (bp)") +
+  labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = ".Q2 proportion (% African ancestry)", y = "Mean length of Runs (bp)") +
   scale_color_brewer(palette = "Dark2") +
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8)) +
   theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank()) +
@@ -338,13 +589,36 @@ ggplot(malagasy_all, aes(x = .Q1, y = mean, fill = population, colour = populati
   )
 
 
-ggsave(paste0(res_dir, "mean_len_vs_african_ancestry.jpg"), width = 7, height = 7, dpi = 300)
+ggsave(paste0(res_dir, "mean_len_vs_african_ancestry.jpg"),
+       width = 7, height = 7, dpi = 300)
 ```
+
+# Ancestry proportion compared to median length of ROHS
+
+```{r}
+ggplot(malagasy_all, aes(x = .Q3, y = median, fill = population,
+                         colour = population, shape = population)) +
+  geom_point(size = 1.8) +
+  labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = ".Q3 proportion (% Asian ancestry)", y = "Median length of Runs (bp)") +
+  scale_color_brewer(palette = "Dark2") +
+  scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8)) +
+  theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank()) +
+  # axis.text.x = element_blank(),  axis.text.y = element_blank(),
+  scale_fill_brewer(palette = "Dark2") +
+  guides(
+    fill = guide_legend(title = "Population"),
+    colour = guide_legend(title = "Population"),
+    shape = guide_legend(title = "Population")
+  )
+```
+
+
 
 # Ancestry proportion compared to total length of ROHS
 
 ```{r}
-ggplot(malagasy_all, aes(x = .Q3, y = length, fill = population, colour = population, shape = population)) +
+ggplot(malagasy_all, aes(x = .Q3, y = length, fill = population,
+                         colour = population, shape = population)) +
   geom_point(size = 1.8) +
   labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = ".Q3 proportion (% Asian ancestry)", y = "Total length of runs (bp)") +
   scale_color_brewer(palette = "Dark2") +
@@ -358,13 +632,15 @@ ggplot(malagasy_all, aes(x = .Q3, y = length, fill = population, colour = popula
     shape = guide_legend(title = "Population")
   )
 
-ggsave(paste0(res_dir, "total_len_vs_asian_ancestry.jpg"), width = 7, height = 7, dpi = 300)
+ggsave(paste0(res_dir, "total_len_vs_asian_ancestry.jpg"),
+       width = 7, height = 7, dpi = 300)
 ```
 
 ```{r}
-ggplot(malagasy_all, aes(x = .Q1, y = length, fill = population, colour = population, shape = population)) +
+ggplot(malagasy_all, aes(x = .Q2, y = length, fill = population,
+                         colour = population, shape = population)) +
   geom_point(size = 1.8) +
-  labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = ".Q1 proportion (% African ancestry) (% African ancestry)", y = "Total length of runs (bp)") +
+  labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = ".Q2 proportion (% African ancestry)", y = "Total length of runs (bp)") +
   scale_color_brewer(palette = "Dark2") +
   scale_shape_manual(values = c(21, 22, 23, 24, 25, 3, 4, 8)) +
   theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank()) +
@@ -377,8 +653,29 @@ ggplot(malagasy_all, aes(x = .Q1, y = length, fill = population, colour = popula
   )
 
 
-ggsave(paste0(res_dir, "total_len_vs_african_ancestry.jpg"), width = 7, height = 7, dpi = 300)
+ggsave(paste0(res_dir, "total_len_vs_african_ancestry.jpg"),
+       width = 7, height = 7, dpi = 300)
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -386,7 +683,8 @@ ggsave(paste0(res_dir, "total_len_vs_african_ancestry.jpg"), width = 7, height =
 
 
 ```{r}
-ggplot(malagasy_all, aes(x = .Q3, y = n, fill = population, colour = population, shape = population)) +
+ggplot(malagasy_all, aes(x = .Q3, y = n, fill = population,
+                         colour = population, shape = population)) +
   geom_point(size = 1.8) +
   geom_smooth(method = "lm") +
   labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = ".Q3 proportion (% Asian ancestry)", y = "Number of runs") +
@@ -404,7 +702,8 @@ ggplot(malagasy_all, aes(x = .Q3, y = n, fill = population, colour = population,
 
 
 ```{r}
-ggplot(malagasy_all, aes(x = .Q3, y = n, fill = population, colour = population, shape = population)) +
+ggplot(malagasy_all, aes(x = .Q3, y = n, fill = population,
+                         colour = population, shape = population)) +
   geom_point(size = 1.8) +
   geom_smooth(method = "lm", aes(group = 1)) +
   labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = ".Q3 proportion (% Asian ancestry)", y = "Number of runs") +
@@ -423,7 +722,8 @@ ggplot(malagasy_all, aes(x = .Q3, y = n, fill = population, colour = population,
 
 
 ```{r}
-ggplot(malagasy_all, aes(x = .Q3, y = mean, fill = population, colour = population, shape = population)) +
+ggplot(malagasy_all, aes(x = .Q3, y = mean, fill = population,
+                         colour = population, shape = population)) +
   geom_point(size = 1.8) +
   geom_smooth(method = "lm") +
   labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = ".Q3 proportion (% Asian ancestry)", y = "Mean length of runs (bp)") +
@@ -441,7 +741,8 @@ ggplot(malagasy_all, aes(x = .Q3, y = mean, fill = population, colour = populati
 
 
 ```{r}
-ggplot(malagasy_all, aes(x = .Q3, y = mean, fill = population, colour = population, shape = population)) +
+ggplot(malagasy_all, aes(x = .Q3, y = mean, fill = population,
+                         colour = population, shape = population)) +
   geom_point(size = 1.8) +
   geom_smooth(method = "lm", aes(group = 1)) +
   labs(title = "Runs of homozygosity against ancestry proportion for Malagasy individuals", x = ".Q3 proportion (% Asian ancestry)", y = "Mean length of runs (bp)") +

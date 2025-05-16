@@ -7,18 +7,26 @@ date: "2025-02-03"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidypopgen)
-library(resrepo)
 library(admixtools)
 library(ggplot2)
 library(testthat)
 ```
 
 ```{r set-directories}
-res_dir <- path_resrepo("results/s11_ALDER/")
+res_dir <- "../results/s11_ALDER/"
 ```
 
+# Load gt
+
 ```{r}
-mad_bor_g1000_sum <- gt_load(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.gt"))
+mad_bor_g1000_sum <- gt_load("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_clean.gt")
+```
+
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum)
+count_loci(mad_bor_g1000_sum)
 ```
 
 # Make $population a copy of $id
@@ -38,13 +46,13 @@ is_loci_table_ordered(mad_bor_g1000_sum, error_on_false = TRUE, ignore_genetic_d
 # Remove existing plink .bed files and write .bed
 
 ```{r}
-if (file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.bed"))) {
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.bed"))
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.bim"))
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.fam"))
+if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.bed")) {
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.bed")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.bim")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.fam")
 }
 
-gt_as_plink(mad_bor_g1000_sum, resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum"))
+gt_as_plink(mad_bor_g1000_sum, "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum")
 ```
 
 # Transform to .ped
@@ -59,15 +67,14 @@ plink --bfile ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum 
 check and remove any snps without a map position
 
 ```{r}
-# read resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.fam")
-mad_bor_g1000_sum_fam <- read.table(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.fam"), header = FALSE, sep = " ")
+mad_bor_g1000_sum_fam <- read.table("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.fam", header = FALSE, sep = " ")
 
 # colnames of $V1 to "id"
 colnames(mad_bor_g1000_sum_fam)[1] <- "id"
 # colnames of $V6 to "population"
 colnames(mad_bor_g1000_sum_fam)[6] <- "population"
 
-pop_table <- read.table(path_resrepo("data/raw/data_input/Madagascar_Borneo.poptable"), sep = "\t", fill = TRUE)
+pop_table <- read.table("../data/raw/data_input/Madagascar_Borneo.poptable", sep = "\t", fill = TRUE)
 colnames(pop_table) <- c("IID", "V2", "FID", "Population", "V5", "V6", "V7")
 
 # Remove the "RR"
@@ -90,13 +97,14 @@ mad_bor_g1000_sum_fam$population <- gsub(" ", "_", mad_bor_g1000_sum_fam$populat
 mad_bor_g1000_sum_fam$population[grepl("^GRC", mad_bor_g1000_sum_fam$id)] <- "Sumba"
 
 # Load fastmixture results
-mad_bor_g1000_sum <- gt_load(path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
+mad_bor_g1000_sum <- gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean.gt")
 qmats <- readRDS("~/Dropbox/gitdata/malagasy_diversity/data/intermediate/fastmixture/fastmixture_m.RData")
 # tidy with the gt
 mad_bor_g1000_sum <- augment(get_q_matrix(qmats, k = 3, run = 1), data = mad_bor_g1000_sum)
 # filter to merina
 merina <- mad_bor_g1000_sum %>% filter(population == "Merina")
 # split groups
+# .Q3 representing Asian ancestry and .Q2 representing African ancestry
 merina$population <- ifelse(merina$.Q3 > 0.5, "MerinaA", "MerinaB")
 merina <- merina[, c("id", "population")]
 merina$id <- sub("RR.*", "", merina$id)
@@ -109,14 +117,14 @@ mad_bor_g1000_sum_fam$population <- ifelse(!is.na(matching_m), merina$population
 mad_bor_g1000_sum_fam$population <- as.factor(mad_bor_g1000_sum_fam$population)
 
 # mad_bor_g1000_sum_fam$V6 <- mad_bor_g1000_sum_fam$population
-write.table(mad_bor_g1000_sum_fam, resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.fam"), row.names = FALSE, col.names = FALSE, sep = " ", quote = FALSE)
+write.table(mad_bor_g1000_sum_fam, "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.fam", row.names = FALSE, col.names = FALSE, sep = " ", quote = FALSE)
 ```
 
 ```{r}
-if (file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.geno"))) {
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.geno"))
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.ind"))
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.snp"))
+if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.geno")) {
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.geno")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.ind")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.snp")
 }
 ```
 
@@ -172,8 +180,7 @@ alder -p s11b_alder_sakalava_tsimihety.par > s11b_alder_sakalava_tsimihety.log
 # Boxplot
 
 ```{r}
-files <- list.files(
-  resrepo::path_resrepo("code"),
+files <- list.files("../code",
   pattern = ".log",
   full.names = TRUE
 )
@@ -261,18 +268,23 @@ amp_aff_lines <- do.call(rbind, amp_aff_lines)
 amp_aff_lines <- amp_aff_lines[complete.cases(amp_aff_lines), ]
 amp_aff_lines <- do.call(rbind, strsplit(amp_aff_lines, " "))
 result$amp_aff <- as.numeric(amp_aff_lines[, 8])
+
+result$`test pop` <- factor(result$`test pop`, levels = c("Betsimisaraka", "Temoro","MerinaB",  "Betsileo", "Mikea", "Merina", "Sakalava_Tsimihety", "Vezo", "MerinaA","Diego"))
+
+```
+
+```{r}
+# save result
+saveRDS(result, "../results/s11_ALDER/alder_results.RData")
 ```
 
 
-
 ```{r}
-result$`test pop` <- factor(result$`test pop`, levels = c("Temoro", "Betsimisaraka", "MerinaA", "Betsileo", "Mikea", "Merina", "Sakalava_Tsimihety", "MerinaB", "Vezo", "Diego"))
-
 ggplot(result, aes(x = `test pop`, y = admixture_date, colour = `test pop`)) +
   geom_boxplot() +
   scale_y_continuous(
     "Admixture date (generations ago)",
-    sec.axis = sec_axis(~ . * 25, name = "Admixture date (years BP)")
+    sec.axis = sec_axis(~ . * 29, name = "Admixture date (years BP)")
   ) +
   geom_errorbar(aes(ymin = admixture_date - CI, ymax = admixture_date + CI), width = 0.2) +
   theme(axis.text.x = element_blank()) +

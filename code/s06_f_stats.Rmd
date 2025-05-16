@@ -8,7 +8,6 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(resrepo)
 library(ggplot2)
 library(admixtools)
 library(tidypopgen)
@@ -16,23 +15,32 @@ library(knitr)
 ```
 
 ```{r set-directories}
-res_dir <- path_resrepo("results/s06_f_stats/")
+res_dir <- "../results/s06_f_stats/"
 ```
 
 # Load and group gt
 
 ```{r}
-mad_bor_g1000_sum <- gt_load(path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
+mad_bor_g1000_sum <- gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean_ld.gt")
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
 ```
+
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum)
+count_loci(mad_bor_g1000_sum)
+```
+
 
 # Create f2 blocks directory
 
 ```{r}
-if (dir.exists(path_resrepo("data/intermediate/f2"))) {
-  f2_dir <- path_resrepo("data/intermediate/f2")
+if (dir.exists("../data/intermediate/f2")) {
+  f2_dir <- "../data/intermediate/f2"
 } else {
-  gt_extract_f2(mad_bor_g1000_sum, outdir = path_resrepo("data/intermediate/f2"))
+  dir.create("../data/intermediate/f2")
+  gt_extract_f2(mad_bor_g1000_sum, outdir = "../data/intermediate/f2")
 }
 ```
 
@@ -134,7 +142,7 @@ test_grouped %>%
   ggplot(aes(x = est, y = reorder(Malagasy, est), color = highlight, shape = highlight, )) +
   geom_point() +
   labs(title = "F3 (Malagasy; Asian, African)", x = "f3", y = NULL, color = "'Source' populations", shape = "'Source' populations") +
-  scale_shape_manual(values = c("NA" = 19, "Borneo" = 3, "Esan, Nigeria" = 15, "Borneo and Esan, Nigeria" = 17), breaks = c("Borneo", "Esan, Nigeria", "Borneo and Esan, Nigeria"))  +
+  scale_shape_manual(values = c("NA" = 19, "Borneo" = 3, "Esan, Nigeria" = 15, "Borneo and Esan, Nigeria" = 17), breaks = c("Borneo", "Esan, Nigeria", "Borneo and Esan, Nigeria")) +
   guides(color = "none", shape = "none")
 ```
 
@@ -384,8 +392,8 @@ remember that the z-score is affected by population size, so interpretation need
 # Add an  outgroup
 
 ```{r}
-hgdp <- gt_load(path_resrepo("data/raw/data_input/HGDP_Axiom_allmap.gt"))
-hgdp_meta <- read.table(path_resrepo("data/raw/data_input/HGDPid_populations.txt"), header = TRUE)
+hgdp <- gt_load("../data/raw/data_input/HGDP_Axiom_allmap.gt")
+hgdp_meta <- read.table("../data/raw/data_input/HGDPid_populations.txt", header = TRUE)
 hgdp_meta <- hgdp_meta[match(hgdp$id, hgdp_meta$Id), ]
 hgdp$population <- hgdp_meta$population
 
@@ -396,10 +404,10 @@ hgdp$population[hgdp$id == "Gorilla"] <- "Gorilla"
 ```
 
 ```{r}
-if (file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp.gt"))) {
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp.gt"))
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp.bk"))
-  file.remove(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp.rds"))
+if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp.gt")) {
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp.gt")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp.bk")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp.rds")
 }
 ```
 
@@ -409,11 +417,11 @@ if (file.exists(resrepo::path_resrepo("data/intermediate/rbind_data/mad_bor_g100
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% ungroup()
 mad_bor_g1000_sum_g <- rbind(mad_bor_g1000_sum, hgdp,
   as_is = FALSE, flip_strand = TRUE,
-  quiet = FALSE, backingfile = path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp")
+  quiet = FALSE, backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp"
 )
 
 
-mad_bor_g1000_sum_g <- gt_load(path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp.gt"))
+mad_bor_g1000_sum_g <- gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp.gt")
 ```
 
 ```{r}
@@ -424,18 +432,18 @@ mad_bor_g1000_sum_g <- mad_bor_g1000_sum_g %>% group_by(population)
 # Create f2 blocks directory
 
 ```{r}
-if (dir.exists(path_resrepo("data/intermediate/f2_outgroup"))) {
-  f2_dir <- path_resrepo("data/intermediate/f2_outgroup")
+if (dir.exists("../data/intermediate/f2_outgroup")) {
+  f2_dir <- "../data/intermediate/f2_outgroup"
 } else {
-  dir.create(path_resrepo("data/intermediate/f2_outgroup"))
-  gt_extract_f2(mad_bor_g1000_sum_g, outdir = path_resrepo("data/intermediate/f2_outgroup"))
+  dir.create("../data/intermediate/f2_outgroup")
+  gt_extract_f2(mad_bor_g1000_sum_g, outdir = "../data/intermediate/f2_outgroup")
 }
 ```
 
 # Read in precomputed f2's
 
 ```{r}
-f2_dir <- path_resrepo("data/intermediate/f2_outgroup")
+f2_dir <- "../data/intermediate/f2_outgroup"
 f2_blocks <- f2_from_precomp(f2_dir)
 dim(f2_blocks)
 count_snps(f2_blocks)

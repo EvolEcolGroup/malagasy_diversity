@@ -1,0 +1,139 @@
+---
+title: "Assigning ancestry proportions"
+output:
+  pdf_document: default
+  html_document: default
+date: "2025-05-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidypopgen)
+library(dplyr)
+library(tidyr)
+```
+
+# Load gt
+
+```{r}
+mad_bor_g1000_sum <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean.gt",
+    reattach_to = "../data/intermediate/rbind_data/mad_bor_g1000_sum_clean"
+  )
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
+```
+
+# Load fastmixture results
+
+```{r}
+qmats <-
+  readRDS("../data/intermediate/fastmixture/fastmixture_m.RData")
+# check order
+testthat::expect_equal(qmats$id, mad_bor_g1000_sum$id)
+# add grouping variable
+qmats$group <- mad_bor_g1000_sum$population
+```
+
+# Add continental region
+
+```{r}
+mad_bor_g1000_sum$Region <- "Other"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Borneo", "Sumba", "Timor"), "Region"] <- "Island southeast Asia"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("BEB", "PJL"), "Region"] <- "South Asia"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("CHS", "KHV"), "Region"] <- "East Asia"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("ESN", "GWD", "LWK", "MSL", "YRI"), "Region"] <- "Africa"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Betsimisaraka", "Merina", "Diego", "Sakalava Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro"),"Region"] <- "Madagascar"
+```
+
+```{r}
+qmats$continents <- mad_bor_g1000_sum$Region
+```
+
+# Find .Q values that represent African ancestry
+
+The function calculates the average of each column in the Q matrix for all individuals within each population. Then, it subsets down to just the African populations. If the average is above 50% in any African population, it is determined to be an 'African' column. For cases where only one column is 'African' (k values 2-5 say) it assigns Merina individuals to African or Non-African depending on whether they are above or below 50%. For cases where more than one column is 'African' (K values > 5) it does a rowSum across all columns representing African ancestry, and then if the total is > 50% it assigns individuals as African.
+
+```{r}
+merina_df <- data.frame(mad_bor_g1000_sum[,c(1,2)])
+# create a dataframe of only merina individuals with "id" and "population" columns
+merina_df <- merina_df %>% filter(population == "Merina")
+
+# The function takes qmats - the gt_admix object containing a list of all Q matrices
+# and a dataframe of merina individuals with "id" and "population" columns
+
+assign_african_ancestry <- function(qmats, merina_df){
+  
+  # Initialise a list to store which columns represent african ancestry for each run of each K
+  assigned_african <- list()
+  
+  for(this_k in 2:max(range(unique(qmats$k)))){ # for each k 
+    # list within a list - so we have $K containing runs 1 2 3 
+    assigned_african[[as.character(this_k)]] <- list()
+    for(this_rep in 1:rle(qmats$k)$lengths[1]){ # for each run
+      # get the q_matrix 
+      k_run <- get_q_matrix(qmats, k = this_k, run = this_rep) %>% as.data.frame()
+      k_run$id <- qmats$id # add id
+      k_run$group <- qmats$group # add population
+      k_run$continents <- qmats$continents # add the continent
+    
+    assigned_african[[as.character(this_k)]][[this_rep]] <- k_run %>%
+      # group to calculate within each population
+      group_by(group) %>%
+      # get the mean of each column
+      reframe(across(starts_with(".Q"), mean), continents = unique(continents)) %>% 
+      # filter to African populations
+      filter(continents == "Africa") %>%
+      # find whether mean .Q is over 0.5 in any African population
+      summarise(across(starts_with(".Q"), ~ any(.x > 0.5))) %>%
+      # pivot to long format
+      pivot_longer(everything(), names_to = "Q_value", values_to = "flag") %>%
+      # filter to those that are TRUE
+      filter(flag) %>%
+      pull(Q_value) # extract their column names into the assigned_african list
+    
+    # get the column names of the .Q values that represent African ancestry
+    Q <- assigned_african[[as.character(this_k)]][[this_rep]]
+    
+    # if there is only one column
+    if(length(Q)==1){
+      # create column name from the current K and run
+      column <- paste0(paste0("k",this_k),paste0("_r",this_rep))
+          merina <- k_run %>%
+            filter(group == "Merina") %>% # filter to merina
+            # create a new column labelling individuals as African or Non-African
+            mutate(
+              !!column := ifelse(.data[[Q]] > 0.5, "African", "Non-African")
+            ) %>%
+            select(column)
+          merina_df <- cbind(merina_df, merina)
+          
+    # if there are two or more columns
+    } else if(length(Q)>1){
+      # create column name from the current K and run
+      column <- paste0(paste0("k",this_k),paste0("_r",this_rep))
+        merina <- k_run %>%
+          filter(group == "Merina") %>% # filter to merina
+          # sum the across all columns representing African ancestry for each individual
+          mutate(sum_q = rowSums(across(Q))) %>%
+          # create a new column labelling individuals as African or Non-African
+          mutate(
+              !!column := ifelse(sum_q > 0.5, "African", "Non-African")
+            ) %>%
+            select(column)
+        merina_df <- cbind(merina_df, merina)
+      }
+    }
+  }
+  return(as.data.frame(merina_df))
+}
+
+res <- assign_african_ancestry(qmats, merina_df)
+
+```
+
+Results show inconsistency, a hardcoded 50% threshold for a .Q proportion to be determined as 'African' is not ideal.
+
+```{r}
+res[20:26,]
+```
+

@@ -6,7 +6,6 @@ date: "2025-03-14"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(resrepo)
 library(tidypopgen)
 library(tidyr)
 library(Matrix)
@@ -16,21 +15,50 @@ library(ggplot2)
 
 
 ```{r set-directories}
-res_dir <- path_resrepo("results/s12_FST/")
+res_dir <- "../results/s12_FST/"
 ```
 
 # Load and group gt
 
 ```{r}
-mad_bor_g1000_sum <- gt_load(path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
+mad_bor_g1000_sum <- gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean_ld.gt")
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
+```
+
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum)
+count_loci(mad_bor_g1000_sum)
+```
+
+# Impute
+
+```{r}
+mad_bor_g1000_sum <- gt_impute_simple(mad_bor_g1000_sum, method = "random")
+gt_set_imputed(mad_bor_g1000_sum, TRUE)
+```
+
+# LD clumping
+
+```{r}
+to_keep_LD <- loci_ld_clump(mad_bor_g1000_sum, thr_r2 = 0.2, size = 100, return_id = TRUE, use_positions = TRUE)
+
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% select_loci(all_of(to_keep_LD))
+```
+
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum)
+count_loci(mad_bor_g1000_sum)
 ```
 
 # Pairwise Fst
 
 ```{r}
 mad_bor_g1000_sum_fst <- mad_bor_g1000_sum %>% 
-  pairwise_pop_fst(by_locus = FALSE, method = "WC84")
+  pairwise_pop_fst(by_locus = FALSE, method = "Hudson")
 ```
 
 ```{r}
@@ -49,18 +77,13 @@ mad_bor_g1000_sum_fst$pop_1 <- as.numeric(mad_bor_g1000_sum_fst$population_1)
 mad_bor_g1000_sum_fst$pop_2 <- as.numeric(mad_bor_g1000_sum_fst$population_2)
 
 
-
-
 fst_matrix <- matrix(nrow = 20, ncol = 20)
 
 # Fill matrix
 for (i in seq_len(nrow(mad_bor_g1000_sum_fst))) {
-  
+
   x <- as.numeric(mad_bor_g1000_sum_fst[i, 4])
   y <- as.numeric(mad_bor_g1000_sum_fst[i, 5])
-  
-  # x <- as.numeric(mad_bor_g1000_sum_fst$population_1[i])
-  # y <- as.numeric(mad_bor_g1000_sum_fst$population_2[i])
 
   fst_matrix[x, y] <- mad_bor_g1000_sum_fst$value[i]
   fst_matrix[y, x] <- mad_bor_g1000_sum_fst$value[i]
@@ -100,7 +123,7 @@ fst_matrix_sub <- subset(fst_matrix_sub, rownames(fst_matrix_sub) %in% c("Betsim
 
 ```{r}
 ggheatmap(fst_matrix_sub) +
-  scale_fill_viridis_c() +
+  scale_fill_viridis_c(expression("F"[st])) +
     theme(axis.text.x = element_text(angle = -60, hjust = 0))
 ```
 
@@ -109,8 +132,8 @@ ggheatmap(fst_matrix_sub) +
 
 ```{r}
 # Load fastmixture Q matrix
-qmats <- readRDS(path_resrepo("data/intermediate/fastmixture/fastmixture_m.RData"))
-mad_bor_g1000_sum <- gt_load(path_resrepo("data/intermediate/rbind_data/mad_bor_g1000_sum.gt"))
+qmats <- readRDS("../data/intermediate/fastmixture/fastmixture_m.RData")
+mad_bor_g1000_sum <- gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean.gt")
 ```
 
 ```{r}
@@ -136,7 +159,7 @@ mad_bor_g1000_sum <- mad_bor_g1000_sum %>% filter(population %in% c("Betsimisara
 
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
 mad_bor_g1000_sum_fst <- mad_bor_g1000_sum %>% 
-  pairwise_pop_fst(by_locus = FALSE, method = "WC84")
+  pairwise_pop_fst(by_locus = FALSE, method = "Hudson")
 ```
 
 ```{r}
@@ -171,22 +194,10 @@ colnames(fst_matrix) <- levels(mad_bor_g1000_sum_fst$population_2)
 
 ```
 
-```{r}
-# # subset fst matrix to rows in c("Betsimisaraka", "Merina", "Diego", "Sakalava Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro", "ESN", "Borneo")
-# 
-# sub <- c("Betsimisaraka", "MerinaA","MerinaB", "Diego", "Sakalava_Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro")
-# 
-# fst_matrix_sub <- as.data.frame(fst_matrix)
-# rm <- names(fst_matrix_sub)[(names(fst_matrix_sub) %in% sub)]
-# fst_matrix_sub <- fst_matrix_sub[,rm]
-# 
-# fst_matrix_sub <- subset(fst_matrix_sub, rownames(fst_matrix_sub) %in% c("Betsimisaraka", "MerinaA", "MerinaB", "Diego", "Sakalava_Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro"))
-
-```
 
 ```{r}
 ggheatmap(fst_matrix) +
-  scale_fill_viridis_c() +
+  scale_fill_viridis_c(name = expression("F"[st])) +
   anno_right(size = unit(15, "mm")) +
     align_dendro(reorder_dendrogram = TRUE) +
     anno_top(size = unit(15, "mm")) +
@@ -200,7 +211,13 @@ ggheatmap(fst_matrix) +
 
 ```{r}
 ggheatmap(fst_matrix) +
-  scale_fill_viridis_c() +
+  scale_fill_viridis_c(name = expression("F"[st])) +
     theme(axis.text.x = element_text(angle = -60, hjust = 0))
 ggsave(paste0(res_dir, "fst_merina_split.jpg"), width = 7, height = 7, dpi = 300)
 ```
+
+```{r}
+
+```
+
+
