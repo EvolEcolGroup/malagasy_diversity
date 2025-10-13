@@ -1,0 +1,289 @@
+---
+title: "s00_update_build"
+output: html_document
+date: "2025-10-13"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(biomaRt)
+library(BiocManager)
+library(tidypopgen)
+library(tidyverse)
+library(testthat)
+```
+
+This script uses biomaRt to update SNP positions from HG19 to HG38 for the Malagasy dataset. It finds the SNPs in Ensembl by id and retrieves their updated positions, this information is then used in `s01_qc_merge` to update the chromosome, position, and genetic distance of each SNP.
+
+# Read in Malagasy data
+
+```{r}
+bim_file1 <- read.table("../data/raw/data_input/Madagascar_full.bim",
+  header = FALSE,
+  col.names = c(
+    "chromosome", "snp_id",
+    "genetic_dist", "physical_pos",
+    "allele1", "allele2"
+  )
+)
+as.data.frame(bim_file1)
+```
+
+# Removing SNPs with VG identifiers from .bim file
+
+```{r}
+filtered_bim_VG_id <- bim_file1[grepl("VG", bim_file1[, 2]), ]
+clean_bim <- anti_join(bim_file1, filtered_bim_VG_id)
+cat(
+  "Number of VG entries removed:",
+  sum(nrow(bim_file1) - nrow(clean_bim)), "\n"
+)
+cat(
+  "Number of SNPs remaining after removing VG id SNPs:",
+  nrow(clean_bim), "\n"
+)
+
+analysis <- c("Start", "Removing VG SNPs")
+num_SNPs <- c(nrow(bim_file1), nrow(clean_bim))
+lost <- c(0, nrow(bim_file1) - nrow(clean_bim))
+tracking_snp_number <- cbind(analysis, num_SNPs, lost)
+```
+
+# Select Ensembl mart
+
+new dbplyr not compatible with biomart, gives ensembl errors, so install old version devtools::install_version("dbplyr", version = "2.3.4")
+
+```{r}
+# Ensembl Release 110 (July 2023) GRCH38.14
+snpmart <- useEnsembl(biomart = "ENSEMBL_MART_SNP", dataset = "hsapiens_snp")
+```
+
+# Find our SNPs in biomart
+
+```{r}
+# Chunking data to avoid timeout issues with ensembl getBM
+snps <- clean_bim[, 2]
+chunk <- split(snps, ceiling(seq_along(snps) / 50000))
+
+# Find biomart entries for all our SNPs
+get_and_combine_data <- function(chunk, mart) {
+  result_df <- data.frame()
+
+  for (i in seq_along(chunk)) {
+    data <- chunk[[i]]
+    snp_data <- getBM(
+      attributes = c(
+        "refsnp_id", "chr_name",
+        "chrom_start", "allele_1",
+        "allele", "minor_allele", "chrom_strand"
+      ),
+      filters = "snp_filter", values = data, mart = mart
+    )
+
+    result_df <- rbind(result_df, snp_data)
+
+    cat("Chunk", i, "complete.\n")
+  }
+  Sys.sleep(10)
+  return(result_df)
+}
+
+biomart_result <- get_and_combine_data(chunk, snpmart)
+colnames(biomart_result)[1] <- "snp_id"
+colnames(biomart_result)[4] <- "ancestral_allele"
+
+# save
+write.table(
+  file = "../data/intermediate/biomart/biomart_output.txt",
+  biomart_result, sep = "\t", row.names = FALSE, quote = FALSE
+)
+```
+
+# Update our Malagasy data to HG38 using biomart result
+
+```{r}
+biomart_result <- read.table("../data/intermediate/biomart/biomart_output.txt",
+  header = TRUE,
+  sep = "\t",
+  stringsAsFactors = FALSE
+)
+```
+
+## Remove patch entries from the biomart data
+
+```{r}
+# Patch entries (all start with H)
+biomart_pos_H <- biomart_result[grepl("H", biomart_result[, 2]), ]
+cat("Number of SNPs affected by patched entries:", nrow(biomart_pos_H), "\n")
+cat(
+  "Number of unique patches covering SNPs:",
+  length(unique(biomart_pos_H[, 2])), "\n"
+)
+
+tracking_snp_number <- rbind(
+  tracking_snp_number,
+  c(
+    "Biomart output: increase due to patch entries",
+    nrow(biomart_result), NA
+  )
+)
+
+# Removing these patch entries
+biomart_no_patches <- anti_join(biomart_result, biomart_pos_H)
+cat(
+  "Number of SNPs in biomart output after removing patch entries:",
+  nrow(biomart_no_patches), "\n"
+)
+tracking_snp_number <- rbind(tracking_snp_number, c(
+  "Removing patches",
+  nrow(biomart_no_patches), sum(nrow(biomart_result) - nrow(biomart_no_patches))
+))
+```
+
+## Remove SNPs that aren't in biomart output/weren't updated by biomart
+
+```{r}
+# Missing entries: removing SNPs without biomart position
+missing_total <- clean_bim[!(clean_bim$snp_id %in% biomart_no_patches$snp_id), ]
+cat("Number of SNPs missing in biomart output:", nrow(missing_total), "\n")
+clean_bim <- anti_join(clean_bim, missing_total, by = "snp_id")
+```
+
+## Merge the biomart and Malagasy data into one dataframe by SNP ID
+
+```{r}
+# Merge our 'clean .bim' with the biomart output with updated positions
+new_bim <- left_join(clean_bim, biomart_no_patches, by = "snp_id")
+```
+
+## Remove NA entries
+
+Selects SNP position and chr from biomart data, and all other columns from the Malagasy data 
+
+```{r}
+sum(is.na(new_bim$chrom_start))
+new_bim <- new_bim[, c(7, 2:3, 8, 5:6)]
+
+new_bim_no_NA <- na.omit(new_bim)
+```
+
+## Remove entries where Allele A/B is entered as 0
+
+```{r}
+if (file.exists("../data/raw/data_input/Madagascar_full.gt")) {
+  madagascar <- gt_load("../data/raw/data_input/Madagascar_full.gt")
+} else {
+  madagascar <- gen_tibble("../data/raw/data_input/Madagascar_full.bed",
+    quiet = TRUE,
+    valid_alleles = c("T", "G", "A", "C", "I")
+  )
+}
+
+# count very low maf loci
+mono_loc <- madagascar %>%
+  select_loci_if(loci_maf(genotypes) <= 0.000000001) %>%
+  show_loci()
+to_remove <- subset(
+  new_bim_no_NA,
+  new_bim_no_NA[, 5] == 0 | new_bim_no_NA[, 6] == 0
+)
+
+overlapping <- subset(to_remove, to_remove$snp_id %in% mono_loc$name)
+
+cat(
+  "Number of our SNPs missing Allele A/B that are monomorphic/low maf:",
+  nrow(overlapping), "\n"
+)
+
+# Remove missing
+new_bim_no_NA <- anti_join(new_bim_no_NA, to_remove)
+tracking_snp_number <- rbind(
+  tracking_snp_number,
+  c(
+    "Removing NA entries and SNPs missing an allele in our data",
+    nrow(new_bim_no_NA),
+    nrow(new_bim) - nrow(new_bim_no_NA)
+  )
+)
+```
+
+## Create a list of ambiguous SNPs in and remove them
+
+```{r}
+ambiguous <- subset(
+  new_bim_no_NA,
+  new_bim_no_NA$allele1 == "A" & new_bim_no_NA$allele2 == "T" |
+    new_bim_no_NA$allele1 == "T" & new_bim_no_NA$allele2 == "A" |
+    new_bim_no_NA$allele1 == "G" & new_bim_no_NA$allele2 == "C" |
+    new_bim_no_NA$allele1 == "C" & new_bim_no_NA$allele2 == "G"
+)
+cat(nrow(ambiguous), "ambiguous SNPs", "\n")
+
+new_bim_no_NA <- anti_join(new_bim_no_NA, ambiguous)
+
+tracking_snp_number <- rbind(
+  tracking_snp_number,
+  c(
+    "Removing ambiguous AT CG SNPs",
+    nrow(new_bim_no_NA),
+    nrow(new_bim) - nrow(new_bim_no_NA)
+  )
+)
+```
+
+## Check resulting data
+
+```{r}
+test_that(
+  "Check no NA's",
+  expect_false(any(is.na(new_bim_no_NA)))
+)
+test_that(
+  "Check no SNP positions = 0",
+  expect_false(any(new_bim_no_NA[, 4] == 0))
+)
+test_that(
+  "Check no cases where Allele A and Allele B both = 0",
+  expect_false(any(new_bim_no_NA[, 5] == 0 & new_bim_no_NA[, 6] == 0))
+)
+test_that(
+  "Check no cases where Allele A or Allele B = 0",
+  expect_false(any(new_bim_no_NA[, 5] == 0 | new_bim_no_NA[, 6] == 0))
+)
+```
+
+## Saves as Madagascar_full_HG38.bim and Madagascar_full_HG38_snps
+
+```{r}
+write.table(
+  file = "../data/intermediate/biomart/Madagascar_full_HG38.bim",
+  new_bim_no_NA, sep = "\t",
+  row.names = FALSE,
+  quote = FALSE,
+  col.names = FALSE
+)
+
+write.table(
+  file = "../data/intermediate/biomart/Madagascar_full_HG38_snps",
+  new_bim_no_NA$snp_id,
+  sep = "\t",
+  row.names = FALSE,
+  quote = FALSE,
+  col.names = FALSE
+)
+```
+
+# Compare
+
+```{r}
+old_biomart_bim <- read.table("../data/intermediate/Madagascar_full_HG38.bim",
+  header = FALSE
+)
+colnames(old_biomart_bim) <- c(
+  "chr_name", "snp_id",
+  "genetic_dist", "chrom_start",
+  "allele1", "allele2"
+)
+
+all.equal(old_biomart_bim, new_bim_no_NA)
+```
