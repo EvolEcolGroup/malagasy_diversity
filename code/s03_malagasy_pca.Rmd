@@ -22,20 +22,13 @@ malagasy_merged <-
   gt_load("../data/intermediate/rbind_data/malagasy_merge_clean_ld.gt")
 ```
 
-# Loci and sample count
-
-```{r}
-nrow(malagasy_merged)
-count_loci(malagasy_merged)
-```
-
+This script creates a PCA of only Malagasy individuals, using the Malagasy dataset, comprising of `r nrow(malagasy_merged)` individuals and `r ncol(malagasy_merged)` loci.
 
 # Set imputed
 
 ```{r}
 gt_set_imputed(malagasy_merged, TRUE)
 ```
-
 
 # PCA
 

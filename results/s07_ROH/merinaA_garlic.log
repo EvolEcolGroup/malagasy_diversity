@@ -1,0 +1,71 @@
+garlic --tped ../data/intermediate/rbind_data/merinaA_clean.tped --tfam ../data/intermediate/rbind_data/merinaA_clean.tfam --build hg18 --error 0.001 --auto-winsize --resample 100 --winsize 50 --out ../results/s07_ROH/merinaA_garlic
+Output file basename: ../results/s07_ROH/merinaA_garlic
+TPED file: ../data/intermediate/rbind_data/merinaA_clean.tped
+TPED missing data code: 0
+TFAM file: ../data/intermediate/rbind_data/merinaA_clean.tfam
+TGLS file: none
+Genotype likelihood format: none
+Measure ROH in genetic distance units: FALSE
+Weighted LOD: FALSE
+Genome build: hg18
+User defined centromere file: none
+Calculate allele frequencies only: FALSE
+Calculate allele frequencies from data: TRUE
+Allele frequencies resampled: 100
+Explore window sizes: FALSE
+Automatic window size: TRUE
+Automatic window step size: 10
+Choose LOD score cutoff automatically: TRUE
+Choose ROH class thresholds automatically: TRUE
+Threads: 1
+Genotyping error: 0.001
+Max gap: 200000
+Overlap fraction: 0.25
+mu: 1e-09
+M: 7
+# GMM clusters: 3
+# of rand individuals for KDE: 20
+# of rand individuals for LD: ALL
+Output raw LOD scores: FALSE
+Use r2 for weighting phased data: FALSE
+Use thinning for KDE estimation: TRUE
+Chromosome chr1: 41369 sites.
+Chromosome chr2: 41083 sites.
+Chromosome chr3: 34372 sites.
+Chromosome chr4: 28872 sites.
+Chromosome chr5: 29622 sites.
+Chromosome chr6: 30278 sites.
+Chromosome chr7: 26905 sites.
+Chromosome chr8: 26505 sites.
+Chromosome chr9: 23547 sites.
+Chromosome chr10: 27752 sites.
+Chromosome chr11: 25822 sites.
+Chromosome chr12: 24832 sites.
+Chromosome chr13: 19434 sites.
+Chromosome chr14: 16897 sites.
+Chromosome chr15: 16047 sites.
+Chromosome chr16: 16399 sites.
+Chromosome chr17: 14457 sites.
+Chromosome chr18: 15693 sites.
+Chromosome chr19: 10392 sites.
+Chromosome chr20: 13585 sites.
+Chromosome chr21: 7581 sites.
+Chromosome chr22: 7482 sites.
+Total loci: 498926
+Population: Central_Highland
+Total diploid individuals: 22
+Monomorphic loci filtered: 10178
+Total loci used for analysis: 488748
+Individuals used for KDE: CH01RR CH02RR CH03RR CH04RR CH06RR CH07RR CH08RR CH09RR CH10RR CH11RR CH12RR CH15RR CH16RR CH27RR CH28RR CH29RR CH30RR CH31RR CH32RR CH36RR
+Searching for acceptable window size, smoothness threshold: 0.5
+winsize	smoothness
+KDE with 193280 points.
+ 50	 0.0935858
+Wrote KDE results to ../results/s07_ROH/merinaA_garlic.50SNPs.kde
+Selected window size: 50
+Selected LOD score cutoff: 2.18979
+Gaussian class A ( mixture, mean, std ) = ( 0.595825, 258800, 1.23065e+10 )
+Gaussian class B ( mixture, mean, std ) = ( 0.334332, 678911, 1.00493e+11 )
+Gaussian class C ( mixture, mean, std ) = ( 0.0698436, 2.71151e+06, 5.0586e+12 )
+Selected ROH size boundaries = ( 471693 1.53678e+06 )
+ROH calls: ../results/s07_ROH/merinaA_garlic.roh.bed

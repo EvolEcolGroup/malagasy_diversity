@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidypopgen)
 library(tidygenclust)
 library(ggplot2)
+library(patchwork)
 
 # Set cores
 n_cores <- 10
@@ -85,7 +86,8 @@ clump <- gt_clumppling(input_path = qmats)
 ```
 
 ```{r}
-clump %>% autoplot(type = "all_modes", group = qmats$group)
+out <- clump %>% autoplot(type = "all_modes", group = qmats$group)
+out
 ```
 
 ```{r}

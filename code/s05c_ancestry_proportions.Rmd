@@ -1,0 +1,402 @@
+---
+title: "New function"
+output: pdf_document
+date: "2025-05-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidypopgen)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+
+# Load gt
+
+```{r}
+mad_bor_g1000_sum <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean.gt",
+    reattach_to = "../data/intermediate/rbind_data/mad_bor_g1000_sum_clean"
+  )
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
+```
+
+# Load fastmixture results
+
+```{r}
+qmats <-
+  readRDS("../data/intermediate/fastmixture/fastmixture_m.RData")
+# check order
+testthat::expect_equal(qmats$id, mad_bor_g1000_sum$id)
+# add grouping variable
+qmats$group <- mad_bor_g1000_sum$population
+```
+
+# Add continental region
+
+```{r}
+mad_bor_g1000_sum$Region <- "Other"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Borneo", "Sumba", "Timor"), "Region"] <- "Island southeast Asia"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("BEB", "PJL"), "Region"] <- "South Asia"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("CHS", "KHV"), "Region"] <- "East Asia"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("ESN", "GWD", "LWK", "MSL", "YRI"), "Region"] <- "Africa"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Betsimisaraka", "Merina", "Diego", "Sakalava Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro"), "Region"] <- "Madagascar"
+```
+
+```{r}
+qmats$continents <- mad_bor_g1000_sum$Region
+```
+
+# New function
+
+```{r}
+assigned_african <- list()
+
+merina_df <- data.frame(mad_bor_g1000_sum[, c(1, 2)])
+# create a dataframe of only merina individuals
+merina_df <- merina_df %>% filter(population == "Merina")
+
+for (this_k in 2:max(range(unique(qmats$k)))) { # for each k
+  # list within a list - so we have $K containing runs 1 2 3
+  assigned_african[[as.character(this_k)]] <- list()
+  for (this_rep in 1:rle(qmats$k)$lengths[1]) { # for each run
+    # get the q_matrix
+    k_run <- get_q_matrix(qmats, k = this_k, run = this_rep) %>% as.data.frame()
+    k_run$id <- qmats$id # add id
+    k_run$group <- qmats$group # add population
+
+
+    ####  1. Create a factor column in the data.frame that assigns each sample
+    #         as either “African” or “non-African” based on the Population
+    #         column.
+    k_run$region <- qmats$continents # add the continent
+    k_run$region <- ifelse(k_run$region == "Africa", "African", "nonAfrican")
+
+    #### 2. Loop through the ancestry columns by grabbing the column references
+    #       as a list and do the following for each K to determine if it is an
+    #       African K or a non-African K:
+    k_evaluations <- list()
+
+    q_matrix_means <- k_run %>%
+      group_by(region) %>%
+      summarise(across(starts_with(".Q"), ~ mean(.x, na.rm = TRUE)))
+
+    # get the list of column names - each .Q value in this matrix
+    cols <- names(q_matrix_means)[grepl("^\\.Q", names(q_matrix_means))]
+
+    # Assign each column African or non-African based on the mean
+    for (i in cols) {
+      if (q_matrix_means[[i]][q_matrix_means$region == "African"] > q_matrix_means[[i]][q_matrix_means$region == "nonAfrican"]) {
+        k_evaluations[[i]] <- "African"
+      } else {
+        k_evaluations[[i]] <- "nonAfrican"
+      }
+    }
+
+    #### 3. Now that you’ve assigned each K column to “African” or “nonAfrican”
+    #       you can make a function that takes all the K columns as inputs and
+    #       returns a sum value if the column is “African”.
+    sum_af <- function(k_run, k_evaluations) {
+      k_run$sum_af <- 0
+      for (i in names(k_evaluations)) {
+        if (k_evaluations[[i]] == "African") {
+          k_run$sum_af <- k_run$sum_af + k_run[[i]]
+        }
+      }
+      return(k_run)
+    }
+    k_run <- sum_af(k_run, k_evaluations)
+
+    # And here we do the same for non-African
+    sum_as <- function(k_run, k_evaluations) {
+      k_run$sum_as <- 0
+      for (i in names(k_evaluations)) {
+        if (k_evaluations[[i]] == "nonAfrican") {
+          k_run$sum_as <- k_run$sum_as + k_run[[i]]
+        }
+      }
+      return(k_run)
+    }
+    k_run <- sum_as(k_run, k_evaluations)
+
+    # k_run now contains $sum_af and $sum_as - the sum of African and
+    # non-African ancestry for each individual
+
+
+    # create column name
+    column <- paste0(paste0("k", this_k), paste0("_r", this_rep))
+
+
+    #### 4. Assign African or non_African based on which sum is greater
+    k_run <- k_run %>%
+      mutate(
+        !!column := ifelse(k_run$sum_af > k_run$sum_as, "African", "nonAfrican")
+      ) %>%
+      filter(group == "Merina") %>%
+      select(column)
+
+    #### 5. Bind to Merina data to return
+    merina_df <- cbind(merina_df, k_run)
+  }
+}
+```
+
+```{r}
+merina_df[20:26, ]
+```
+
+Results show better consistency, this time up to K = 7. Last time the switch
+occured at K = 5.
+
+# Get proportions for the Merina
+
+```{r}
+assigned_african <- list()
+
+merina_df_proportion <- data.frame(mad_bor_g1000_sum[, c(1, 2)])
+# create a dataframe of only merina individuals
+merina_df_proportion <- merina_df_proportion %>% filter(population == "Merina")
+
+for (this_k in 2:max(range(unique(qmats$k)))) { # for each k
+  # list within a list - so we have $K containing runs 1 2 3
+  assigned_african[[as.character(this_k)]] <- list()
+  for (this_rep in 1:rle(qmats$k)$lengths[1]) { # for each run
+    # get the q_matrix
+    k_run <- get_q_matrix(qmats, k = this_k, run = this_rep) %>% as.data.frame()
+    k_run$id <- qmats$id # add id
+    k_run$group <- qmats$group # add population
+
+
+    ####  1. Create a factor column in the data.frame that assigns each sample
+    #         as either “African” or “non-African” based on the Population
+    #         column.
+    k_run$region <- qmats$continents # add the continent
+    k_run$region <- ifelse(k_run$region == "Africa", "African", "nonAfrican")
+
+    #### 2. Loop through the ancestry columns by grabbing the column references
+    #       as a list and do the following for each K to determine if it is an
+    #       African K or a non-African K:
+    k_evaluations <- list()
+
+    q_matrix_means <- k_run %>%
+      group_by(region) %>%
+      summarise(across(starts_with(".Q"), ~ mean(.x, na.rm = TRUE)))
+
+    # get the list of column names - each .Q value in this matrix
+    cols <- names(q_matrix_means)[grepl("^\\.Q", names(q_matrix_means))]
+
+    # Assign each column African or non-African based on the mean
+    for (i in cols) {
+      if (q_matrix_means[[i]][q_matrix_means$region == "African"] > q_matrix_means[[i]][q_matrix_means$region == "nonAfrican"]) {
+        k_evaluations[[i]] <- "African"
+      } else {
+        k_evaluations[[i]] <- "nonAfrican"
+      }
+    }
+
+    #### 3. Now that you’ve assigned each K column to “African” or “nonAfrican”
+    #       you can make a function that takes all the K columns as inputs and
+    #       returns a sum value if the column is “African”.
+    sum_af <- function(k_run, k_evaluations) {
+      k_run$sum_af <- 0
+      for (i in names(k_evaluations)) {
+        if (k_evaluations[[i]] == "African") {
+          k_run$sum_af <- k_run$sum_af + k_run[[i]]
+        }
+      }
+      return(k_run)
+    }
+    k_run <- sum_af(k_run, k_evaluations)
+
+    # And here we do the same for non-African
+    sum_as <- function(k_run, k_evaluations) {
+      k_run$sum_as <- 0
+      for (i in names(k_evaluations)) {
+        if (k_evaluations[[i]] == "nonAfrican") {
+          k_run$sum_as <- k_run$sum_as + k_run[[i]]
+        }
+      }
+      return(k_run)
+    }
+    k_run <- sum_as(k_run, k_evaluations)
+
+    # k_run now contains $sum_af and $sum_as - the sum of African and
+    # non-African ancestry for each individual
+
+
+    # create column name
+    column <- paste0(paste0("k", this_k), paste0("_r", this_rep))
+
+
+    #### SKIP  4. Assign African or non_African based on which sum is greater
+
+    k_run <- k_run %>%
+      filter(group == "Merina") %>%
+      mutate(
+        !!column := sum_af
+      ) %>%
+      select(column)
+
+    #### 5. Bind to Merina data to return
+    merina_df_proportion <- cbind(merina_df_proportion, k_run)
+  }
+}
+```
+
+```{r}
+merina_df_proportion[20:26, ]
+```
+
+
+```{r}
+long <- merina_df_proportion %>%
+  pivot_longer(
+    cols = -c(id, population),
+    names_to = c("K_run"),
+    values_to = "assigned"
+  )
+
+
+# Ensure your K_run is in the order it appears in the dataframe
+long$K_run <- factor(long$K_run, levels = unique(long$K_run))
+
+long %>% ggplot(aes(x = K_run, y = assigned, group = id, colour = id)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Ancestry assignment",
+    x = "K and run",
+    y = "Ancestry assignment"
+  ) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  geom_hline(yintercept = 0.5)+
+  ylim(0, 1)
+```
+
+# Get proportions for the all Malagasy individuals
+
+
+```{r}
+assigned_african <- list()
+
+malagasy_df_proportion <- data.frame(mad_bor_g1000_sum[, c(1, 2)])
+# create a dataframe of only merina individuals
+malagasy_df_proportion <- malagasy_df_proportion %>% filter(population %in% c("Merina", "Betsimisaraka", "Diego", "Sakalava Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro"))
+
+for (this_k in 2:max(range(unique(qmats$k)))) { # for each k
+  # list within a list - so we have $K containing runs 1 2 3
+  assigned_african[[as.character(this_k)]] <- list()
+  for (this_rep in 1:rle(qmats$k)$lengths[1]) { # for each run
+    browser()
+    # get the q_matrix
+    k_run <- get_q_matrix(qmats, k = this_k, run = this_rep) %>% as.data.frame()
+    k_run$id <- qmats$id # add id
+    k_run$group <- qmats$group # add population
+
+
+    ####  1. Create a factor column in the data.frame that assigns each sample
+    #         as either “African” or “non-African” based on the Population
+    #         column.
+    k_run$region <- qmats$continents # add the continent
+    k_run$region <- ifelse(k_run$region == "Africa", "African", "nonAfrican")
+
+    #### 2. Loop through the ancestry columns by grabbing the column references
+    #       as a list and do the following for each K to determine if it is an
+    #       African K or a non-African K:
+    k_evaluations <- list()
+
+    q_matrix_means <- k_run %>%
+      group_by(region) %>%
+      summarise(across(starts_with(".Q"), ~ mean(.x, na.rm = TRUE)))
+
+    # get the list of column names - each .Q value in this matrix
+    cols <- names(q_matrix_means)[grepl("^\\.Q", names(q_matrix_means))]
+
+    # Assign each column African or non-African based on the mean
+    for (i in cols) {
+      if (q_matrix_means[[i]][q_matrix_means$region == "African"] > q_matrix_means[[i]][q_matrix_means$region == "nonAfrican"]) {
+        k_evaluations[[i]] <- "African"
+      } else {
+        k_evaluations[[i]] <- "nonAfrican"
+      }
+    }
+
+    #### 3. Now that you’ve assigned each K column to “African” or “nonAfrican”
+    #       you can make a function that takes all the K columns as inputs and
+    #       returns a sum value if the column is “African”.
+    sum_af <- function(k_run, k_evaluations) {
+      k_run$sum_af <- 0
+      for (i in names(k_evaluations)) {
+        if (k_evaluations[[i]] == "African") {
+          k_run$sum_af <- k_run$sum_af + k_run[[i]]
+        }
+      }
+      return(k_run)
+    }
+    k_run <- sum_af(k_run, k_evaluations)
+
+    # And here we do the same for non-African
+    sum_as <- function(k_run, k_evaluations) {
+      k_run$sum_as <- 0
+      for (i in names(k_evaluations)) {
+        if (k_evaluations[[i]] == "nonAfrican") {
+          k_run$sum_as <- k_run$sum_as + k_run[[i]]
+        }
+      }
+      return(k_run)
+    }
+    k_run <- sum_as(k_run, k_evaluations)
+
+    # k_run now contains $sum_af and $sum_as - the sum of African and
+    # non-African ancestry for each individual
+
+
+    # create column name
+    column <- paste0(paste0("k", this_k), paste0("_r", this_rep))
+
+
+    #### SKIP  4. Assign African or non_African based on which sum is greater
+
+    k_run <- k_run %>%
+      filter(group %in% c("Merina", "Betsimisaraka", "Diego", "Sakalava Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro")) %>%
+      mutate(
+        !!column := sum_af
+      ) %>%
+      select(column)
+
+    #### 5. Bind to Merina data to return
+    malagasy_df_proportion <- cbind(malagasy_df_proportion, k_run)
+  }
+}
+```
+
+```{r}
+malagasy_df_proportion[20:26, ]
+```
+
+
+```{r}
+long <- malagasy_df_proportion %>%
+  pivot_longer(
+    cols = -c(id, population),
+    names_to = c("K_run"),
+    values_to = "assigned"
+  )
+
+
+# Ensure your K_run is in the order it appears in the dataframe
+long$K_run <- factor(long$K_run, levels = unique(long$K_run))
+
+long %>% ggplot(aes(x = K_run, y = assigned, group = id, colour = id)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Ancestry assignment",
+    x = "K and run",
+    y = "Ancestry assignment"
+  ) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  geom_hline(yintercept = 0.5)+
+  ylim(0, 1)
+```

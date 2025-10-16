@@ -1,0 +1,14 @@
+#!/bin/bash
+
+source /home/EJC199/miniconda3/etc/profile.d/conda.sh
+conda activate /home/EJC199/miniconda3/envs/fastmixture
+
+cd /home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data
+
+# fastmixture in reference dataset
+fastmixture --bfile bor_g1000_sum --K 2 --threads 32 --seed 1 --out ref_bor_g1000_sum
+
+# fastmixture using projection mode in new dataset
+fastmixture --bfile malagasy_predict --K 2 --threads 32 --seed 1 --out malagasy_predicted --projection ref_bor_g1000_sum.K2.s1.P
+
+conda deactivate

@@ -1,9 +1,9 @@
 ---
 title: "F statistics"
-output: html_document
 date: "2024-11-11"
 knit: resrepo::knit_to_results
 output: pdf_document
+bibliography: references.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -21,17 +21,12 @@ res_dir <- "../results/s06_f_stats/"
 # Load and group gt
 
 ```{r}
-mad_bor_g1000_sum <- gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean_ld.gt")
+mad_bor_g1000_sum <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean_ld.gt")
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
 ```
 
-# Loci and sample count
-
-```{r}
-nrow(mad_bor_g1000_sum)
-count_loci(mad_bor_g1000_sum)
-```
-
+This script uses admixtools [@maier2024] to calculate F3 and F4 statistics, using the full global dataset, comprising of `r nrow(mad_bor_g1000_sum)` individuals and `r ncol(mad_bor_g1000_sum)` loci.
 
 # Create f2 blocks directory
 
@@ -52,13 +47,17 @@ dim(f2_blocks)
 count_snps(f2_blocks)
 ```
 
-#Test for admixture: F3(Malagasy; Asian, African)
-
+# Test for admixture: F3(Malagasy; Asian, African)
 
 ```{r}
-malagasy <- c("Betsimisaraka", "Merina", "Diego", "Sakalava_Tsimihety", "Betsileo", "Temoro", "Vezo", "Mikea")
-asian <- c("Borneo", "Sumba", "Timor", "KHV", "CHS") # removing ,"BEB","PJL"
-african <- c("YRI", "LWK", "GWD", "ESN", "MSL") # Yoruba, Luhya, Gambian, Esan, Mende
+malagasy <- c(
+  "Betsimisaraka", "Merina", "Diego", "Sakalava_Tsimihety",
+  "Betsileo", "Temoro", "Vezo", "Mikea"
+)
+asian <- c("Borneo", "Sumba", "Timor", "KHV", "CHS")
+# removing ,"BEB","PJL"
+african <- c("YRI", "LWK", "GWD", "ESN", "MSL")
+# Yoruba, Luhya, Gambian, Esan, Mende
 
 test <- qp3pop(f2_blocks, malagasy, asian, african) # A, B ; C
 
@@ -76,13 +75,17 @@ test$African <- sub("GWD", "Mandinka, The Gambia", test$African)
 test$African <- sub("LWK", "Luhye, Kenya", test$African)
 test$African <- sub("MSL", "Mende, Sierra Leone", test$African)
 
-test$Malagasy <- sapply(strsplit(test$Malagasy, "_"), function(x) paste(x, collapse = " "))
+test$Malagasy <- sapply(
+  strsplit(test$Malagasy, "_"),
+  function(x) paste(x, collapse = " ")
+)
 
 print(test)
 ```
 
+Admixture f3 statistics were used in the configuration f3(Malagasy; Asian, African) to examine which comparative African and Asian populations show the greatest similarity to the ‘source’ populations of the Malagasy.
 
-# Examine min F3 values for each Malagasy popualtion 
+# Examine min F3 values for each Malagasy popualtion
 
 ```{r}
 obj <- test %>%
@@ -90,14 +93,14 @@ obj <- test %>%
   slice(which.min(est))
 obj
 
-# write.csv(file = paste0(res_dir, "minimum_f3_malagasy_pops"), obj, row.names = FALSE,quote = FALSE)
-
-write.table(file = paste0(res_dir, "minimum_f3_malagasy_pops"), obj, row.names = FALSE, quote = FALSE)
+write.table(
+  file = paste0(res_dir, "minimum_f3_malagasy_pops"),
+  obj, row.names = FALSE, quote = FALSE
+)
 ```
 
-#Examine z-scores 
-
 ```{r}
+# Examine z-scores remembering that z-score is affected by population size, so interpretation should be careful
 test %>%
   group_by(Malagasy) %>%
   slice(which.min(z))
@@ -120,14 +123,41 @@ test_grouped$highlight <- as.factor(test_grouped$highlight)
 test_grouped %>%
   group_by(Malagasy) %>%
   arrange(desc(est)) %>%
-  ggplot(aes(x = est, y = reorder(Malagasy, est), color = highlight, shape = highlight, )) +
+  ggplot(aes(
+    x = est, y = reorder(Malagasy, est),
+    color = highlight, shape = highlight,
+  )) +
   geom_point() +
-  labs(title = "F3 (Malagasy; Asian, African)", x = "f3", y = NULL, color = "'Source' populations", shape = "'Source' populations") +
-  scale_shape_manual(values = c("NA" = 19, "Borneo" = 3, "Esan, Nigeria" = 15, "Borneo and Esan, Nigeria" = 17), breaks = c("Borneo", "Esan, Nigeria", "Borneo and Esan, Nigeria")) +
-  # scale_shape_manual(values = c(1,3,7,15,17,19,21,23)) +
-  scale_color_manual(values = c("NA" = "grey", "Borneo" = "lightpink", "Esan, Nigeria" = "lightblue", "Borneo and Esan, Nigeria" = "purple"), breaks = c("Borneo", "Esan, Nigeria", "Borneo and Esan, Nigeria"))
+  labs(
+    title = "F3 (Malagasy; Asian, African)", x = "f3", y = NULL,
+    color = "'Source' populations", shape = "'Source' populations"
+  ) +
+  scale_shape_manual(
+    values = c(
+      "NA" = 19, "Borneo" = 3, "Esan, Nigeria" = 15,
+      "Borneo and Esan, Nigeria" = 17
+    ),
+    breaks = c(
+      "Borneo", "Esan, Nigeria",
+      "Borneo and Esan, Nigeria"
+    )
+  ) +
+  scale_color_manual(
+    values = c(
+      "NA" = "grey", "Borneo" = "lightpink",
+      "Esan, Nigeria" = "lightblue",
+      "Borneo and Esan, Nigeria" = "purple"
+    ),
+    breaks = c(
+      "Borneo", "Esan, Nigeria",
+      "Borneo and Esan, Nigeria"
+    )
+  )
 
-ggsave(filename = paste0(res_dir, "F3_all_combinations.jpg"), width = 7, height = 5, units = "in", dpi = 300)
+ggsave(
+  filename = paste0(res_dir, "F3_all_combinations.jpg"),
+  width = 7, height = 5, units = "in", dpi = 300
+)
 ```
 
 ```{r}
@@ -139,14 +169,29 @@ test_grouped$highlight <- as.factor(test_grouped$highlight)
 test_grouped %>%
   group_by(Malagasy) %>%
   arrange(desc(est)) %>%
-  ggplot(aes(x = est, y = reorder(Malagasy, est), color = highlight, shape = highlight, )) +
+  ggplot(aes(
+    x = est, y = reorder(Malagasy, est),
+    color = highlight, shape = highlight,
+  )) +
   geom_point() +
-  labs(title = "F3 (Malagasy; Asian, African)", x = "f3", y = NULL, color = "'Source' populations", shape = "'Source' populations") +
-  scale_shape_manual(values = c("NA" = 19, "Borneo" = 3, "Esan, Nigeria" = 15, "Borneo and Esan, Nigeria" = 17), breaks = c("Borneo", "Esan, Nigeria", "Borneo and Esan, Nigeria")) +
+  labs(
+    title = "F3 (Malagasy; Asian, African)", x = "f3",
+    y = NULL, color = "'Source' populations",
+    shape = "'Source' populations"
+  ) +
+  scale_shape_manual(
+    values = c(
+      "NA" = 19, "Borneo" = 3,
+      "Esan, Nigeria" = 15,
+      "Borneo and Esan, Nigeria" = 17
+    ),
+    breaks = c(
+      "Borneo", "Esan, Nigeria",
+      "Borneo and Esan, Nigeria"
+    )
+  ) +
   guides(color = "none", shape = "none")
 ```
-
-
 
 # F3 values descending (with Yoruba)
 
@@ -159,10 +204,16 @@ Y <- Y[order(Y$est), ]
 Y$F3 <- paste(Y$Malagasy, " - ", Y$Asian)
 Y$F3 <- factor(Y$F3, levels = Y$F3[order(Y$est, decreasing = TRUE)])
 
-ggplot(Y, aes(x = est, y = F3, colour = Asian, xmax = est - (se / 2), xmin = est + (se / 2))) +
+ggplot(Y, aes(
+  x = est, y = F3, colour = Asian,
+  xmax = est - (se / 2), xmin = est + (se / 2)
+)) +
   geom_point() +
   # geom_errorbar()+
-  labs(title = "F3 (Malagasy; Asian, African)", x = "f3", y = NULL, colour = "Asian population") +
+  labs(
+    title = "F3 (Malagasy; Asian, African)",
+    x = "f3", y = NULL, colour = "Asian population"
+  ) +
   theme(axis.text.y = element_text(size = 8))
 ```
 
@@ -183,10 +234,16 @@ Y <- Y %>%
 
 ggplot(Y, aes(x = est, y = F3, colour = Asian)) +
   geom_point() +
-  labs(title = "F3 (Malagasy; Asian, African)", x = "f3", y = NULL, colour = "Asian population") +
+  labs(
+    title = "F3 (Malagasy; Asian, African)", x = "f3",
+    y = NULL, colour = "Asian population"
+  ) +
   theme(axis.text.y = element_text(size = 8))
 
-ggsave(filename = paste0(res_dir, "F3_Asian_source.jpg"), width = 7, height = 5, units = "in", dpi = 300)
+ggsave(
+  filename = paste0(res_dir, "F3_Asian_source.jpg"),
+  width = 7, height = 5, units = "in", dpi = 300
+)
 ```
 
 # F3 values for each Malagasy grouped (with Yoruba)
@@ -203,9 +260,15 @@ Y %>%
   arrange(desc(est)) %>%
   ggplot(aes(x = est, y = reorder(Malagasy, est), colour = Asian)) +
   geom_point() +
-  labs(title = "F3 (Malagasy; Asian, African)", x = "f3", y = NULL, colour = "Asian population")
+  labs(
+    title = "F3 (Malagasy; Asian, African)", x = "f3", y = NULL,
+    colour = "Asian population"
+  )
 
-ggsave(filename = paste0(res_dir, "F3_Asian_source_per_malagasy_pop.jpg"), width = 7, height = 5, units = "in", dpi = 300)
+ggsave(
+  filename = paste0(res_dir, "F3_Asian_source_per_malagasy_pop.jpg"),
+  width = 7, height = 5, units = "in", dpi = 300
+)
 ```
 
 # Also check z-scores
@@ -222,9 +285,15 @@ Y %>%
   arrange(desc(z)) %>%
   ggplot(aes(x = z, y = reorder(Malagasy, z), colour = Asian)) +
   geom_point() +
-  labs(title = "F3 (Malagasy; Asian, African)", x = "z-score", y = NULL, colour = "Asian population")
+  labs(
+    title = "F3 (Malagasy; Asian, African)", x = "z-score", y = NULL,
+    colour = "Asian population"
+  )
 
-ggsave(filename = paste0(res_dir, "F3_Asian_source_per_malagasy_pop_z.jpg"), width = 7, height = 5, units = "in", dpi = 300)
+ggsave(
+  filename = paste0(res_dir, "F3_Asian_source_per_malagasy_pop_z.jpg"),
+  width = 7, height = 5, units = "in", dpi = 300
+)
 ```
 
 # F3 values descending (with Borneo)
@@ -246,10 +315,16 @@ Y <- Y[order(Y$est), ]
 Y$F3 <- paste(Y$Malagasy, " - ", Y$African)
 Y$F3 <- factor(Y$F3, levels = Y$F3[order(Y$est, decreasing = TRUE)])
 
-ggplot(Y, aes(x = est, y = F3, colour = African, xmax = est - (se / 2), xmin = est + (se / 2))) +
+ggplot(Y, aes(
+  x = est, y = F3,
+  colour = African, xmax = est - (se / 2), xmin = est + (se / 2)
+)) +
   geom_point() +
   # geom_errorbar()+
-  labs(title = "F3 (Malagasy; Asian, African)", x = "f3", y = NULL, colour = "African population") +
+  labs(
+    title = "F3 (Malagasy; Asian, African)", x = "f3", y = NULL,
+    colour = "African population"
+  ) +
   theme(axis.text.y = element_text(size = 8))
 ```
 
@@ -270,10 +345,16 @@ Y <- Y %>%
 
 ggplot(Y, aes(x = est, y = F3, colour = African)) +
   geom_point() +
-  labs(title = "F3 (Malagasy; Asian, African)", x = "f3", y = NULL, colour = "African population") +
+  labs(
+    title = "F3 (Malagasy; Asian, African)", x = "f3", y = NULL,
+    colour = "African population"
+  ) +
   theme(axis.text.y = element_text(size = 8))
 
-ggsave(filename = paste0(res_dir, "F3_African_source.jpg"), width = 7, height = 5, units = "in", dpi = 300)
+ggsave(
+  filename = paste0(res_dir, "F3_African_source.jpg"),
+  width = 7, height = 5, units = "in", dpi = 300
+)
 ```
 
 #F3 values for each Malagasy grouped (with Borneo)
@@ -290,9 +371,15 @@ Y %>%
   arrange(desc(est)) %>%
   ggplot(aes(x = est, y = reorder(Malagasy, est), colour = African)) +
   geom_point() +
-  labs(title = "F3 (Malagasy; Asian, African)", x = "f3", y = NULL, colour = "African population")
+  labs(
+    title = "F3 (Malagasy; Asian, African)", x = "f3", y = NULL,
+    colour = "African population"
+  )
 
-ggsave(filename = paste0(res_dir, "F3_African_source_per_malagasy_pop.jpg"), width = 7, height = 5, units = "in", dpi = 300)
+ggsave(
+  filename = paste0(res_dir, "F3_African_source_per_malagasy_pop.jpg"),
+  width = 7, height = 5, units = "in", dpi = 300
+)
 ```
 
 # Also check z-scores
@@ -309,18 +396,20 @@ Y %>%
   arrange(desc(z)) %>%
   ggplot(aes(x = z, y = reorder(Malagasy, z), colour = African)) +
   geom_point() +
-  labs(title = "F3 (Malagasy; Asian, African)", x = "z-score", y = NULL, colour = "African population")
+  labs(
+    title = "F3 (Malagasy; Asian, African)", x = "z-score", y = NULL,
+    colour = "African population"
+  )
 
-ggsave(filename = paste0(res_dir, "F3_African_source_per_malagasy_pop_z.jpg"), width = 7, height = 5, units = "in", dpi = 300)
+ggsave(
+  filename = paste0(res_dir, "F3_African_source_per_malagasy_pop_z.jpg"),
+  width = 7, height = 5, units = "in", dpi = 300
+)
 ```
-
-
 
 # Outgroup f3's
 
-An f3 to assess the closest outgroup from a list of alternatives for an admixed population does not make sense, because there is not an equal branch length to the common ancestor. However, replication of Brucato et al 2016 may still be useful to check our data.
-
-Here, we will use F3(Asian, Malagasy; African) as in Brucato et al 2016 to investigate the closest Asian population.
+[@brucato2016a] used an outgroup f3 statistic to investigate the closest Asian population to the Malagasy. An f3 to assess the closest outgroup from a list of alternatives for an admixed population is not accurate, because there is not an equal branch length to the common ancestor. However, here we we will use F3(Asian, Malagasy; African) as in [@brucato2016a] to replicate their result and check our data.
 
 ```{r}
 african <- c("YRI")
@@ -334,7 +423,10 @@ test2$Asian <- sub("CHS", "Han Chinese", test2$Asian)
 test2$Asian <- sub("KHV", "Kinh Vietnamese", test2$Asian)
 test2$Asian <- sub("PJL", "Punjabi", test2$Asian)
 test2$Asian <- sub("BEB", "Bengali", test2$Asian)
-test2$Malagasy <- sapply(strsplit(test2$Malagasy, "_"), function(x) paste(x, collapse = " "))
+test2$Malagasy <- sapply(
+  strsplit(test2$Malagasy, "_"),
+  function(x) paste(x, collapse = " ")
+)
 
 print(test2)
 ```
@@ -357,7 +449,10 @@ Y$F3 <- factor(Y$F3, levels = Y$F3[order(Y$est, decreasing = TRUE)])
 
 ggplot(Y, aes(x = est, y = F3, colour = Asian)) +
   geom_point() + # , xmax = est - (se/2), xmin = est + (se/2)
-  labs(title = "F3 (Asian, Malagasy; African)", x = "f3", y = NULL, colour = "Asian population") +
+  labs(
+    title = "F3 (Asian, Malagasy; African)", x = "f3", y = NULL,
+    colour = "Asian population"
+  ) +
   theme(axis.text.y = element_text(size = 5))
 ```
 
@@ -376,24 +471,27 @@ Y <- Y %>%
 
 ggplot(Y, aes(x = est, y = F3, colour = Asian)) +
   geom_point() +
-  labs(title = "F3 (Asian, Malagasy; African)", x = "f3", y = NULL, colour = "Asian population") +
+  labs(
+    title = "F3 (Asian, Malagasy; African)", x = "f3", y = NULL,
+    colour = "Asian population"
+  ) +
   theme(axis.text.y = element_text(size = 5))
 ```
 
-F3 to determine the source, and then F4 ratio to determine the proportion of the two 
-
-Supplementary table for all combinaions of F3 (potentially)
-
-
-remember that the z-score is affected by population size, so interpretation needs to be careful 
-
 # F4 ratio
 
-# Add an  outgroup
+To estimate the proportion of each ancestry source within the Malagasy population, we will use an f4 ratio in the following configurations:
+
+f4(French,Gorilla;Malagasy,Borneo)/f4(French,Gorrilla;Esan,Borneo)
+
+f4(French,Gorilla;Malagasy,Esan)/f4(French,Gorrilla;Borneo,Esan)
 
 ```{r}
+# Add an outgroup
 hgdp <- gt_load("../data/raw/data_input/HGDP_Axiom_allmap.gt")
-hgdp_meta <- read.table("../data/raw/data_input/HGDPid_populations.txt", header = TRUE)
+hgdp_meta <- read.table("../data/raw/data_input/HGDPid_populations.txt",
+  header = TRUE
+)
 hgdp_meta <- hgdp_meta[match(hgdp$id, hgdp_meta$Id), ]
 hgdp$population <- hgdp_meta$population
 
@@ -411,23 +509,22 @@ if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp.gt")) {
 }
 ```
 
-
 ```{r}
 # ungroup
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% ungroup()
 mad_bor_g1000_sum_g <- rbind(mad_bor_g1000_sum, hgdp,
   as_is = FALSE, flip_strand = TRUE,
-  quiet = FALSE, backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp"
+  quiet = FALSE,
+  backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp"
 )
 
-
-mad_bor_g1000_sum_g <- gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp.gt")
+mad_bor_g1000_sum_g <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_hgdp.gt")
 ```
 
 ```{r}
 mad_bor_g1000_sum_g <- mad_bor_g1000_sum_g %>% group_by(population)
 ```
-
 
 # Create f2 blocks directory
 
@@ -436,7 +533,9 @@ if (dir.exists("../data/intermediate/f2_outgroup")) {
   f2_dir <- "../data/intermediate/f2_outgroup"
 } else {
   dir.create("../data/intermediate/f2_outgroup")
-  gt_extract_f2(mad_bor_g1000_sum_g, outdir = "../data/intermediate/f2_outgroup")
+  gt_extract_f2(mad_bor_g1000_sum_g,
+    outdir = "../data/intermediate/f2_outgroup"
+  )
 }
 ```
 
@@ -449,20 +548,28 @@ dim(f2_blocks)
 count_snps(f2_blocks)
 ```
 
-# F4 ratio 
+# F4 ratio: estimating the proportion of African admixture
 
 Sister taxon and outgroup on the left, target in the centre, and sister population and source of admixture on the right.
 
-Here, we are estimating the proportion of African admixture. 
-
 ```{r}
-malagasy <- c("Betsimisaraka", "Merina", "Diego", "Sakalava_Tsimihety", "Betsileo", "Temoro", "Vezo", "Mikea")
+malagasy <- c(
+  "Betsimisaraka", "Merina", "Diego", "Sakalava_Tsimihety",
+  "Betsileo", "Temoro", "Vezo", "Mikea"
+)
 
-pop_matrix <- as.matrix(data.frame("French", "Gorilla", malagasy, "Borneo", "ESN"))
+pop_matrix <-
+  as.matrix(data.frame("French", "Gorilla", malagasy, "Borneo", "ESN"))
 
 qp4_african_p <- qpf4ratio(f2_blocks, pop_matrix)
 
-qp4_african_p$pop3 <- factor(qp4_african_p$pop3, levels = c("Betsimisaraka", "Merina", "Diego", "Sakalava_Tsimihety", "Betsileo", "Temoro", "Vezo", "Mikea"))
+qp4_african_p$pop3 <- factor(qp4_african_p$pop3,
+  levels = c(
+    "Betsimisaraka", "Merina", "Diego",
+    "Sakalava_Tsimihety", "Betsileo",
+    "Temoro", "Vezo", "Mikea"
+  )
+)
 # order by qp4_african_p$pop3 levels
 qp4_african_p <- qp4_african_p %>% mutate(pop3 = forcats::fct_inorder(pop3))
 # round alpha to 1 decimal place
@@ -476,25 +583,35 @@ qp4_african_p <- qp4_african_p %>%
   mutate(pop3 = forcats::fct_inorder(pop3))
 ggplot(qp4_african_p, aes(x = alpha, y = pop3, colour = pop3, fill = pop3)) +
   geom_point() +
-  labs(title = "Proportion of African admixture into Malagasy populaitons", x = paste("Admixture proportion \u03b1"), y = NULL, colour = "Malagasy population", fill = "Malagasy population") +
+  labs(
+    title = "Proportion of African admixture into Malagasy populaitons",
+    x = paste("Admixture proportion \u03b1"), y = NULL,
+    colour = "Malagasy population", fill = "Malagasy population"
+  ) +
   theme(axis.text.y = element_text(size = 5)) +
   guides(colour = "none", fill = "none")
 ```
 
-
-Merina is lowest, as expected
-
+Merina is lowest, as expected.
 
 ```{r}
-pop_matrix <- as.matrix(data.frame("French", "Gorilla", malagasy, "ESN", "Borneo"))
+pop_matrix <-
+  as.matrix(data.frame("French", "Gorilla", malagasy, "ESN", "Borneo"))
 
 qp4_asian_p <- qpf4ratio(f2_blocks, pop_matrix)
-qp4_asian_p$pop3 <- factor(qp4_asian_p$pop3, c("Betsimisaraka", "Merina", "Diego", "Sakalava_Tsimihety", "Betsileo", "Temoro", "Vezo", "Mikea"))
+qp4_asian_p$pop3 <- factor(
+  qp4_asian_p$pop3,
+  c(
+    "Betsimisaraka", "Merina", "Diego",
+    "Sakalava_Tsimihety", "Betsileo", "Temoro",
+    "Vezo", "Mikea"
+  )
+)
 qp4_asian_p <- qp4_asian_p %>% mutate(pop3 = forcats::fct_inorder(pop3))
 qp4_asian_p
 ```
 
-Merina and Betsileo are highest, as expected
+Merina and Betsileo are highest, as expected.
 
 ```{r}
 qp4_asian_p <- qp4_asian_p %>%
@@ -502,11 +619,14 @@ qp4_asian_p <- qp4_asian_p %>%
   mutate(pop3 = forcats::fct_inorder(pop3))
 ggplot(qp4_asian_p, aes(x = alpha, y = pop3, colour = pop3, fill = pop3)) +
   geom_point() +
-  labs(title = "Proportion of Asian admixture into Malagasy populations", x = paste("Admixture proportion \u03b1"), y = NULL, colour = "Malagasy population", fill = "Malagasy population") +
+  labs(
+    title = "Proportion of Asian admixture into Malagasy populations",
+    x = paste("Admixture proportion \u03b1"), y = NULL,
+    colour = "Malagasy population", fill = "Malagasy population"
+  ) +
   theme(axis.text.y = element_text(size = 5)) +
   guides(colour = "none", fill = "none")
 ```
-
 
 ```{r}
 ```

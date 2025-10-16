@@ -142,6 +142,12 @@ testthat::expect_false(is_loci_table_ordered(madagascar,
 ))
 ```
 
+```{r}
+gt_save(madagascar,
+  file_name = "../data/intermediate/rbind_data/madagascar_updated_build"
+)
+```
+
 
 # Malagasy Pierron data
 
@@ -519,113 +525,136 @@ mad_bor_g1000_sum <- rbind(mad_bor_g1000, sumba,
 )
 ```
 
+# Load NEO data
+
+```{r}
+NEO_full <- gt_load("../data/intermediate/rbind_data/NEO_full.gt")
+```
+
+# Merge 
+
+```{r}
+if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo.gt")) {
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo.gt")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo.bk")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo.rds")
+}
+
+mad_bor_g1000_sum_neo <- rbind(mad_bor_g1000_sum, NEO_full,
+  as_is = FALSE,
+  flip_strand = TRUE,
+  quiet = FALSE,
+  backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo"
+)
+```
+
 # Quality control on the merged dataset
 
 ```{r}
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
-loci_report_m <- qc_report_loci(mad_bor_g1000_sum)
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% ungroup()
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% group_by(population)
+loci_report_m <- qc_report_loci(mad_bor_g1000_sum_neo)
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% ungroup()
 ```
 
 # Filter loci
 
 ```{r}
 to_keep <- which(loci_report_m$hwe_p > 0.01)
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% select_loci(all_of(to_keep))
-count_loci(mad_bor_g1000_sum)
-mad_bor_g1000_sum <-
-  mad_bor_g1000_sum %>% select_loci_if(loci_missingness(genotypes) < 0.01)
-count_loci(mad_bor_g1000_sum)
-mad_bor_g1000_sum <-
-  mad_bor_g1000_sum %>% select_loci_if(loci_maf(genotypes) > 0.025)
-count_loci(mad_bor_g1000_sum)
-mad_bor_g1000_sum <-
-  mad_bor_g1000_sum %>% select_loci_if(show_loci(genotypes)$chromosome %in% c(1:22))
-count_loci(mad_bor_g1000_sum)
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% select_loci(all_of(to_keep))
+count_loci(mad_bor_g1000_sum_neo)
+mad_bor_g1000_sum_neo <-
+  mad_bor_g1000_sum_neo %>% select_loci_if(loci_missingness(genotypes) < 0.01)
+count_loci(mad_bor_g1000_sum_neo)
+mad_bor_g1000_sum_neo <-
+  mad_bor_g1000_sum_neo %>% select_loci_if(loci_maf(genotypes) > 0.025)
+count_loci(mad_bor_g1000_sum_neo)
+mad_bor_g1000_sum_neo <-
+  mad_bor_g1000_sum_neo %>% select_loci_if(show_loci(genotypes)$chromosome %in% c(1:22))
+count_loci(mad_bor_g1000_sum_neo)
 ```
 
 # Filter indiv
 
 ```{r}
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% group_by(population)
 individual_report_m <-
-  qc_report_indiv(mad_bor_g1000_sum, kings_threshold = 0.0884)
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% ungroup()
-mad_bor_g1000_sum <-
-  mad_bor_g1000_sum %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
-mad_bor_g1000_sum <-
-  mad_bor_g1000_sum %>% filter(indiv_missingness(genotypes) < 0.1)
-nrow(mad_bor_g1000_sum)
-count_loci(mad_bor_g1000_sum)
+  qc_report_indiv(mad_bor_g1000_sum_neo, kings_threshold = 0.0884)
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% ungroup()
+mad_bor_g1000_sum_neo <-
+  mad_bor_g1000_sum_neo %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
+mad_bor_g1000_sum_neo <-
+  mad_bor_g1000_sum_neo %>% filter(indiv_missingness(genotypes) < 0.1)
+nrow(mad_bor_g1000_sum_neo)
+count_loci(mad_bor_g1000_sum_neo)
 ```
 
 # Loci and sample count
 
 ```{r}
-nrow(mad_bor_g1000_sum)
-count_loci(mad_bor_g1000_sum)
+nrow(mad_bor_g1000_sum_neo)
+count_loci(mad_bor_g1000_sum_neo)
 ```
 
 # Save
 
 ```{r}
-if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean.gt")) {
-  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean.gt")
-  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean.bk")
-  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean.rds")
+if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.gt")) {
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.gt")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.bk")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.rds")
 }
 gt_save(
-  mad_bor_g1000_sum,
-  "../data/intermediate/rbind_data/mad_bor_g1000_sum_clean"
+  mad_bor_g1000_sum_neo,
+  "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean"
 )
-mad_bor_g1000_sum <-
-  gt_update_backingfile(mad_bor_g1000_sum,
-    backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum_clean"
+mad_bor_g1000_sum_neo <-
+  gt_update_backingfile(mad_bor_g1000_sum_neo,
+    backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean"
   )
 ```
 
 # Impute
 
 ```{r}
-mad_bor_g1000_sum <- gt_impute_simple(mad_bor_g1000_sum, method = "mean")
+mad_bor_g1000_sum_neo <- gt_impute_simple(mad_bor_g1000_sum_neo, method = "mean")
 ```
 
 # LD clumping
 
 ```{r, error=TRUE}
-if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean_ld.gt")) {
-  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean_ld.gt")
-  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean_ld.bk")
-  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean_ld.rds")
+if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")) {
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.bk")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.rds")
 }
 ```
 
 ```{r}
-to_keep_LD <- loci_ld_clump(mad_bor_g1000_sum,
+to_keep_LD <- loci_ld_clump(mad_bor_g1000_sum_neo,
   thr_r2 = 0.2, size = 100,
   return_id = TRUE, use_positions = TRUE
 )
 
-mad_bor_g1000_sum_ld <- mad_bor_g1000_sum %>% select_loci(all_of(to_keep_LD))
+mad_bor_g1000_sum_neo_ld <- mad_bor_g1000_sum_neo %>% select_loci(all_of(to_keep_LD))
 ```
 
 # Loci and sample count
 
 ```{r}
-nrow(mad_bor_g1000_sum_ld)
-count_loci(mad_bor_g1000_sum_ld)
+nrow(mad_bor_g1000_sum_neo_ld)
+count_loci(mad_bor_g1000_sum_neo_ld)
 ```
 
 # Save LD filtered dataset
 
 ```{r}
 gt_save(
-  mad_bor_g1000_sum_ld,
-  "../data/intermediate/rbind_data/mad_bor_g1000_sum_clean_ld"
+  mad_bor_g1000_sum_neo_ld,
+  "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld"
 )
-mad_bor_g1000_sum_ld <-
-  gt_update_backingfile(mad_bor_g1000_sum_ld,
-    backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum_clean_ld"
+mad_bor_g1000_sum_neo_ld <-
+  gt_update_backingfile(mad_bor_g1000_sum_neo_ld,
+    backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld"
   )
 ```
 
@@ -635,7 +664,7 @@ Genetic and phenotypic data collected by the team of Dr George Perry at Pennsylv
 
 Two main datasets were created, a Malagasy only dataset and a global dataset combining Malagasy samples with comparative data. The Malagasy dataset was created by merging the data from this study with Malagasy data from Pierron et al. (2014) (n = `r nrow(madagascar_p)`). For a comparative global dataset, this data was combined with data from southeast Asian and African populations in the 1000 Genomes Project Consortium (2015) dataset (n = `r nrow(g1000)`), individuals from Borneo from Brucato et al. (2016) (n = `r nrow(borneo)`), and individuals from the islands of Sumba (n = 30, subsampled at random from `r nrow(sumba)`) and Timor (n = `r nrow(timor)`) from Cox et al. (2016).
 
-Scripts in R were used to map data to GRCH38 from build GRCH37. The package BiomaRt (version ‘2.56.1’), which utilises the ensembl database, was employed to do so (Durinck et al., 2009, 2005).  Data were then cleaned and merged in R with package tidypopgen (Carter and Manica, 2025). Only autosomal SNPs were analysed. All SNPs with a missingness rate above 0.01 across all samples were removed. All individuals with a genotype call rate less than 0.9 (missingness exceeding 0.1) were removed. All SNPs with minor allele frequency below a threshold of 0.025 were removed. All SNPs with a Hardy-Weinberg equilibrium test p-value below 0.01 were removed. Close relatives were removed using the KING robust kinship coefficient (Manichaikul et al., 2010), implemented in tidypopgen. One individual was removed from each pair with a kinship coefficient greater than 0.0884, equivalent to removing relatives up to the second degree. After this filtering, the Malagasy dataset consisted of `r nrow(malagasy_merged)` individuals and `r count_loci(malagasy_merged)` SNPs, and the global dataset consisted of `r nrow(mad_bor_g1000_sum)` individuals and `r count_loci(mad_bor_g1000_sum)` SNPs.
+Scripts in R were used to map data to GRCH38 from build GRCH37. The package BiomaRt (version ‘2.56.1’), which utilises the ensembl database, was employed to do so (Durinck et al., 2009, 2005).  Data were then cleaned and merged in R with package tidypopgen (Carter and Manica, 2025). Only autosomal SNPs were analysed. All SNPs with a missingness rate above 0.01 across all samples were removed. All individuals with a genotype call rate less than 0.9 (missingness exceeding 0.1) were removed. All SNPs with minor allele frequency below a threshold of 0.025 were removed. All SNPs with a Hardy-Weinberg equilibrium test p-value below 0.01 were removed. Close relatives were removed using the KING robust kinship coefficient (Manichaikul et al., 2010), implemented in tidypopgen. One individual was removed from each pair with a kinship coefficient greater than 0.0884, equivalent to removing relatives up to the second degree. After this filtering, the Malagasy dataset consisted of `r nrow(malagasy_merged)` individuals and `r count_loci(malagasy_merged)` SNPs, and the global dataset consisted of `r nrow(mad_bor_g1000_sum_neo)` individuals and `r count_loci(mad_bor_g1000_sum_neo)` SNPs.
 
-SNPs in linkage were then removed by LD clumping (Privé et al., 2018), using tidypopgen. Those with an r2 value greater than 0.2 in a sliding window of 100 kilobases were removed. After pruning, the Malagasy dataset consisted of `r count_loci(malagasy_merged_ld)` SNPs and the global dataset consisted of `r count_loci(mad_bor_g1000_sum_ld)` SNPs.
+SNPs in linkage were then removed by LD clumping (Privé et al., 2018), using tidypopgen. Those with an r2 value greater than 0.2 in a sliding window of 100 kilobases were removed. After pruning, the Malagasy dataset consisted of `r count_loci(malagasy_merged_ld)` SNPs and the global dataset consisted of `r count_loci(mad_bor_g1000_sum_neo_ld)` SNPs.
 

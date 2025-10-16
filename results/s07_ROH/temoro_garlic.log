@@ -1,0 +1,71 @@
+garlic --tped ../data/intermediate/rbind_data/temoro_clean.tped --tfam ../data/intermediate/rbind_data/temoro_clean.tfam --build hg18 --error 0.001 --auto-winsize --resample 100 --winsize 50 --out ../results/s07_ROH/temoro_garlic
+Output file basename: ../results/s07_ROH/temoro_garlic
+TPED file: ../data/intermediate/rbind_data/temoro_clean.tped
+TPED missing data code: 0
+TFAM file: ../data/intermediate/rbind_data/temoro_clean.tfam
+TGLS file: none
+Genotype likelihood format: none
+Measure ROH in genetic distance units: FALSE
+Weighted LOD: FALSE
+Genome build: hg18
+User defined centromere file: none
+Calculate allele frequencies only: FALSE
+Calculate allele frequencies from data: TRUE
+Allele frequencies resampled: 100
+Explore window sizes: FALSE
+Automatic window size: TRUE
+Automatic window step size: 10
+Choose LOD score cutoff automatically: TRUE
+Choose ROH class thresholds automatically: TRUE
+Threads: 1
+Genotyping error: 0.001
+Max gap: 200000
+Overlap fraction: 0.25
+mu: 1e-09
+M: 7
+# GMM clusters: 3
+# of rand individuals for KDE: 20
+# of rand individuals for LD: ALL
+Output raw LOD scores: FALSE
+Use r2 for weighting phased data: FALSE
+Use thinning for KDE estimation: TRUE
+Chromosome chr1: 48497 sites.
+Chromosome chr2: 47956 sites.
+Chromosome chr3: 39511 sites.
+Chromosome chr4: 32972 sites.
+Chromosome chr5: 34450 sites.
+Chromosome chr6: 38140 sites.
+Chromosome chr7: 30654 sites.
+Chromosome chr8: 30295 sites.
+Chromosome chr9: 26633 sites.
+Chromosome chr10: 32145 sites.
+Chromosome chr11: 29662 sites.
+Chromosome chr12: 28971 sites.
+Chromosome chr13: 22677 sites.
+Chromosome chr14: 19584 sites.
+Chromosome chr15: 18259 sites.
+Chromosome chr16: 19070 sites.
+Chromosome chr17: 16933 sites.
+Chromosome chr18: 18273 sites.
+Chromosome chr19: 12009 sites.
+Chromosome chr20: 15774 sites.
+Chromosome chr21: 8616 sites.
+Chromosome chr22: 8661 sites.
+Total loci: 579742
+Population: Temoro
+Total diploid individuals: 24
+Monomorphic loci filtered: 9928
+Total loci used for analysis: 569814
+Individuals used for KDE: GSM1293648 GSM1293649 GSM1293651 GSM1293652 GSM1293653 GSM1293654 GSM1293656 GSM1293657 GSM1293658 GSM1293659 GSM1293660 GSM1293661 GSM1293662 GSM1293663 GSM1293665 GSM1293667 GSM1293668 GSM1293669 GSM1293670 GSM1293671
+Searching for acceptable window size, smoothness threshold: 0.5
+winsize	smoothness
+KDE with 225940 points.
+ 50	 0.477101
+Wrote KDE results to ../results/s07_ROH/temoro_garlic.50SNPs.kde
+Selected window size: 50
+Selected LOD score cutoff: 3.319
+Gaussian class A ( mixture, mean, std ) = ( 0.609813, 223411, 9.74237e+09 )
+Gaussian class B ( mixture, mean, std ) = ( 0.326583, 561107, 6.92933e+10 )
+Gaussian class C ( mixture, mean, std ) = ( 0.0636045, 2.30084e+06, 4.10682e+12 )
+Selected ROH size boundaries = ( 409219 1.28701e+06 )
+ROH calls: ../results/s07_ROH/temoro_garlic.roh.bed

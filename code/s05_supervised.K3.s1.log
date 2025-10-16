@@ -1,0 +1,11 @@
+fastmixture v0.93.3
+Time: 23/06/2025 10:50:28
+Directory: /home/EJC199/Git/malagasy_diversity/code
+Options:
+	--bfile /home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/mad_bor_g1000_sum.bed
+	--K 3
+	--threads 2
+	--seed 1
+	--out s05_supervised
+	--batches 32
+	--supervised /home/EJC199/Git/malagasy_diversity/results/s05_fastmixture/data_labels
