@@ -19,28 +19,28 @@ res_dir <- "../results/s11_ALDER/"
 # Load gt
 
 ```{r}
-mad_bor_g1000_sum <-
-  gt_load("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_clean.gt")
+mad_bor_g1000_sum_neo <-
+  gt_load("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean.gt")
 ```
 
 # Loci and sample count
 
 ```{r}
-nrow(mad_bor_g1000_sum)
-count_loci(mad_bor_g1000_sum)
+nrow(mad_bor_g1000_sum_neo)
+count_loci(mad_bor_g1000_sum_neo)
 ```
 
 # Make $population a copy of $id
 
 ```{r}
-mad_bor_g1000_sum$population <- mad_bor_g1000_sum$id
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
+mad_bor_g1000_sum_neo$population <- mad_bor_g1000_sum_neo$id
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% group_by(population)
 ```
 
 # Check the original gt
 
 ```{r}
-is_loci_table_ordered(mad_bor_g1000_sum,
+is_loci_table_ordered(mad_bor_g1000_sum_neo,
   error_on_false = TRUE,
   ignore_genetic_dist = FALSE
 )
@@ -50,19 +50,19 @@ is_loci_table_ordered(mad_bor_g1000_sum,
 # Remove existing plink .bed files and write .bed
 
 ```{r}
-if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.bed")) {
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.bed")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.bim")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.fam")
+if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.bed")) {
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.bed")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.bim")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.fam")
 }
 
-gt_as_plink(mad_bor_g1000_sum, "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum")
+gt_as_plink(mad_bor_g1000_sum_neo, "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo")
 ```
 
 # Transform to .ped
 
 ```{bash}
-plink --bfile ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum --recode --out ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum
+plink --bfile ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo --recode --out ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo
 ```
 
 
@@ -71,15 +71,15 @@ plink --bfile ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum 
 check and remove any snps without a map position
 
 ```{r}
-mad_bor_g1000_sum_fam <-
-  read.table("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.fam",
-    header = FALSE, sep = " "
+mad_bor_g1000_sum_neo_fam <-
+  read.table("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.fam",
+    header = FALSE, sep = ""
   )
 
 # colnames of $V1 to "id"
-colnames(mad_bor_g1000_sum_fam)[1] <- "id"
+colnames(mad_bor_g1000_sum_neo_fam)[1] <- "id"
 # colnames of $V6 to "population"
-colnames(mad_bor_g1000_sum_fam)[6] <- "population"
+colnames(mad_bor_g1000_sum_neo_fam)[6] <- "population"
 
 pop_table <- read.table("../data/raw/data_input/Madagascar_Borneo.poptable",
   sep = "\t", fill = TRUE
@@ -87,41 +87,41 @@ pop_table <- read.table("../data/raw/data_input/Madagascar_Borneo.poptable",
 colnames(pop_table) <- c("IID", "V2", "FID", "Population", "V5", "V6", "V7")
 
 # Remove the "RR"
-mad_bor_g1000_sum_fam$id <- sub("RR.*", "", mad_bor_g1000_sum_fam$id)
-mad_bor_g1000_sum_fam$V2 <- sub("RR.*", "", mad_bor_g1000_sum_fam$V2)
+mad_bor_g1000_sum_neo_fam$id <- sub("RR.*", "", mad_bor_g1000_sum_neo_fam$id)
+mad_bor_g1000_sum_neo_fam$V2 <- sub("RR.*", "", mad_bor_g1000_sum_neo_fam$V2)
 
 # Find Malagasy entries
-pop_table_sub <- subset(pop_table, pop_table$IID %in% mad_bor_g1000_sum_fam$id)
+pop_table_sub <- subset(pop_table, pop_table$IID %in% mad_bor_g1000_sum_neo_fam$id)
 
 # match up the ID's with pop table metadata
-matching_m <- match(mad_bor_g1000_sum_fam$id, pop_table_sub$IID)
+matching_m <- match(mad_bor_g1000_sum_neo_fam$id, pop_table_sub$IID)
 
-mad_bor_g1000_sum_fam$population <- ifelse(!is.na(matching_m),
+mad_bor_g1000_sum_neo_fam$population <- ifelse(!is.na(matching_m),
   pop_table_sub$Population[matching_m],
-  mad_bor_g1000_sum_fam$population
+  mad_bor_g1000_sum_neo_fam$population
 )
 
 
 # replace any " " in $populaiton with a "_"
-mad_bor_g1000_sum_fam$population <- gsub(
+mad_bor_g1000_sum_neo_fam$population <- gsub(
   " ", "_",
-  mad_bor_g1000_sum_fam$population
+  mad_bor_g1000_sum_neo_fam$population
 )
 
 # any $id begining GRC has $population "Sumba"
-mad_bor_g1000_sum_fam$population[grepl("^GRC", mad_bor_g1000_sum_fam$id)] <- "Sumba"
+mad_bor_g1000_sum_neo_fam$population[grepl("^GRC", mad_bor_g1000_sum_neo_fam$id)] <- "Sumba"
 
 # Load fastmixture results
-mad_bor_g1000_sum <-
-  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean.gt")
+mad_bor_g1000_sum_neo <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.gt")
 qmats <-
   readRDS("~/Dropbox/gitdata/malagasy_diversity/data/intermediate/fastmixture/fastmixture_m.RData")
 # tidy with the gt
-mad_bor_g1000_sum <- augment(get_q_matrix(qmats, k = 3, run = 1),
-  data = mad_bor_g1000_sum
+mad_bor_g1000_sum_neo <- augment(get_q_matrix(qmats, k = 3, run = 1),
+  data = mad_bor_g1000_sum_neo
 )
 # filter to merina
-merina <- mad_bor_g1000_sum %>% filter(population == "Merina")
+merina <- mad_bor_g1000_sum_neo %>% filter(population == "Merina")
 # split groups
 # .Q3 representing Asian ancestry and .Q2 representing African ancestry
 merina$population <- ifelse(merina$.Q3 > 0.5, "MerinaA", "MerinaB")
@@ -130,26 +130,26 @@ merina$id <- sub("RR.*", "", merina$id)
 
 # match V2 and merina$id and replace the population column in merina_fam with
 # the population column in merina
-matching_m <- match(mad_bor_g1000_sum_fam$id, merina$id)
-mad_bor_g1000_sum_fam$population <- ifelse(!is.na(matching_m),
-  merina$population[matching_m], mad_bor_g1000_sum_fam$population
+matching_m <- match(mad_bor_g1000_sum_neo_fam$id, merina$id)
+mad_bor_g1000_sum_neo_fam$population <- ifelse(!is.na(matching_m),
+  merina$population[matching_m], mad_bor_g1000_sum_neo_fam$population
 )
 
-# mad_bor_g1000_sum_fam$id <- as.numeric(rownames(mad_bor_g1000_sum_fam))
-mad_bor_g1000_sum_fam$population <- as.factor(mad_bor_g1000_sum_fam$population)
+# mad_bor_g1000_sum_neo_fam$id <- as.numeric(rownames(mad_bor_g1000_sum_neo_fam))
+mad_bor_g1000_sum_neo_fam$population <- as.factor(mad_bor_g1000_sum_neo_fam$population)
 
-# mad_bor_g1000_sum_fam$V6 <- mad_bor_g1000_sum_fam$population
-write.table(mad_bor_g1000_sum_fam,
-  "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.fam",
+# mad_bor_g1000_sum_neo_fam$V6 <- mad_bor_g1000_sum_neo_fam$population
+write.table(mad_bor_g1000_sum_neo_fam,
+  "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.fam",
   row.names = FALSE, col.names = FALSE, sep = " ", quote = FALSE
 )
 ```
 
 ```{r}
-if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.geno")) {
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.geno")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.ind")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.snp")
+if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno")) {
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.ind")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.snp")
 }
 ```
 
@@ -210,6 +210,9 @@ files <- list.files("../code",
   full.names = TRUE
 )
 
+# remove any from files that don't have 'alder' in  the name
+files <- files[grepl("_alder", files)]
+
 # use readLines to read each of files
 logs <- lapply(files, readLines)
 
@@ -223,6 +226,7 @@ data_lines <- lapply(
     )]
   }
 )
+
 
 # Extract the first line from each element in data_lines
 first_lines <- sapply(data_lines, function(x) if (length(x) > 0) x[1] else NA)
