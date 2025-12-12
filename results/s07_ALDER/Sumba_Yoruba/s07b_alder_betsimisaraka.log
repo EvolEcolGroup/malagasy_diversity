@@ -1,0 +1,340 @@
+
+        |                          
+        |      ALDER,   v1.03
+     \..|./                        
+    \ \  /       Admixture         
+     \ |/ /      Linkage           
+      \| /       Disequilibrium for
+       |/        Evolutionary      
+       |         Relationships     
+       |                           
+
+  +--------------------------------------------------------------------------+
+  |  ALDER computes weighted LD decay curves, performs curve-fitting to      |
+  |  infer admixture dates, and uses the results to test for admixture.      |
+  |  For full details about options and parameters, please see the README    |
+  |  file included with this software.                                       |
+  +--------------------------------------------------------------------------+
+
+---------- contents of parameter file: s07b_alder_betsimisaraka.par ----------
+genotypename: ../../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno
+snpname: ../../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.snp
+indivname: ../../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.ind
+checkmap: YES
+jackknife: YES
+mindis: 0.005
+admixpop: Betsimisaraka
+refpops: Sumba;Yoruba
+raw_outname: /home/EJC199/Git/malagasy_diversity/code/s07_ALDER_par_files/Sumba_Yoruba/alder_betsimisaraka.txt
+---------- parameter settings used (with defaults for unspecified) ----------
+
+Input data files:
+        genotypename: ../../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno
+             snpname: ../../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.snp
+           indivname: ../../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.ind
+
+Admixed population:
+            admixpop: Betsimisaraka
+
+Reference populations/weights:
+             refpops: Sumba;Yoruba
+
+Raw weighted LD curve output:
+         raw_outname: /home/EJC199/Git/malagasy_diversity/code/s07_ALDER_par_files/Sumba_Yoruba/alder_betsimisaraka.txt
+           jackknife: YES
+
+Output file for IDs of SNPs used:
+         snp_outname: (none)
+
+Data filtering:
+            mincount: 4
+
+Curve fitting:
+             binsize: 0.000500
+              mindis: 0.005000
+              maxdis: 0.500000
+
+Input checks:
+       fast_snp_read: NO
+            checkmap: YES
+
+Computational options:
+         num_threads: 1
+      approx_ld_corr: YES
+      use_naive_algo: NO
+
+-------------------------------------------------------------------------------
+
+                        *** Processing data ***
+
+num indivs in full data set: 2742
+parsing refpops string (semicolon-delimited; no spaces): Sumba;Yoruba
+  admixed pop: Betsimisaraka (33 indivs)
+  ref pop 0: Sumba (36 indivs)
+  ref pop 1: Yoruba (104 indivs)
+initial filtering: using 235715 of 235715 snps in data set
+reading genotype data............... done
+number of reference populations: 2
+number of chromosomes (with data) used: 22
+
+Form of ALDER to run: 2-reference weighted LD
+
+==> Time to process data: 1.01489
+
+-------------------------------------------------------------------------------
+
+     *** Determining extent of correlated LD between test and ref pops ***
+
+WARNING: skipping LD correlation computation: 'mindis' param is set
+decay curves will be fit starting at d = 0.005 Morgans, as specified
+
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Sumba Yoruba ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.169002
+
+     0.050	 0.00293130	      1358964
+     0.100	 0.00229677	      1237915
+     0.150	 0.00203174	      1152494
+     0.200	 0.00191603	      1088051
+     0.250	 0.00181453	      1063987
+     0.300	 0.00170447	      1036996
+     0.350	 0.00163189	      1007112
+     0.400	 0.00163102	       998969
+     0.450	 0.00157050	       972144
+     0.500	 0.00154781	       968079
+     0.550	 0.00149874	       953601
+     0.600	 0.00148825	       944196
+     0.650	 0.00144205	       946377
+     0.700	 0.00138636	       938902
+     0.750	 0.00137580	       925878
+     0.800	 0.00133429	       931408
+     0.850	 0.00132324	       926659
+     0.900	 0.00128713	       927233
+     0.950	 0.00126460	       927680
+         .	          .	            .
+         .	          .	            .
+         .	          .	            .
+    49.600	 0.00000376	       632440
+    49.650	 0.00001385	       627982
+    49.700	-0.00000975	       630899
+    49.750	 0.00001799	       628003
+    49.800	 0.00000376	       631433
+    49.850	 0.00001681	       631337
+    49.900	 0.00001221	       632353
+    49.950	 0.00001344	       631868
+       inf	 0.00000716	  49990713812   (inter-chrom snp pairs)
+
++1.6e-03
+|    x                                                                         
+|                                                                              
+|     x                                                                        
+|      x                                                                       
+|       x                                                                      
+|        x                                                                     
+|         x                                                                    
+|          xxx                                                                 
+|             x                                                                
+|              xx                                                              
+|                xx                                                            
+|                  xx                                                          
+|                    x                                                         
+|                     xxxx                                                     
+|                         x                                                    
+|                          xx                                                  
+|                            xxx                                               
+|                               xxx                                            
+|                                  xxx                                         
+|                                     xxx                                      
+|                                        xxxx                                  
+|                                            xxxxxx                            
+|                                                  xxxx                        
+|                                                      xxxx                    
+|                                                          xxxxx xx x          
+|                                                               x  x xxxxxx    
+|                                                                          xxxx
+|                                                                              
+|                                                                              
++---------+---------+---------+---------+---------+---------+---------+--------
+|         1         2         3         4         5         6         7      cM
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:       29.72 +/- 0.95         z = 31.27 *
+d>0.30     amp_tot:  0.00172318 +/- 0.00005126
+d>0.30     amp_exp:  0.00171960 +/- 0.00005123   z = 33.56 *
+d>0.30     amp_aff:  0.00000716 +/- 0.00000283
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:       29.47 +/- 0.97         z = 30.38 *
+d>0.40     amp_tot:  0.00170754 +/- 0.00005078
+d>0.40     amp_exp:  0.00170396 +/- 0.00005076   z = 33.57 *
+d>0.40     amp_aff:  0.00000716 +/- 0.00000283
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:       29.23 +/- 0.98         z = 29.81 *
+d>0.50     amp_tot:  0.00169275 +/- 0.00005085
+d>0.50     amp_exp:  0.00168918 +/- 0.00005082   z = 33.24 *
+d>0.50     amp_aff:  0.00000716 +/- 0.00000283
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:       29.06 +/- 1.03         z = 28.34 *
+d>0.60     amp_tot:  0.00168121 +/- 0.00005098
+d>0.60     amp_exp:  0.00167763 +/- 0.00005098   z = 32.91 *
+d>0.60     amp_aff:  0.00000716 +/- 0.00000283
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:       28.90 +/- 1.04         z = 27.71 *
+d>0.70     amp_tot:  0.00167068 +/- 0.00005140
+d>0.70     amp_exp:  0.00166711 +/- 0.00005140   z = 32.43 *
+d>0.70     amp_aff:  0.00000716 +/- 0.00000283
+
+==> Time to run fits: 0.148711
+
+-------------------------------------------------------------------------------
+
+                    *** Running test for admixture ***
+
+-------------------------------------------------------------------------------
+
+   *** Computing 1-ref weighted LD with weights Sumba ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 1.1403
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:       29.76 +/- 1.01         z = 29.58 *
+d>0.30     amp_tot:  0.00065789 +/- 0.00002254
+d>0.30     amp_exp:  0.00065601 +/- 0.00002241   z = 29.27 *
+d>0.30     amp_aff:  0.00000377 +/- 0.00000128
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:       29.45 +/- 1.04         z = 28.31 *
+d>0.40     amp_tot:  0.00065060 +/- 0.00002254
+d>0.40     amp_exp:  0.00064872 +/- 0.00002241   z = 28.95 *
+d>0.40     amp_aff:  0.00000377 +/- 0.00000128
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:       29.15 +/- 1.07         z = 27.22 *
+d>0.50     amp_tot:  0.00064362 +/- 0.00002296
+d>0.50     amp_exp:  0.00064173 +/- 0.00002282   z = 28.12 *
+d>0.50     amp_aff:  0.00000377 +/- 0.00000128
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:       28.94 +/- 1.12         z = 25.81 *
+d>0.60     amp_tot:  0.00063837 +/- 0.00002349
+d>0.60     amp_exp:  0.00063648 +/- 0.00002336   z = 27.24 *
+d>0.60     amp_aff:  0.00000377 +/- 0.00000128
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:       28.75 +/- 1.15         z = 24.91 *
+d>0.70     amp_tot:  0.00063362 +/- 0.00002404
+d>0.70     amp_exp:  0.00063174 +/- 0.00002390   z = 26.43 *
+d>0.70     amp_aff:  0.00000377 +/- 0.00000128
+
+==> Time to run fits: 0.131621
+
+-------------------------------------------------------------------------------
+
+   *** Computing 1-ref weighted LD with weights Yoruba ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 1.10442
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:       30.50 +/- 1.06         z = 28.79 *
+d>0.30     amp_tot:  0.00027159 +/- 0.00001194
+d>0.30     amp_exp:  0.00027138 +/- 0.00001196   z = 22.70 *
+d>0.30     amp_aff:  0.00000042 +/- 0.00000034
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:       30.23 +/- 1.06         z = 28.61 *
+d>0.40     amp_tot:  0.00026895 +/- 0.00001188
+d>0.40     amp_exp:  0.00026875 +/- 0.00001190   z = 22.59 *
+d>0.40     amp_aff:  0.00000042 +/- 0.00000034
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:       29.99 +/- 1.05         z = 28.56 *
+d>0.50     amp_tot:  0.00026663 +/- 0.00001156
+d>0.50     amp_exp:  0.00026642 +/- 0.00001157   z = 23.03 *
+d>0.50     amp_aff:  0.00000042 +/- 0.00000034
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:       29.85 +/- 1.09         z = 27.50 *
+d>0.60     amp_tot:  0.00026517 +/- 0.00001164
+d>0.60     amp_exp:  0.00026497 +/- 0.00001166   z = 22.73 *
+d>0.60     amp_aff:  0.00000042 +/- 0.00000034
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:       29.76 +/- 1.09         z = 27.26 *
+d>0.70     amp_tot:  0.00026426 +/- 0.00001171
+d>0.70     amp_exp:  0.00026405 +/- 0.00001173   z = 22.51 *
+d>0.70     amp_aff:  0.00000042 +/- 0.00000034
+
+==> Time to run fits: 0.13333
+
+-------------------------------------------------------------------------------
+
+               *** Comparing curves to test for admixture ***
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30  decay diff:        0.04 +/- 0.39      1-ref Sumba - 2-ref
+d>0.30  decay diff:        0.78 +/- 0.49      1-ref Yoruba - 2-ref
+d>0.30  decay diff:        0.74 +/- 0.87      1-ref Yoruba - 1-ref Sumba
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40  decay diff:       -0.02 +/- 0.39      1-ref Sumba - 2-ref
+d>0.40  decay diff:        0.76 +/- 0.49      1-ref Yoruba - 2-ref
+d>0.40  decay diff:        0.78 +/- 0.87      1-ref Yoruba - 1-ref Sumba
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50  decay diff:       -0.08 +/- 0.39      1-ref Sumba - 2-ref
+d>0.50  decay diff:        0.76 +/- 0.51      1-ref Yoruba - 2-ref
+d>0.50  decay diff:        0.84 +/- 0.88      1-ref Yoruba - 1-ref Sumba
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60  decay diff:       -0.11 +/- 0.40      1-ref Sumba - 2-ref
+d>0.60  decay diff:        0.80 +/- 0.51      1-ref Yoruba - 2-ref
+d>0.60  decay diff:        0.91 +/- 0.89      1-ref Yoruba - 1-ref Sumba
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70  decay diff:       -0.15 +/- 0.40      1-ref Sumba - 2-ref
+d>0.70  decay diff:        0.87 +/- 0.50      1-ref Yoruba - 2-ref
+d>0.70  decay diff:        1.01 +/- 0.89      1-ref Yoruba - 1-ref Sumba
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Pre-test: Does Betsimisaraka have a 1-ref weighted LD curve with Sumba?
+   1-ref decay z-score:   27.22
+   1-ref amp_exp z-score: 28.12
+                                  YES: curve is significant
+
+Pre-test: Does Betsimisaraka have a 1-ref weighted LD curve with Yoruba?
+   1-ref decay z-score:   28.56
+   1-ref amp_exp z-score: 23.03
+                                  YES: curve is significant
+
+Does Betsimisaraka have a 2-ref weighted LD curve with Sumba and Yoruba?
+   2-ref decay z-score:   29.81
+   2-ref amp_exp z-score: 33.24
+                                  YES: curve is significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+   1-ref Sumba - 2-ref z-score:                       -0.20   ( -0%)
+   1-ref Yoruba - 2-ref z-score:                       1.50   (  3%)
+   1-ref Yoruba - 1-ref Sumba z-score:                 0.95   (  3%)
+                                  YES: decay rates are consistent
+
+Test SUCCEEDS (z=29.81, p=3e-195) for Betsimisaraka with {Sumba, Yoruba} weights
+
+DATA:	success	3e-195	Betsimisaraka	Sumba	Yoruba	29.81	27.22	23.03	3%	29.23 +/- 0.98	0.00168918 +/- 0.00005082	29.15 +/- 1.07	0.00064173 +/- 0.00002282	29.99 +/- 1.05	0.00026642 +/- 0.00001157
+
+DATA:	test status	p-value	test pop	ref A	ref B	2-ref z-score	1-ref z-score A	1-ref z-score B	max decay diff %	2-ref decay	2-ref amp_exp	1-ref decay A	1-ref amp_exp A	1-ref decay B	1-ref amp_exp B

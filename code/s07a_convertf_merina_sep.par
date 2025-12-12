@@ -1,0 +1,10 @@
+#!/bin/bash
+genotypename: ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.bed
+snpname: ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.bim
+indivname: ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.fam
+outputformat: EIGENSTRAT
+hashcheck: NO
+genotypeoutname: ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.geno
+snpoutname: ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.snp
+indivoutname: ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.ind
+

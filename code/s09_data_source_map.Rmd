@@ -1,0 +1,261 @@
+---
+title: "Map of 5 data collection areas in Madagascar"
+date: "2024-02-07"
+knit: resrepo::knit_to_results
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(rnaturalearth)
+library(sf)
+library(dplyr)
+library(ggrepel)
+```
+
+```{r set-directories}
+res_dir <- "../results/s09_data_source_map/"
+```
+
+
+# New plan for map with rnaturalearth
+
+```{r}
+# WGS84 is standard, but lets use Laborde
+Madagascar <- ne_countries(country = "Madagascar", type = "map_units", scale = "medium")
+
+ggplot() +
+  geom_sf(data = Madagascar) +
+  coord_sf(crs = st_crs(29702)) + # Laborde projection, commonly used for Madagascar
+  theme_light()
+```
+
+```{r}
+target <- c("Madagascar", "Mozambique", "Comoros", "Mauritius", "Seychelles", "Mayotte", "United Republic of Tanzania", "Malawi", "Zimbabwe", "South Africa", "Eswatini", "Zambia", "Lesotho", "Somalia", "Kenya", "Ethiopia", "Uganda", "Rwanda", "Burundi", "Djibouti", "Eritrea", "South Sudan", "Botswana", "Namibia", "Angola", "Democratic Republic of the Congo", "Central African Republic", "Republic of the Congo", "Equatorial Guinea", "Cameroon")
+
+# "Reunion" "Equatorial Guinea"!!
+
+
+Madagascar_inset <- ne_countries(country = target, type = "map_units", scale = 50)
+
+ggplot() +
+  geom_sf(data = Madagascar_inset) +
+  coord_sf(crs = st_crs(29702)) + # Laborde projection, commonly used for Madagascar
+  theme_light()
+
+# getting the right area is HARD lims_method = "cross" by default but will try others
+
+# others don't make much difference, confusingly
+```
+
+```{r}
+ggplot() +
+  geom_sf(data = Madagascar_inset) +
+  coord_sf(crs = st_crs(29702), xlim = c(-1000000, 1800000), ylim = c(1, 2000000)) + # Laborde projection, commonly used for Madagascar
+  theme_light()
+```
+
+
+```{r}
+# Dissolve boundaries into a single geometry
+Madagascar_dissolved <- Madagascar_inset %>%
+  st_union() %>%
+  st_as_sf() # Convert back to sf object
+
+# Plot the map without boundaries
+ggplot() +
+  geom_sf(data = Madagascar_dissolved) +
+  theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
+  coord_sf(crs = st_crs(29702)) # Laborde projection
+```
+
+
+```{r}
+# Get all African countries
+africa <- ne_countries(continent = "Africa", scale = 50, returnclass = "sf") %>%
+  st_union() %>%
+  st_as_sf()
+
+# Plot
+ggplot() +
+  geom_sf(data = africa) +
+  coord_sf(crs = st_crs(29702), xlim = c(-1500000, 4800000), ylim = c(-1500000, 4500000)) +
+  theme(panel.background = element_rect(fill = "#F0F8FF", color = NA))
+```
+
+
+```{r}
+# kml_data <- sf::st_read(dsn = "../data/raw/data_input/Data_with_pierron.kml")
+# kml_data <- sf::st_transform(kml_data, crs = 29702)
+# 
+# # Add names
+# kml_data$Name <- c("Merina", "Sakalava", "Betsimisaraka", "Betsileo", "Diego", "Temoro", "Vezo", "Mikea", "Mikea", "Mikea", "Mikea", "Mikea", "Mikea", "Mikea")
+# 
+# kml_data <- kml_data %>%
+#   mutate(
+#     x = st_coordinates(.)[, 1],
+#     y = st_coordinates(.)[, 2]
+#   )
+
+
+
+kml_data <- readRDS("../data/raw/data_input/sampling_locations_with_pierron.rds")
+
+
+ours <- rep(0, 5)
+pierron <- rep(1, 9)
+sample <- c(ours, pierron)
+kml_data$sample <- sample
+
+labels_data <- kml_data %>%
+  group_by(Name) %>%
+  summarise(
+    x = mean(x),
+    y = mean(y),
+    geometry = st_centroid(st_union(geometry)) # Optional: Keeps geometry if needed
+  )
+
+
+ggplot() +
+  geom_sf(data = Madagascar_dissolved) +
+  geom_sf(data = sf::st_as_sf(kml_data), aes(shape = factor(sample)), size = 1) +
+  coord_sf(crs = st_crs(29702), xlim = c(-1000000, 1800000), ylim = c(1, 2000000), expand = FALSE) + # Laborde projection, commonly used for Madagascar
+  theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
+  scale_shape_manual(values = c(16, 17), labels = c("Our sample", "From literature")) +
+  labs(shape = NULL) +
+  # geom_text(data = kml_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3)
+  geom_text(data = labels_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3) +
+  # geom_text_repel(data = labels_data, aes(x = x, y = y, label = Name), max.overlaps = 10, force = 200)+
+  labs(x = NULL, y = NULL)
+
+
+ggsave(paste0(res_dir, "madagascar_map_labels.jpg"), width = 7, height = 7, dpi = 300)
+```
+
+
+```{r}
+kml_data <- kml_data[order(kml_data$Name), ]
+
+kml_data$shape <- c(1, 3, 7, 15, 17, 17, 17, 17, 17, 17, 17, 19, 21, 23)
+
+main_map <- ggplot() +
+  geom_sf(data = Madagascar_dissolved) +
+  geom_sf(data = sf::st_as_sf(kml_data), aes(shape = Name, color = Name, fill = Name), size = 2) +
+  coord_sf(crs = st_crs(29702), xlim = c(-1000000, 1800000), ylim = c(1, 2000000), expand = FALSE) + # Laborde projection, commonly used for Madagascar
+  theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
+  scale_shape_manual(values = c(1, 3, 7, 15, 17, 19, 21, 23)) +
+  labs(shape = NULL) +
+  # geom_text(data = labels_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3)+
+  labs(x = NULL, y = NULL, color = NULL, shape = NULL, fill = NULL) +
+  scale_color_brewer(palette = "Dark2") +
+  scale_fill_brewer(palette = "Dark2") +
+  guides() +
+  theme(  #legend.position = c(0.85, 0.65),
+    legend.position = "right",
+    legend.background = element_rect(fill = "white")
+  )
+
+main_map
+ggsave(paste0(res_dir, "madagascar_map_pca_symbols.jpg"), width = 7, height = 5, dpi = 300)
+```
+
+# Create an inset
+
+```{r}
+library(ggplot2)
+library(sf)
+library(cowplot)
+library(rnaturalearth)
+library(rnaturalearthdata)
+
+africa <- ne_countries(scale = "medium", continent = c("Africa", "Asia", "Europe"), returnclass = "sf") %>% st_union()
+madagascar_outline <- ne_countries(scale = "medium", country = "Madagascar", returnclass = "sf")
+
+inset_map <- ggplot() +
+  geom_sf(data = africa, fill = "gray90", color = "gray60") +
+  geom_sf(data = madagascar_outline, fill = "gray60", color = "gray60") +
+  coord_sf(xlim = c(-15, 130), ylim = c(-40, 40)) +
+  theme_void() +
+  theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5))
+
+# --- Combine main map and inset ---
+final_plot <- ggdraw() +
+  draw_plot(main_map) +
+  draw_plot(inset_map, x = 0.55, y = 0.71, width = 0.25, height = 0.25) # adjust position/size
+
+final_plot
+
+ggsave(paste0(res_dir, "madagascar_map_pca_symbols_inset.jpg"), width = 7, height = 5, dpi = 300)
+```
+
+
+# Extra map for poster
+
+```{r}
+# filter kml data to only betsileo, merina, betsimisaraka, and sakalava
+kml_data_subset <- kml_data[kml_data$Name %in% c("Betsileo", "Merina", "Betsimisaraka", "Sakalava"), ]
+# rename "sakalava" to "sakalava_tsimihety
+kml_data_subset$Name[kml_data_subset$Name == "Sakalava"] <- "Sakalava_Tsimihety"
+ggplot() +
+  geom_sf(data = Madagascar_dissolved) +
+  geom_sf(data = sf::st_as_sf(kml_data_subset), aes(shape = Name, color = Name, fill = Name), size = 2) +
+  coord_sf(crs = st_crs(29702), xlim = c(-1000000, 1800000), ylim = c(1, 2000000), expand = FALSE) + # Laborde projection, commonly used for Madagascar
+  theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
+  scale_shape_manual(values = c(1, 3, 15, 19)) +
+  labs(shape = NULL) +
+  # geom_text(data = labels_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3)+
+  labs(x = NULL, y = NULL, color = "Population", shape = "Population", fill = "Population") +
+  # scale_color_brewer(palette = "Dark2")+
+  scale_color_manual(values = c("Betsileo" = "#1B9E77", "Merina" = "#7570B3", "Betsimisaraka" = "#D95F02", "Sakalava_Tsimihety" = "#E7298A")) +
+  # scale_fill_brewer(palette = "Dark2")+
+  scale_fill_manual(values = c("Betsileo" = "#1B9E77", "Merina" = "#7570B3", "Betsimisaraka" = "#D95F02", "Sakalava_Tsimihety" = "#E7298A")) +
+  guides()
+
+
+# ggsave("/home/EJC199/Dropbox/malagasy_assortative_mating/map.jpg", width = 7, height = 5, dpi = 500)
+```
+
+
+
+
+# Data currently merged in: Malagasy, 1000 Genomes, Borneo, Sumba
+
+```{r}
+# Get all African countries
+africa_eurasia <- ne_countries(continent = c("Africa", "Asia"), scale = 50, returnclass = "sf") # %>% st_union() %>% st_as_sf()
+
+# Specify countries to highlight and assign colors
+highlighted_countries <- africa_eurasia %>%
+  mutate(fill_color = case_when(
+    name %in% c("Madagascar", "Kenya", "Nigeria", "Sierra Leone", "The Gambia", "China", "Vietnam", "Pakistan", "Bangladesh", "Indonesia") ~ "highlight", # Countries to color
+    TRUE ~ "base" # Default color for other countries
+  ))
+
+
+# Plot current data
+ggplot() +
+  geom_sf(data = highlighted_countries, aes(fill = fill_color)) +
+  scale_fill_manual(values = c("highlight" = "#FFDBBB", "base" = "gray80")) +
+  # coord_sf(crs = st_crs(29702), xlim = c(-1500000,4800000), ylim = c(-1500000,4500000)) +
+  theme(panel.background = element_rect(fill = "#F0F8FF", color = NA))
+```
+
+
+***
+
+## Recording R environment
+
+Part of ensuring our workflow is reproducible is to keep track of the R environment.
+We will automatically save our R environment into a file called `r_environment.json`.
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s09_data_source_map.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+
+```

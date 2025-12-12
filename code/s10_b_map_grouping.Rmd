@@ -1,0 +1,485 @@
+---
+title: "Bantu African dataset maps"
+date: "2025-11-04"
+knit: resrepo::knit_to_results
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(rnaturalearth)
+library(sf)
+library(dplyr)
+library(ggrepel)
+library(readxl)
+library(gridExtra)
+library(stringr)
+library(tidyr)
+library(tidypopgen)
+```
+
+
+# Plot metadata
+
+```{r}
+dat2 <- as.data.frame(read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx", sheet = 2))
+colnames(dat2) <- dat2[1, ]
+dat2 <- dat2[-1, ]
+# rename the 'Only-Africa dataset' column
+colnames(dat2)[which(colnames(dat2) == "Only-Africa dataset")] <- "Africa"
+# include only entries in Africa
+dat2 <- dat2 %>%
+  filter(Africa == "Yes")
+# remove rows with missing lat/lon
+dat2 <- dat2 %>%
+  filter(!is.na(Latitude) & !is.na(Longitude))
+# transform to sf object
+dat2 <- st_as_sf(dat2, coords = c("Longitude", "Latitude"), crs = 4326)
+# make sample size numeric
+dat2$N <- as.numeric(dat2$N)
+# create plot of Africa
+africa <- ne_countries(continent = c("Africa"), scale = 50, returnclass = "sf")
+# plot by sample size
+p2 <- ggplot() +
+  geom_sf(data = africa) +
+  geom_sf(data = dat2, aes(color = N), size = 2, alpha = 0.7) +
+  theme(panel.background = element_rect(fill = "white", color = NA)) +
+  scale_color_viridis_c()
+p2
+# plot by group
+p3 <- ggplot() +
+  geom_sf(data = africa) +
+  geom_sf(data = dat2, aes(color = Group), size = 2, alpha = 0.7) +
+  theme(panel.background = element_rect(fill = "white", color = NA))
+p3
+# plot by country
+p4 <- ggplot() +
+  geom_sf(data = africa) +
+  geom_sf(data = dat2, aes(color = Country), size = 2, alpha = 0.7) +
+  theme(panel.background = element_rect(fill = "white", color = NA))
+p4
+grid.arrange(p2, p3, p4, ncol = 1)
+
+# 
+```
+
+```{r}
+NEO_full <- gt_load("../data/intermediate/rbind_data/NEO_full.gt")
+length(unique(NEO_full$population))
+length(unique(dat2$`Population label`))
+```
+
+```{r}
+dat1 <- as.data.frame(read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx", sheet = 1))
+colnames(dat1) <- dat1[1, ]
+dat1 <- dat1[-1, ]
+
+NEO_full$dataset <- dat1[match(NEO_full$id, dat1$`ID Lab`),"EGA Dataset"]
+```
+
+```{r}
+dat2 <- as.data.frame(read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx", sheet = 2))
+colnames(dat2) <- dat2[1, ]
+dat2 <- dat2[-1, ]
+# rename the 'Only-Africa dataset' column
+colnames(dat2)[which(colnames(dat2) == "Only-Africa dataset")] <- "Africa"
+# include only entries in Africa
+dat2 <- dat2 %>%
+  filter(Africa == "Yes")
+# remove rows with missing lat/lon
+dat2 <- dat2 %>%
+  filter(!is.na(Latitude) & !is.na(Longitude))
+# subset to just `Population label` and Latitude and Longitude
+dat2 <- dat2[, c("Population label", "Latitude", "Longitude")]
+# rename `Population label` to Population
+colnames(dat2)[which(colnames(dat2) == "Population label")] <- "Population"
+
+dat3 <- as.data.frame(read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx", sheet = 3))
+colnames(dat3) <- dat3[1, ]
+dat3 <- dat3[-1, ]
+dat3 <- dat3[, c("Population", "Latitude", "Longitude")]
+
+dat4 <- as.data.frame(read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx", sheet = 4))
+colnames(dat4) <- dat4[1, ]
+dat4 <- dat4[-1, ]
+dat4 <- dat4[, c("Population", "Latitude", "Longitude")]
+
+dat12 <- as.data.frame(read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx", sheet = 12))
+colnames(dat12) <- dat12[1, ]
+dat12 <- dat12[-1, ]
+
+dat10 <- as.data.frame(read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx", sheet = 10))
+colnames(dat10) <- dat10[1, ]
+dat10 <- dat10[-1, ]
+dat10 <- dat10[, c("Populations", "Latitude", "Longitude")]
+colnames(dat10)[which(colnames(dat10) == "Populations")] <- "Population"
+```
+
+```{r}
+all_pops <- rbind(dat2, dat3, dat4, dat10)
+dups <- duplicated(all_pops)
+# remove duplicates
+all_pops <- all_pops[!dups, ]
+```
+
+Unfortunately, coordinates are missing for a lot of populations in our full dataset. In some cases the mismatch is a naming issue
+
+eg 
+
+Namibia_DamaraKSP in dat$`Population label` is probably "Namibia_Damara" in NEO_full
+
+There are coords for Sotho, but in NEO_full there are southern and northern Sotho
+
+SouthAfrica_Coloured in NEO_full is probably SouthAfrica_ColouredAskham in dat$`Population label` - both have 12 individuals
+
+```{r}
+
+all_pops$Population <- ifelse(all_pops$Population == "Tanzania_TanzaniaMixed",
+  "Tanzania_Mixed",
+  all_pops$Population
+)
+
+# rename DRC_Bangubangu to DRC_BanguBangu in NEO_full$population
+NEO_full$population <- ifelse(NEO_full$population == "DRC_Bangubangu",
+  "DRC_BanguBangu",
+  NEO_full$population
+)
+
+
+setdiff(NEO_full$population, all_pops$Population)
+```
+
+```{r}
+# add coordinates to NEO_full based on matching population labels
+NEO_full_na_omit <- NEO_full %>%
+  filter(population %in% all_pops$Population)
+
+# add geometry to NEO_full_na_omit based on matching population labels
+NEO_full_na_omit <- NEO_full_na_omit %>%
+  left_join(all_pops,
+    by = c("population" = "Population")
+  )
+
+NEO_full_na_omit <- gt_add_sf(NEO_full_na_omit,
+  coords = c("Longitude", "Latitude"), crs = st_crs(4326)
+)
+
+
+africa <- ne_countries(continent = c("Africa"), scale = 50, returnclass = "sf")
+
+ggplot() +
+  geom_sf(data = africa) +
+  geom_sf(data = NEO_full_na_omit$geometry, aes(colour = NEO_full_na_omit$dataset)) +
+  coord_sf(crs = st_crs(4326)) +
+  theme_minimal()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###########################
+# Read in and clean up metadata
+
+Using population metadata provided in the supplementary of Fortez-Lima et al., 2024.
+
+```{r}
+dat <- as.data.frame(read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx", sheet = 2))
+colnames(dat) <- dat[1, ]
+
+# rename the 'Only-Africa dataset' column
+colnames(dat)[which(colnames(dat) == "Only-Africa dataset")] <- "Africa"
+
+# include only entries in Africa
+dat <- dat %>%
+  filter(Africa == "Yes")
+
+# remove rows with missing lat/lon
+dat <- dat %>%
+  filter(!is.na(Latitude) & !is.na(Longitude))
+
+# transform to sf object
+dat <- st_as_sf(dat, coords = c("Longitude", "Latitude"), crs = 4326)
+
+# make sample size numeric
+dat$N <- as.numeric(dat$N)
+```
+
+```{r}
+# dat2 contains all populations in EGAS50000000006, even those without coordinates
+dat2 <- read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx", sheet = 1)
+colnames(dat2) <- dat2[1,]
+dat2 <- dat2[-1,]
+
+# rename the 'Population label.1' column
+colnames(dat2)[8] <- "Population"
+
+# not all have coordinates
+setdiff(dat$`Population label`, dat2$Population)
+
+length(unique(dat$`Population label`))
+
+
+setdiff(NEO_full$population, dat$`Population label`)
+
+as.integer(table(NEO_full$population))
+as.integer(na.omit(dat2$N))
+
+
+# The total number of indiviudals in the metadata is way larger than the number we have 
+sum(dat$N) 
+nrow(NEO_full)
+
+
+```
+
+Unfortunately, coordinates are missing for a lot of populations in our full dataset. In some cases the mismatch is a naming issue
+
+eg 
+
+Namibia_DamaraKSP in dat$`Population label` is probably "Namibia_Damara" in NEO_full
+
+There are coords for Sotho, but in NEO_full there are southern and northern Sotho
+
+SouthAfrica_Coloured in NEO_full is probably SouthAfrica_ColouredAskham in dat$`Population label` - both have 12 individuals
+
+```{r}
+dat$`Population label` <- ifelse(dat$`Population label` == "Tanzania_TanzaniaMixed",
+  "Tanzania_Mixed",
+  dat$`Population label`
+)
+
+
+# rename DRC_Bangubangu to DRC_BanguBangu in NEO_full$population
+NEO_full$population <- ifelse(NEO_full$population == "DRC_Bangubangu",
+  "DRC_BanguBangu",
+  NEO_full$population
+)
+
+
+setdiff(NEO_full$population, dat$`Population label`)
+```
+
+```{r}
+# add coordinates to NEO_full based on matching population labels
+NEO_full_na_omit <- NEO_full %>%
+  filter(population %in% dat$`Population label`)
+
+
+dat_sep <- dat %>%
+  mutate(lat = st_coordinates(.)[,1],
+         long = st_coordinates(.)[,2]) %>%
+  st_drop_geometry()
+
+# rename `population label` to population in dat_sep
+colnames(dat_sep)[which(colnames(dat_sep) == "Population label")] <- "population"
+
+
+# add geometry to NEO_full_na_omit based on matching population labels
+NEO_full_na_omit <- NEO_full_na_omit %>%
+  left_join(dat_sep[, c("population", "lat", "long")],
+    by = c("population")
+  )
+
+
+NEO_full_na_omit <- gt_add_sf(NEO_full_na_omit,
+  coords = c("lat", "long"), crs = st_crs(4326)
+)
+
+```
+
+
+```{r}
+africa <- ne_countries(continent = c("Africa"), scale = 50, returnclass = "sf")
+
+ggplot() +
+  geom_sf(data = africa) +
+  geom_sf(data = NEO_full_na_omit$geometry, aes(colour = NEO_full_na_omit$population)) +
+  coord_sf(crs = st_crs(4326)) +
+  theme_minimal()
+```
+
+```{r}
+setdiff(NEO_full$population, NEO_full_na_omit$population)
+```
+
+```{r}
+View(dat[which(dat$Country == "Angola"),])
+```
+
+
+DRC_LubaLulua has 11 indivs, NEO_full has 1 indiv for DRC_Lulua
+
+
+```{r}
+length(unique(NEO_full$population))
+length(unique(NEO_full_na_omit$population))
+length(unique(dat$`Population label`))
+```
+
+
+
+
+
+
+
+# Current population sample sizes
+
+```{r}
+
+
+ggplot(dat) +
+  geom_histogram(aes(x = N), bins = 100, fill = "lightblue", color = "black") +
+  labs(x = "Population sample size")
+```
+
+After filtering, some populations contain very few individuals. This causes an issue for calculating F statistics between populations. 
+
+```{r}
+africa <- ne_countries(continent = c("Africa"), scale = 50, returnclass = "sf")
+
+p2 <- ggplot() +
+  geom_sf(data = africa) +
+  geom_sf(data = dat, aes(color = N), size = 2, alpha = 0.7) +
+  theme(panel.background = element_rect(fill = "white", color = NA)) +
+  scale_color_viridis_c()
+p2
+```
+
+
+
+
+
+# Potential alternative groupings
+
+- Glottocode and Guthrie group are not available for all populations, don't group on this basis.
+
+A few options:
+
+## 1. Group by linguistic group
+
+For the Bantu speaking groups, each population is given a 'branch', and for the non-Bantu groups, we could use prexisting groups. This results in very unbalanced sample sizes (highest is Eastern Bantu-speaking at 1580 individuals and lowest is 23 individuals). This will also put the Mozambique individuals in a much larger Eastern Bantu-speaking group, which makes our result less specific.
+
+```{r}
+dat$`Bantu Group` <- ifelse(dat$`Bantu Group` == "-", NA, dat$`Bantu Group`)
+dat$poss_group <- ifelse(!is.na(dat$`Bantu Group`), dat$`Bantu Group`, dat$Group)
+table(dat$poss_group)
+
+label_data <- dat %>%
+  group_by(poss_group) %>%
+  summarise(n = sum(N), geometry = st_centroid(st_union(geometry))) %>%
+  arrange(-desc(n)) # Results in 14 groups
+```
+
+```{r}
+ggplot() +
+  geom_sf(data = africa) +
+  geom_sf(data = dat, aes(color = poss_group), size = 2, alpha = 0.7) +
+  geom_label_repel(
+    data = label_data, force = 5, force_pull = 1, aes(label = n, geometry = geometry),
+    stat = "sf_coordinates", size = 3, color = "black", alpha = 0.7
+  ) +
+  theme(panel.background = element_rect(fill = "white", color = NA))
+```
+
+## 2. Use linguistic groups to guide cases where we merge populations together
+
+eg if a set of populations have less than X individuals each, are part of the same linguistic branch, and within X distance of one another then we put them together. 
+
+If a population has 15 or fewer individuals, we look for other populations within 500km that are part of the same linguistic group and save them as potential merge candidates
+
+```{r}
+distance_matrix <- st_distance(dat)
+rownames(distance_matrix) <- dat$Population
+colnames(distance_matrix) <- dat$Population
+distance_matrix <- distance_matrix / 1000
+
+
+merge_pop_names <- function(x, distance_matrix, dat) {
+  # if n <= 10
+  if (as.integer(x["N"]) <= 15) {
+    # get the name of the population
+    pop_name <- x["Population"]
+    # get the group of the population
+    group <- x["poss_group"]
+    # find this row in the distance matrix
+    dists <- distance_matrix[pop_name, ]
+    # drop units
+    dists <- units::drop_units(dists)
+    # get the names of populations within 500km
+    close_pops <- names(dists[dists <= 500])
+    # exclude self-distance
+    close_pops <- close_pops[close_pops != pop_name]
+    # get the group of populations within 200km
+    close_pops_groups <- dat$poss_group[dat$Population %in% close_pops]
+    # if any pops are closer than 200 km, and within the same poss_group
+    if (length(close_pops_groups > 0) & any(close_pops_groups == group)) {
+      # return the names of the populations to merge
+      return(paste(c(pop_name, close_pops[close_pops_groups == group]), collapse = "; "))
+    } else {
+      # if there's nothing it can be merged with within 200km
+      return("Nothing to merge")
+    }
+  } else if (x["N"] > 10) {
+    return(NA)
+  }
+}
+
+dat$merge_names <- apply(st_drop_geometry(dat), 1, merge_pop_names,
+  distance_matrix = distance_matrix, dat = dat
+)
+
+# NB consider two Baka entries with the same Population and Group
+```
+
+
+
+```{r}
+
+```
+
+# Run admixture on only Eastern Bantu pops of interest
+
+```{r}
+
+
+```
+
+
+
+***
+
+## Recording R environment
+
+Part of ensuring our workflow is reproducible is to keep track of the R environment.
+We will automatically save our R environment into a file called `r_environment.json`.
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s10_b_map_grouping.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+
+```
+

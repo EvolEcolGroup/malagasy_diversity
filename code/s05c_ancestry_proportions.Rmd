@@ -1,7 +1,8 @@
 ---
 title: "New function"
-output: pdf_document
 date: "2025-05-20"
+knit: resrepo::knit_to_results
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -400,3 +401,23 @@ long %>% ggplot(aes(x = K_run, y = assigned, group = id, colour = id)) +
   geom_hline(yintercept = 0.5)+
   ylim(0, 1)
 ```
+
+
+***
+
+## Recording R environment
+
+Part of ensuring our workflow is reproducible is to keep track of the R environment.
+We will automatically save our R environment into a file called `r_environment.json`.
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s05c_ancestry_proportions.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+
+```
+

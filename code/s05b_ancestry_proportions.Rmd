@@ -1,9 +1,8 @@
 ---
 title: "Assigning ancestry proportions"
-output:
-  pdf_document: default
-  html_document: default
 date: "2025-05-16"
+knit: resrepo::knit_to_results
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -284,3 +283,22 @@ for (this_k in 2:max(range(unique(qmats$k)))) { # for each k
   }
 }
 ```
+
+***
+
+## Recording R environment
+
+Part of ensuring our workflow is reproducible is to keep track of the R environment.
+We will automatically save our R environment into a file called `r_environment.json`.
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s05b_ancestry_proportions.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+
+```
+

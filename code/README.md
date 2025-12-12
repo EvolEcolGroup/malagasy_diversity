@@ -1,7 +1,15 @@
 # Code
 
-The code for your analysis goes here. Scripts should use relative paths to find data (e.g. `../data/raw/defaults/my_data.txt`) as well as to write to results (e.g. `../results/Fig_1png`).
-If you have many scripts, it is often better to have them writing results into separate sub-directories
-under `results`, as it helps tracking where each result file comes from. This strategy also allows to have a simple command at the beginning of a script which wipes the results directory before generating the new set of results (thus avoiding the risk of having old files from obsolete analysis floating around the repository)
+Scripts should be run in the following order:
 
-It is good practice to add a metafile that tells what every script does (e.g. you can add this info here in the readme).
+s00_merge_neo_dataset: Merges African datasets from Fortez-Lima et al 2024
+s01_qc_merge.Rmd: Quality control and merging of SNP datasets
+s02_qc_merge_genetic_dist: Quality control and merging of SNP datasets, checking genetic distance
+s03_malagasy_pca: PCA of Malagasy samples
+s04_full_pca: PCA of Malagasy samples with African and Asian references
+s05_fastmixture: FastMixture analysis of global samples
+s06_f_stats: f3 and f4 ratio statistics
+s07_ALDER: ALDER analysis for admixture dating
+s07_b_ALDER_map: Map of sampling locations with ALDER results
+s08_FST: FST calculations between populations
+s09_data_source_map: Map of sampling locations

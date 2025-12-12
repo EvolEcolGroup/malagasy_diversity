@@ -11,6 +11,7 @@ library(dplyr)
 library(ggplot2)
 library(tidypopgen)
 library(grid)
+library(tidyr)
 ```
 
 ```{r set-directories}
@@ -149,7 +150,7 @@ dups <- find_duplicated_loci(madagascar_p)
 madagascar_p <- madagascar_p %>% select_loci(-all_of(dups))
 
 # remove entries with no allele_ref & no allele_alt
-no_allele <- which(is.na(show_loci(madagascar_p)$allele_ref) &  is.na(show_loci(madagascar_p)$allele_alt))
+no_allele <- which(is.na(show_loci(madagascar_p)$allele_ref) & is.na(show_loci(madagascar_p)$allele_alt))
 madagascar_p <- madagascar_p %>% select_loci(-all_of(no_allele))
 count_loci(madagascar_p)
 ```
@@ -166,7 +167,7 @@ if (file.exists("../data/intermediate/rbind_data/malagasy_merge.gt")) {
 
 ```{r}
 malagasy_merged <- rbind(madagascar, madagascar_p,
-  as_is = FALSE, flip_strand = TRUE, use_position = TRUE,
+  as_is = FALSE, flip_strand = TRUE, use_position = FALSE,
   quiet = FALSE, backingfile = "../data/intermediate/rbind_data/malagasy_merge"
 )
 ```
@@ -198,6 +199,68 @@ malagasy_merged <- malagasy_merged %>% group_by(population)
 loci_report_m <- qc_report_loci(malagasy_merged)
 malagasy_merged <- malagasy_merged %>% ungroup()
 ```
+
+# Check HWE Merina vs other groups
+
+```{r}
+malagasy_merged <- malagasy_merged %>% group_by(population)
+hwe_res <- loci_hwe(malagasy_merged)
+
+hwe_dist_per_pop <- hwe_res %>% pivot_wider(names_from = group, values_from = value)
+merina <- as.data.frame(hwe_dist_per_pop$Merina)
+colnames(merina) <- "Value"
+
+merina_hwe <- ggplot(merina, aes(x = Value)) +
+  geom_density() +
+  labs(title = "Merina HWE")
+
+betsimisaraka <- as.data.frame(hwe_dist_per_pop$Betsimisaraka)
+colnames(betsimisaraka) <- "Value"
+
+betsimisaraka_hwe <- ggplot(betsimisaraka, aes(x = Value)) +
+  geom_density() + 
+  labs(title = "Betsimisaraka HWE")
+
+diego <- as.data.frame(hwe_dist_per_pop$Diego)
+colnames(diego) <- "Value"
+
+diego_hwe <- ggplot(diego, aes(x = Value)) +
+  geom_density() + 
+  labs(title = "Diego HWE")
+
+gridExtra::grid.arrange(merina_hwe, betsimisaraka_hwe, diego_hwe, ncol = 2, nrow = 2)
+```
+
+Shape of distribution of HWE p-values looks similar across groups.
+
+```{r}
+min_vals <- hwe_res %>%
+  mutate(value = value * length(unique(group))) %>% # correction
+  group_by(loci) %>%
+  slice_min(value, n = 1)
+
+ggplot(min_vals, aes(x = group, fill = group)) +
+  geom_bar() +
+  theme(axis.text.x = element_blank()) +
+  labs(x = "Ethnic group", fill = "Ethnic group", y = "Count") + 
+  scale_fill_brewer(palette = "Dark2")
+```
+
+Minimum p-values are distributed evenly across groups.
+
+```{r}
+min_vals <- hwe_res %>%
+  mutate(value = value * length(unique(group))) %>% # correction
+  filter(value < 0.01)
+
+ggplot(min_vals, aes(x = group, fill = group)) +
+  geom_bar() +
+  theme(axis.text.x = element_blank()) +
+  labs(x = "Ethnic group", fill = "Ethnic group", y = "Count") + 
+  scale_fill_brewer(palette = "Dark2")
+```
+
+P-values < 0.01 are not elevated in the Merina.
 
 # Filter loci
 
@@ -319,7 +382,7 @@ if (file.exists("../data/intermediate/rbind_data/malagasy_merge_clean_ld.gt")) {
 }
 ```
 
-# Save LD filtered dataset
+# Save imputed LD filtered dataset
 
 ```{r}
 gt_save(malagasy_merged_ld,
@@ -369,7 +432,7 @@ if (file.exists("../data/intermediate/rbind_data/malagasy_borneo.gt")) {
 malagasy_merged <-
   gt_load("../data/intermediate/rbind_data/malagasy_merge_clean.gt")
 malagasy_borneo <- rbind(malagasy_merged, borneo,
-  as_is = FALSE, flip_strand = TRUE, use_position = TRUE,
+  as_is = FALSE, flip_strand = TRUE, use_position = FALSE,
   quiet = FALSE, backingfile = "../data/intermediate/rbind_data/malagasy_borneo"
 )
 ```
@@ -438,7 +501,7 @@ if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000.gt")) {
 }
 
 mad_bor_g1000 <- rbind(malagasy_borneo, g1000,
-  as_is = FALSE, flip_strand = TRUE, use_position = TRUE,
+  as_is = FALSE, flip_strand = TRUE, use_position = FALSE,
   quiet = FALSE, backingfile = "../data/intermediate/rbind_data/mad_bor_g1000"
 )
 ```
@@ -511,7 +574,7 @@ mad_bor_g1000_sum <- rbind(mad_bor_g1000, sumba,
   as_is = FALSE,
   flip_strand = TRUE,
   quiet = FALSE,
-  use_position = TRUE,
+  use_position = FALSE,
   backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum"
 )
 ```
@@ -580,20 +643,52 @@ count_loci(mad_bor_g1000_sum_neo)
 # Filter indiv
 
 ```{r}
-# remove all populations with only one individual
+# temporarily remove all populations with only one individual
 pop_tbl <- table(mad_bor_g1000_sum_neo$population)
 to_remove <- which(pop_tbl == 1)
 to_remove_pops <- names(to_remove) # this removes a lot of DRC samples and some Mozambique samples (relevant)
+
+removed_pops <- mad_bor_g1000_sum_neo %>%
+  filter(population %in% to_remove_pops)
+
 mad_bor_g1000_sum_neo <-
   mad_bor_g1000_sum_neo %>% filter(!population %in% to_remove_pops)
 
-# run filtering
+
+# filter indivs
 mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% group_by(population)
 individual_report_m <-
   qc_report_indiv(mad_bor_g1000_sum_neo, kings_threshold = 0.0884)
 mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% ungroup()
 mad_bor_g1000_sum_neo <-
   mad_bor_g1000_sum_neo %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
+
+if(file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_rebind.bk")){
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_rebind.gt")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_rebind.bk")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_rebind.rds")
+}
+
+# bind them together again
+mad_bor_g1000_sum_neo <- rbind(mad_bor_g1000_sum_neo, removed_pops, backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_rebind")
+
+NEO_full <-
+  NEO_full %>% filter(indiv_missingness(genotypes) < 0.1)
+
+# remove all populations with only one individual
+# pop_tbl <- table(mad_bor_g1000_sum_neo$population)
+# to_remove <- which(pop_tbl == 1)
+# to_remove_pops <- names(to_remove) # this removes a lot of DRC samples and some Mozambique samples (relevant)
+# mad_bor_g1000_sum_neo <-
+#   mad_bor_g1000_sum_neo %>% filter(!population %in% to_remove_pops)
+
+# run filtering
+# mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% group_by(population)
+# individual_report_m <-
+#   qc_report_indiv(mad_bor_g1000_sum_neo, kings_threshold = 0.0884)
+# mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% ungroup()
+# mad_bor_g1000_sum_neo <-
+#   mad_bor_g1000_sum_neo %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
 mad_bor_g1000_sum_neo <-
   mad_bor_g1000_sum_neo %>% filter(indiv_missingness(genotypes) < 0.1)
 ```
@@ -627,7 +722,8 @@ mad_bor_g1000_sum_neo <-
 
 ```{r}
 mad_bor_g1000_sum_neo <- gt_impute_simple(mad_bor_g1000_sum_neo,
-                                          method = "mean")
+  method = "mean"
+)
 ```
 
 # LD clumping
@@ -670,6 +766,24 @@ mad_bor_g1000_sum_neo_ld <-
 ```
 
 ```{r}
+```
+
+***
+
+## Recording R environment
+
+Part of ensuring our workflow is reproducible is to keep track of the R environment.
+We will automatically save our R environment into a file called `r_environment.json`.
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s01_qc_merge.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+
 ```
 
 

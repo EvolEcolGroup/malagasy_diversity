@@ -14,10 +14,10 @@ library(grid)
 ```
 
 ```{r set-directories}
-res_dir <- "../results/s02_qc_merge_genetic_dist/"
+res_dir <- "../results/s02_qc_merge_genetic_dist_malagasy/"
 ```
 
-This script repeats the steps in s01a_qc_merge to merge malagasy data, while retaining and ordering the genetic distance of SNPs, for ALDER analysis.
+This script repeats the steps in s01_qc_merge to merge malagasy data, while retaining and ordering the genetic distance of SNPs, for ALDER analysis.
 
 # Generate gen tibble
 
@@ -170,7 +170,7 @@ if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_
 ```{r}
 malagasy_merged <- rbind(madagascar, madagascar_p,
   as_is = FALSE, flip_strand = TRUE,
-  use_position = TRUE, quiet = FALSE,
+  use_position = FALSE, quiet = FALSE,
   backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge"
 )
 ```
@@ -334,7 +334,7 @@ malagasy_merged <-
   gt_load("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean.gt")
 malagasy_borneo <- rbind(malagasy_merged, borneo,
   as_is = FALSE, flip_strand = TRUE,
-  use_position = TRUE, quiet = FALSE,
+  use_position = FALSE, quiet = FALSE,
   backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_borneo"
 )
 ```
@@ -403,7 +403,7 @@ if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000.g
 
 mad_bor_g1000 <- rbind(malagasy_borneo, g1000,
   as_is = FALSE, flip_strand = TRUE,
-  use_position = TRUE, quiet = FALSE,
+  use_position = FALSE, quiet = FALSE,
   backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000"
 )
 ```
@@ -473,7 +473,7 @@ if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_s
 
 mad_bor_g1000_sum <- rbind(mad_bor_g1000, sumba,
   as_is = FALSE, flip_strand = TRUE,
-  use_position = TRUE, quiet = FALSE,
+  use_position = FALSE, quiet = FALSE,
   backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum"
 )
 ```
@@ -540,20 +540,52 @@ count_loci(mad_bor_g1000_sum_neo)
 # Filter indiv
 
 ```{r}
-# remove all populations with only one individual
+# temporarily remove all populations with only one individual
 pop_tbl <- table(mad_bor_g1000_sum_neo$population)
 to_remove <- which(pop_tbl == 1)
 to_remove_pops <- names(to_remove) # this removes a lot of DRC samples and some Mozambique samples (relevant)
+
+removed_pops <- mad_bor_g1000_sum_neo %>%
+  filter(population %in% to_remove_pops)
+
 mad_bor_g1000_sum_neo <-
   mad_bor_g1000_sum_neo %>% filter(!population %in% to_remove_pops)
 
-# run filtering
+
+# filter indivs
 mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% group_by(population)
 individual_report_m <-
   qc_report_indiv(mad_bor_g1000_sum_neo, kings_threshold = 0.0884)
 mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% ungroup()
 mad_bor_g1000_sum_neo <-
   mad_bor_g1000_sum_neo %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
+
+if(file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_rebind.bk")){
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_rebind.bk")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_rebind.gt")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_rebind.rds")
+}
+
+# bind them together again
+mad_bor_g1000_sum_neo <- rbind(mad_bor_g1000_sum_neo, removed_pops, backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_rebind")
+
+NEO_full <-
+  NEO_full %>% filter(indiv_missingness(genotypes) < 0.1)
+
+# remove all populations with only one individual
+# pop_tbl <- table(mad_bor_g1000_sum_neo$population)
+# to_remove <- which(pop_tbl == 1)
+# to_remove_pops <- names(to_remove) # this removes a lot of DRC samples and some Mozambique samples (relevant)
+# mad_bor_g1000_sum_neo <-
+#   mad_bor_g1000_sum_neo %>% filter(!population %in% to_remove_pops)
+
+# run filtering
+# mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% group_by(population)
+# individual_report_m <-
+#   qc_report_indiv(mad_bor_g1000_sum_neo, kings_threshold = 0.0884)
+# mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% ungroup()
+# mad_bor_g1000_sum_neo <-
+#   mad_bor_g1000_sum_neo %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
 mad_bor_g1000_sum_neo <-
   mad_bor_g1000_sum_neo %>% filter(indiv_missingness(genotypes) < 0.1)
 ```
@@ -629,3 +661,19 @@ mad_bor_g1000_sum_neo <-
 ```{r}
 any(is.na(show_loci(mad_bor_g1000_sum_neo)$genetic_dist))
 ```
+
+***
+
+## Recording R environment
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s02_qc_merge_genetic_dist_malagasy.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+
+```
+

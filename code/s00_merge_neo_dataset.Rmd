@@ -610,6 +610,7 @@ if (file.exists("../data/intermediate/rbind_data/NEO_full.gt")) {
 ```
 
 ```{r}
+NEO_ABCDE <- gt_load("../data/intermediate/rbind_data/NEO_ABCDE.gt")
 NEO_F <- gt_load("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_F__OE-0808_150625_no_I_D.gt")
 
 NEO_full <- rbind(NEO_ABCDE, NEO_F,
@@ -627,4 +628,22 @@ gc()
 ```{r}
 count_loci(NEO_full)
 nrow(NEO_full)
+```
+
+***
+
+## Recording R environment
+
+Part of ensuring our workflow is reproducible is to keep track of the R environment.
+We will automatically save our R environment into a file called `r_environment.json`.
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s03_pca.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+
 ```

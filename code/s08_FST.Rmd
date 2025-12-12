@@ -1,0 +1,251 @@
+---
+title: "Pairwise Fst"
+date: "2025-03-14"
+knit: resrepo::knit_to_results
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidypopgen)
+library(tidyr)
+library(Matrix)
+library(ggalign)
+library(ggplot2)
+library(gridExtra)
+library(viridis)
+library(pheatmap)
+```
+
+
+```{r set-directories}
+res_dir <- "../results/s08_FST/"
+```
+
+# Load and group gt
+
+```{r}
+mad_bor_g1000_sum <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
+```
+
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum)
+count_loci(mad_bor_g1000_sum)
+```
+
+# Impute
+
+```{r}
+gt_set_imputed(mad_bor_g1000_sum, TRUE)
+```
+
+# Replace names
+
+```{r}
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(population = case_when(
+    population == "Sakalava_Tsimihety" ~ "Sakalava/Tsimihety",
+    population == "Diego" ~ "Diego Mixed",
+    TRUE ~ population
+  ))
+```
+
+# Pairwise Fst
+
+```{r}
+fst_matrix <- mad_bor_g1000_sum %>%
+  pairwise_pop_fst(by_locus = FALSE, method = "WC84", type = "pairwise")
+```
+
+
+```{r}
+# subset fst matrix
+sub <- c(
+  "Betsimisaraka", "Merina", "Diego Mixed", "Sakalava/Tsimihety",
+  "Betsileo", "Vezo", "Mikea", "Temoro", "Mozambique_Chopi", "Borneo"
+)
+
+fst_matrix <- as.data.frame(fst_matrix)
+fst_matrix_sub <- as.data.frame(fst_matrix)
+rm <- names(fst_matrix_sub)[(names(fst_matrix_sub) %in% sub)]
+fst_matrix_sub <- fst_matrix_sub[, rm]
+
+fst_matrix_sub <-
+  subset(
+    fst_matrix_sub,
+    rownames(fst_matrix_sub) %in% c(
+      "Betsimisaraka", "Merina", "Diego Mixed",
+      "Sakalava/Tsimihety", "Betsileo",
+      "Vezo", "Mikea", "Temoro",
+      "Mozambique_Chopi", "Borneo"
+    )
+  )
+```
+
+```{r}
+ggheatmap(fst_matrix_sub) +
+  scale_fill_viridis_c(expression("F"[st])) +
+  theme(axis.text.x = element_text(angle = -60, hjust = 0))
+```
+
+```{r}
+sub <- c(
+  "Betsimisaraka", "Merina", "Diego Mixed", "Sakalava/Tsimihety",
+  "Betsileo", "Vezo", "Mikea", "Temoro"
+)
+
+fst_matrix_sub <- as.data.frame(fst_matrix)
+rm <- names(fst_matrix_sub)[(names(fst_matrix_sub) %in% sub)]
+fst_matrix_sub <- fst_matrix_sub[, rm]
+
+
+fst_matrix_sub <-
+  subset(
+    fst_matrix_sub,
+    rownames(fst_matrix_sub) %in% c(
+      "Betsimisaraka", "Merina", "Diego Mixed",
+      "Sakalava/Tsimihety", "Betsileo",
+      "Vezo", "Mikea", "Temoro"
+    )
+  )
+
+fst_merina_together <- ggheatmap(fst_matrix_sub) +
+  scale_fill_viridis_c(expression("F"[st])) +
+  theme(axis.text.x = element_text(angle = -60, hjust = 0))
+fst_merina_together
+
+ggsave(paste0(res_dir, "fst_merina_together.jpg"),
+  width = 7, height = 5, dpi = 300
+)
+```
+
+```{r}
+print(fst_matrix_sub)
+```
+
+# Population level FST for Merina subsets
+
+```{r}
+# Load fastmixture Q matrix
+qmats <- readRDS("../data/intermediate/fastmixture/fastmixture_m.RData")
+mad_bor_g1000_sum <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
+```
+
+```{r}
+# tidy with the gt
+mad_bor_g1000_sum <- augment(get_q_matrix(qmats, k = 3, run = 1),
+  data = mad_bor_g1000_sum
+)
+# filter to merina
+merina <- mad_bor_g1000_sum %>% filter(population == "Merina")
+# split groups
+merina$population <- ifelse(merina$.Q3 > 0.5, "Merina A", "Merina B")
+merina <- merina[, c("id", "population")]
+
+# match V2 and merina$id and replace the population column in
+# merina_fam with the population column in merina
+matching_m <- match(mad_bor_g1000_sum$id, merina$id)
+mad_bor_g1000_sum$population <- ifelse(!is.na(matching_m),
+  merina$population[matching_m],
+  mad_bor_g1000_sum$population
+)
+```
+
+# Pairwise Fst
+
+```{r}
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  filter(population %in% c(
+    "Betsimisaraka", "Merina A", "Merina B", "Diego Mixed",
+    "Sakalava/Tsimihety", "Betsileo", "Vezo",
+    "Mikea", "Temoro"
+  ))
+
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
+```
+
+```{r}
+fst_matrix <- mad_bor_g1000_sum %>%
+  pairwise_pop_fst(by_locus = FALSE, method = "WC84", type = "pairwise")
+```
+
+# Pairwise Fst heatmap with dendrogram and Merina split
+
+```{r}
+# https://bioinformatics.ccr.cancer.gov/docs/data-visualization-with-r/Lesson5_intro_to_ggplot/
+pheatmap(fst_matrix,
+  color = viridis(256),
+  angle_col = 45,
+  filename = paste0(res_dir, "fst_dendrogram_merina_split_.jpg"),
+  width = 7, height = 5, dpi = 300
+)
+```
+
+# Other heatmap versions
+
+```{r}
+heatmap(fst_matrix, col = viridis(256)) +
+  theme(axis.text.x = element_text(angle = -60, hjust = 0))
+
+ggheatmap(fst_matrix) +
+  scale_fill_viridis_c(name = expression("F"[st])) +
+  theme(axis.text.x = element_text(angle = -60, hjust = 0))
+
+
+#https://stackoverflow.com/questions/38727324/adding-a-dendrogram-to-a-ggplot2-heatmap 
+#https://yunuuuu.github.io/ggalign-book/complexheatmap-single-heatmap.html
+
+ggheatmap(fst_matrix) +
+  scale_fill_viridis_c(name = expression("F"[st])) +
+  anno_right(size = unit(15, "mm")) +
+  align_dendro(reorder_dendrogram = TRUE) +
+  theme(axis.text.y = element_blank()) +
+
+  anno_top(size = unit(15, "mm")) +
+  align_dendro(reorder_dendrogram = TRUE) +
+  theme(axis.text.x = element_blank()) +
+
+  quad_active() +
+  theme(
+    plot.margin = margin(),
+    axis.text.x = element_text(angle = -60, hjust = 0)
+  )
+```
+
+# Merina split with no dendrogram
+
+```{r}
+fst_merina_split <- ggheatmap(fst_matrix) +
+  scale_fill_viridis_c(name = expression("F"[st])) +
+  theme(axis.text.x = element_text(angle = -60, hjust = 0))
+fst_merina_split
+
+
+ggsave(paste0(res_dir, "fst_merina_split.jpg"),
+  width = 7, height = 5, dpi = 300
+)
+```
+
+
+***
+
+## Recording R environment
+
+Part of ensuring our workflow is reproducible is to keep track of the R environment.
+We will automatically save our R environment into a file called `r_environment.json`.
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s08_FST.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+
+```
