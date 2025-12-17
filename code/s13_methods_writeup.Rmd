@@ -91,7 +91,7 @@ F4 ratio statistics were used to examine the proportion of ancestry derived from
 
 ALDER (version 1.03) [@loh2013] was used to date the timing of admixture across different Malagasy groups. As ALDER requires accurate genetic distances across loci, we used gt_order_loci() to create a subset of the full dataset containing only SNPs with known genetic map positions in correct order, and we did not prune this dataset for linkage disequilibrium. This subset consisted of `r count_loci(mad_bor_g1000_sum_neo_alder)` SNPs. ALDER was run using the default -binsize of `r binsize` (describing the size, in Morgans, of the bins that SNPs are split up into. Instead of directly calculating distance between each SNP pair, ALDER uses the distance between the bins of each SNP pair.), and the –mindis parameter (minimum genetic distance to begin LD decay curve fitting) set to `r mindis`. Standard error of estimated dates were calculated through leave-one-chromosome-out jackknifing, with the flag -jackknife. 
 
-To relate estimated generation times to calendar years, we assumed a generation time of 29 years (refs).
+To relate estimated generation times to calendar years, we assumed a generation time of 30 years (refs).
 
 Pairwise Fst distances between malagasy populations were calculated in tidypopgen, using the method of Weir and Cockerham, 1984 (ref).
 
