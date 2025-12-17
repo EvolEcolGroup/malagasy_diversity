@@ -28,8 +28,8 @@ This script uses fastMIXTURE (Santander et al., 2024) through the package tidypo
 
 ```{r}
 mad_bor_g1000_sum <-
-  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean.gt",
-    reattach_to = "../data/intermediate/rbind_data/mad_bor_g1000_sum_clean"
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.gt",
+    reattach_to = "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean"
   )
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
 ```
@@ -55,7 +55,7 @@ if (file.exists("../data/intermediate/fastmixture/fastmixture_m.RData")) {
     n_runs = 3,
     threads = 1,
     batches = 16,
-    seed = c(1, 2, 3),
+    seed = 1,
     no_freqs = TRUE
   )
   saveRDS(qmats, "../data/intermediate/fastmixture/fastmixture_m.RData")
@@ -166,6 +166,8 @@ mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Southern Han Chinese", "K
 # Not really happy about grouping all African samples here though...
 mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Esan", "Gambian Mandinka", "Luhya", "Mende", "Yoruba"), "Region"] <- "Africa"
 mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Betsimisaraka", "Merina", "Diego", "Sakalava Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro"), "Region"] <- "Malagasy"
+# wharerver is left as "Other" set to Africa
+mad_bor_g1000_sum[mad_bor_g1000_sum$Region == "Other", "Region"] <- "Africa"
 
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% arrange(Region, population)
 ```
@@ -188,9 +190,9 @@ autoplot(get_q_matrix(qmats, k = 3, run = 1),
   arrange_by_indiv = TRUE, reorder_within_groups = TRUE
 )
 
-ggsave(paste0(res_dir, "fastmixture_autoplot.jpg"),
-  width = 7, height = 7, dpi = 300
-)
+#ggsave(paste0(res_dir, "fastmixture_autoplot.jpg"),
+#  width = 7, height = 7, dpi = 300
+#)
 ```
 
 # Check which ancestry components the .Q files represent 
@@ -252,3 +254,23 @@ ggplot(vars, aes(x = population, y = Q3)) +
 
 ```{r}
 ```
+
+
+***
+
+## Recording R environment
+
+Part of ensuring our workflow is reproducible is to keep track of the R environment.
+We will automatically save our R environment into a file called `r_environment.json`.
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s05_fastmixture.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+
+```
+

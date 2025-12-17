@@ -22,7 +22,22 @@ malagasy_merged <-
   gt_load("../data/intermediate/rbind_data/malagasy_merge_clean_ld.gt")
 ```
 
-This script creates a PCA of only Malagasy individuals, using the Malagasy dataset, comprising of `r nrow(malagasy_merged)` individuals and `r ncol(malagasy_merged)` loci.
+This script creates a PCA of only Malagasy individuals, using the
+Malagasy dataset, comprising of `r nrow(malagasy_merged)` individuals
+and `r ncol(malagasy_merged)` loci.
+
+```{r}
+count_loci(malagasy_merged)
+nrow(malagasy_merged)
+```
+
+# Count individuals from each group 
+
+```{r}
+pierron_data <- length(which(malagasy_merged$population %in% c("Mikea", "Vezo", "Temoro")))
+pierron_data
+nrow(malagasy_merged) - pierron_data
+```
 
 # Set imputed
 
@@ -38,9 +53,24 @@ pcs <- as.data.frame(random_pca$u)
 variance <- tidy(random_pca)
 ```
 
+# Digeo Individuals
+
+```{r}
+malagasy_sample_sheet <-
+  as_tibble(read.csv("../data/raw/data_input/Malagasy_pop_gen_sample_sheet_2015_cleaned.csv"))
+diego_groups <- malagasy_sample_sheet %>% filter(District == "Diego")
+diego <- malagasy_merged %>%
+  filter(sub("RR.*", "", id) %in% diego_groups$Sample.ID)
+diego$ethnicity <- diego_groups$Ethnic.group[match(sub("RR.*", "", diego$id), diego_groups$Sample.ID)]
+unique(diego$ethnicity)
+```
+
 # Plot
 
 ```{r}
+malagasy_merged[malagasy_merged$population == "Sakalava_Tsimihety", "population"] <- "Sakalava/Tsimihety"
+malagasy_merged[malagasy_merged$population == "Diego", "population"] <- "Diego Mixed"
+
 ggplot(pcs, aes(
   x = V1, y = V2,
   group = malagasy_merged$population,
@@ -54,11 +84,18 @@ ggplot(pcs, aes(
     title = NULL,
     x = paste0("PC 1 (", round(variance$percent[1], 2), "%)"),
     y = paste0("PC 2 (", round(variance$percent[2], 2), "%)"),
-    colour = "Population", shape = "Population", fill = "Population"
+    colour = NULL, shape = NULL, fill = NULL
   ) +
-  theme(legend.position = "right") +
   scale_color_brewer(palette = "Dark2") +
-  scale_fill_brewer(palette = "Dark2")
+  scale_fill_brewer(palette = "Dark2") +
+  theme_minimal() +
+  theme(
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white"),
+    legend.position = c(0.3, 0.3)
+  )
 
 ggsave(paste0(res_dir, "madagascar_pca.jpg"), width = 7, height = 5, dpi = 300)
 ```
@@ -67,27 +104,58 @@ ggsave(paste0(res_dir, "madagascar_pca.jpg"), width = 7, height = 5, dpi = 300)
 autoplot(random_pca, type = "scree")
 ```
 
+This PCA uses the KING relatedness filtering of 0.088, equivalent to
+second degree relatives. There is justification for keeping second
+degree close relatives (aunts, uncles, grandparents, grandchildren,
+nieces, nephews, and half-siblings) because the prevalence of
+consanguinity in each population is unknown, but likely to be high in
+places, and therefore removing all second degree relatives may
+substantially reduce the sample size.
 
-This PCA uses the KING relatedness filtering of 0.088, equivalent to second degree relatives. There is justification for keeping second degree close relatives (aunts, uncles, grandparents, grandchildren, nieces, nephews, and half-siblings) because the prevalence of consanguinity in each population is unknown, but likely to be high in places, and therefore removing all second degree relatives may substantially reduce the sample size.
+However, altering the relatedness filtering only reduced the sample size
+by \~10. The PCA plot shows a similar distribution of the Malagasy
+samples, but with a slightly different spread and slightly reduced
+explained variance when compared to relatedness filtering with a kinship
+coefficient of 0.177 (first degree relatives). It therefore appears that
+the relatedness filtering has a small effect on the PCA, but the overall
+structure of the Malagasy samples is maintained.
 
-However, altering the relatedness filtering only reduced the sample size by ~10. The PCA plot shows a similar distribution of the Malagasy samples, but with a slightly different spread and slightly reduced explained variance when compared to relatedness filtering with a kinship coefficient of 0.177 (first degree relatives). It therefore appears that the relatedness filtering has a small effect on the PCA, but the overall structure of the Malagasy samples is maintained. 
+'the KING option ‘‘–unrelated’’ proceeds as follows. Related individuals
+(defined by existing pedigree or estimated kinship coefficient ,0.088)
+are first clustered into connected groups (i.e., families). Within each
+family cluster, individuals are ranked according to the count of
+unrelated family members (having estimated kinship coefficient ,0.022).
+To construct a set of unrelated individuals, we first select the
+individual with the largest count of unrelated individuals within the
+family cluster. We then proceed to choose the individual with the next
+highest rank (number of unrelated family members) within the family
+cluster, only if that individual is not related to any of the previously
+selected individuals in the list of unrelated individuals' Manichaikul
+et al., 2010)
 
-'the KING option ‘‘–unrelated’’
-proceeds as follows. Related individuals (defined by existing
-pedigree or estimated kinship coefficient ,0.088) are first clustered
-into connected groups (i.e., families). Within each family cluster,
-individuals are ranked according to the count of unrelated family
-members (having estimated kinship coefficient ,0.022). To
-construct a set of unrelated individuals, we first select the
-individual with the largest count of unrelated individuals within
-the family cluster. We then proceed to choose the individual with
-the next highest rank (number of unrelated family members)
-within the family cluster, only if that individual is not related to
-any of the previously selected individuals in the list of unrelated
-individuals' Manichaikul et al., 2010)
+'--related --degree 2 specifies that only related pairs (up to the
+2nd-degree in this case) between families are included in the output.
+Specifically all pairs across families with a kinship coefficient less
+than 0.0884 will be excluded from the output. '
 
-'--related --degree 2 specifies that only related pairs (up to the 2nd-degree in this case) between families are included in the output. Specifically all pairs across families with a kinship coefficient less than 0.0884 will be excluded from the output. '
+------------------------------------------------------------------------
 
+## Recording R environment
+
+Part of ensuring our workflow is reproducible is to keep track of the R
+environment. We will automatically save our R environment into a file
+called `r_environment.json`.
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s03_malagasy_pca.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+xfun::session_info()
+```
 
 ```{r}
 ```

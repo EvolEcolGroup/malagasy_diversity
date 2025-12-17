@@ -1,0 +1,739 @@
+---
+title: "ALDER"
+date: "2025-02-03"
+knit: resrepo::knit_to_results
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidypopgen)
+library(admixtools)
+library(ggplot2)
+library(testthat)
+```
+
+```{r set-directories}
+res_dir <- "../results/s07_ALDER/"
+```
+
+# Load gt
+
+```{r load_data}
+mad_bor_g1000_sum_neo <-
+  gt_load("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_no_ld.gt")
+```
+
+# Loci and sample count
+
+```{r loci_count}
+nrow(mad_bor_g1000_sum_neo)
+count_loci(mad_bor_g1000_sum_neo)
+```
+
+# Make \$population a copy of \$id
+
+```{r change_population}
+mad_bor_g1000_sum_neo$population <- mad_bor_g1000_sum_neo$id
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% group_by(population)
+```
+
+# Check the original gt
+
+```{r check_ordered}
+is_loci_table_ordered(mad_bor_g1000_sum_neo,
+  error_on_false = TRUE,
+  ignore_genetic_dist = FALSE
+)
+```
+
+# Remove existing plink .bed files and write .bed
+
+```{r rm_plink}
+if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.bed")) {
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.bed")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.bim")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.fam")
+}
+
+gt_as_plink(mad_bor_g1000_sum_neo, "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo")
+```
+
+# Transform to .ped
+
+```{bash transform_ped, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+plink --bfile ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo --recode --out ../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo
+```
+
+# Read the plink file and set 6th col to 1
+
+Remove any snps without a map position
+
+```{r update_fam}
+mad_bor_g1000_sum_neo_fam <-
+  read.table(
+    "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.fam",
+    header = FALSE, sep = ""
+  )
+
+# colnames of $V1 to "id"
+colnames(mad_bor_g1000_sum_neo_fam)[1] <- "id"
+# colnames of $V6 to "population"
+colnames(mad_bor_g1000_sum_neo_fam)[6] <- "population"
+
+pop_table <- read.table("../data/raw/data_input/Madagascar_Borneo.poptable",
+  sep = "\t", fill = TRUE
+)
+colnames(pop_table) <- c("IID", "V2", "FID", "Population", "V5", "V6", "V7")
+
+# Remove the "RR"
+mad_bor_g1000_sum_neo_fam$id <- sub("RR.*", "", mad_bor_g1000_sum_neo_fam$id)
+mad_bor_g1000_sum_neo_fam$V2 <- sub("RR.*", "", mad_bor_g1000_sum_neo_fam$V2)
+
+# Find Malagasy entries
+pop_table_sub <- subset(
+  pop_table,
+  pop_table$IID %in% mad_bor_g1000_sum_neo_fam$id
+)
+
+# match up the ID's with pop table metadata
+matching_m <- match(mad_bor_g1000_sum_neo_fam$id, pop_table_sub$IID)
+
+mad_bor_g1000_sum_neo_fam$population <- ifelse(!is.na(matching_m),
+  pop_table_sub$Population[matching_m],
+  mad_bor_g1000_sum_neo_fam$population
+)
+
+NEO_full <- gt_load("../data/intermediate/rbind_data/NEO_full.gt",
+  reattach_to = "../data/intermediate/rbind_data/NEO_full"
+)
+
+matching_m <- match(mad_bor_g1000_sum_neo_fam$id, NEO_full$id)
+
+mad_bor_g1000_sum_neo_fam$population <- ifelse(!is.na(matching_m),
+  NEO_full$population[matching_m],
+  mad_bor_g1000_sum_neo_fam$population
+)
+
+rm(NEO_full)
+
+# replace any " " in $populaiton with a "_"
+mad_bor_g1000_sum_neo_fam$population <- gsub(
+  " ", "_",
+  mad_bor_g1000_sum_neo_fam$population
+)
+
+# any $id begining GRC has $population "Sumba"
+mad_bor_g1000_sum_neo_fam$population[grepl("^GRC", mad_bor_g1000_sum_neo_fam$id)] <- "Sumba"
+
+# mad_bor_g1000_sum_neo_fam$id <- as.numeric(rownames(mad_bor_g1000_sum_neo_fam))
+mad_bor_g1000_sum_neo_fam$population <-
+  as.factor(mad_bor_g1000_sum_neo_fam$population)
+
+# mad_bor_g1000_sum_neo_fam$V6 <- mad_bor_g1000_sum_neo_fam$population
+write.table(mad_bor_g1000_sum_neo_fam,
+  "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.fam",
+  row.names = FALSE, col.names = FALSE, sep = " ", quote = FALSE
+)
+```
+
+```{r rm_geno}
+if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno")) {
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.ind")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.snp")
+}
+```
+
+# Write a bash scripts to convert plink to eigenstrat
+
+# Run script
+
+```{bash plink_to_eigenstrat, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+cd ~/Git/malagasy_diversity/code
+convertf -p s07a_convertf.par
+```
+
+# Adjust for a second dataset with Merina labelled separately
+
+```{r sep_merina, message = FALSE}
+# back to character
+mad_bor_g1000_sum_neo_fam$population <-
+  as.character(mad_bor_g1000_sum_neo_fam$population)
+
+# Load fastmixture results
+mad_bor_g1000_sum_neo <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.gt")
+qmats <-
+  readRDS("~/Dropbox/gitdata/malagasy_diversity/data/intermediate/fastmixture/fastmixture_m.RData")
+# tidy with the gt
+mad_bor_g1000_sum_neo <- augment(get_q_matrix(qmats, k = 3, run = 1),
+  data = mad_bor_g1000_sum_neo
+)
+# filter to merina
+merina <- mad_bor_g1000_sum_neo %>% filter(population == "Merina")
+# split groups
+# .Q3 representing Asian ancestry and .Q2 representing African ancestry
+merina$population <- ifelse(merina$.Q3 > 0.5, "MerinaA", "MerinaB")
+merina <- merina[, c("id", "population")]
+merina$id <- sub("RR.*", "", merina$id)
+
+# match V2 and merina$id and replace the population column in merina_fam with
+# the population column in merina
+matching_m <- match(mad_bor_g1000_sum_neo_fam$id, merina$id)
+mad_bor_g1000_sum_neo_fam$population <- ifelse(!is.na(matching_m),
+  merina$population[matching_m], mad_bor_g1000_sum_neo_fam$population
+)
+
+# count number of MerinaA
+cat("Merina group > 0.5", length(which(mad_bor_g1000_sum_neo_fam$population == "MerinaA")))
+cat("Merina group < 0.5", length(which(mad_bor_g1000_sum_neo_fam$population == "MerinaB")))
+
+# mad_bor_g1000_sum_neo_fam$id <- as.numeric(rownames(mad_bor_g1000_sum_neo_fam))
+mad_bor_g1000_sum_neo_fam$population <-
+  as.factor(mad_bor_g1000_sum_neo_fam$population)
+
+# mad_bor_g1000_sum_neo_fam$V6 <- mad_bor_g1000_sum_neo_fam$population
+write.table(mad_bor_g1000_sum_neo_fam,
+  "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.fam",
+  row.names = FALSE, col.names = FALSE, sep = " ", quote = FALSE
+)
+
+file.copy(
+  "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.bed",
+  "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.bed",
+  overwrite = TRUE
+)
+file.copy(
+  "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.bim",
+  "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.bim",
+  overwrite = TRUE
+)
+```
+
+```{r rm_geno2, message = FALSE}
+if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.geno")) {
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.geno")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.ind")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.snp")
+}
+```
+
+# Write a bash scripts to convert plink to eigenstrat
+
+# Run script
+
+```{bash plink_to_eigenstrat2, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+cd ~/Git/malagasy_diversity/code
+convertf -p s07a_convertf_merina_sep.par
+```
+
+# Population to Status column as described here
+
+<https://reich.hms.harvard.edu/software/InputFileFormats>
+
+# Write .par files for ALDER
+
+```{r write_par, message = FALSE}
+# First, with Merina together
+admix_list <- c(
+  "Betsileo", "Betsimisaraka", "Diego", "Mikea",
+  "Sakalava_Tsimihety", "Temoro", "Vezo", "Merina"
+)
+
+# List of reference-population sets
+refpop_list <- list(
+  c("Borneo", "Esan"),
+  c("Sumba", "Esan"),
+  c("Borneo", "Yoruba"),
+  c("Sumba", "Yoruba"),
+  c("Borneo", "Mozambique_Chopi"),
+  c("Sumba", "Mozambique_Chopi")
+)
+
+# Fixed parameters
+geno <- "../../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno"
+snp <- "../../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.snp"
+ind <- "../../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.ind"
+
+# Root output directory (do NOT modify inside the loop)
+base_root <- "s07_ALDER_par_files"
+
+write_par_files <- function(base_root,
+                            admix_list,
+                            refpop_list,
+                            geno,
+                            snp,
+                            ind) {
+  for (refset in refpop_list) {
+    for (admix in admix_list) {
+      folder <- paste(refset, collapse = "_")
+
+      # Final output directory for this refpop set
+      base_out <- file.path(getwd(), base_root, folder)
+
+      if (!dir.exists(base_out)) {
+        dir.create(base_out, recursive = TRUE)
+      }
+
+      # Filename for the .par file
+      outfile <- sprintf(
+        "%s/s07b_alder_%s.par",
+        base_out, tolower(admix)
+      )
+      file.create(outfile)
+
+      # Build the refpop string
+      ref_str <- paste(refset, collapse = ";")
+
+      # Write the .par file content
+      par_text <- paste0(
+        "genotypename: ", geno, "\n",
+        "snpname: ", snp, "\n",
+        "indivname: ", ind, "\n",
+        "checkmap: YES\n",
+        "jackknife: YES\n",
+        "mindis: 0.005\n",
+        "admixpop: ", admix, "\n",
+        "refpops: ", ref_str, "\n",
+        "raw_outname: ", file.path(
+          base_out,
+          paste0("alder_", tolower(admix), ".txt")
+        ), "\n"
+      )
+
+      writeLines(par_text, con = outfile)
+    }
+  }
+}
+
+write_par_files(
+  base_root,
+  admix_list,
+  refpop_list,
+  geno,
+  snp,
+  ind
+)
+
+# And then for split Merina
+geno <- "../../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.geno"
+snp <- "../../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.snp"
+ind <- "../../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.ind"
+
+admix_list <- c("MerinaA", "MerinaB")
+
+write_par_files(
+  base_root,
+  admix_list,
+  refpop_list,
+  geno,
+  snp,
+  ind
+)
+```
+
+
+mindis: 0.005 - minimum genetic distance (in Morgans) at which to start
+curve fitting (default: determined using LD correlation).
+<https://comppopgenworkshop2019.readthedocs.io/en/latest/contents/06_alder/alder.html>
+States that the default calculates the correlation in LD decay between
+the target and each reference, and uses 'the minimum distance that shows
+no correlation in both references.' 'If it continues beyond 2 cM (due to
+either a strong bottleneck or admixture in a reference), the program
+aborts.' In example with Merina as Target and Esan and Borneo as
+reference, setting mindis to default causes the program to abort.
+
+@TODO What does mindis do to the results?
+
+If mindis is automatically chosen, Betsileo and Merina/Merina A runs fail with:
+
+'too much long-range LD; not plotting LD curve'
+'fit start = inf because of long-range LD correlation; exiting'
+
+This is likely due to strong bottleneck in Asian ancestry component, given that
+it fails only for populations with a larger Asian ancestry component. If it was 
+due to admixture in the reference, we might expect it to fail for all target populations.
+
+checkmap: YES
+binsize: 0.0005 default - genetic distance resolution (in
+Morgans) - the size of bins that ALDER splits the genome up into, used
+to calculate the distance between the bins of two snps as opposed to the
+distance between the each individual pair of snps, for computational
+efficiency
+jackknife: YES - outputs results from leave-one-chromosome-out jackknifing
+
+# Run bash scripts in a loop
+
+```{bash run_alder, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+CODE_ROOT=~/Git/malagasy_diversity/code/s07_ALDER_par_files
+RESULT_ROOT=~/Git/malagasy_diversity/results/s07_ALDER
+
+for FOLDER in "$CODE_ROOT"/*/; do
+    
+    # Strip path and trailing slash → e.g., Borneo_Esan
+    BASENAME=$(basename "$FOLDER")
+
+    echo "Processing reference set: $BASENAME"
+
+    # Make matching output directory
+    OUTDIR="$RESULT_ROOT/$BASENAME"
+    mkdir -p "$OUTDIR"
+
+    # Enter the folder containing the .par files
+    cd "$FOLDER" || continue
+
+    # Loop through each .par file
+    for PAR in *.par; do
+        LOG="$OUTDIR/${PAR%.par}.log"
+
+        echo "  Running ALDER on $PAR"
+        alder -p "$PAR" > "$LOG" 2>&1
+    done
+
+    echo "Finished $BASENAME"
+    echo "----------------------"
+done
+
+```
+
+# Get and process outputs
+
+```{r process_outputs, message = FALSE}
+res_folders <- list.dirs("../results/s07_ALDER",
+  full.names = TRUE,
+  recursive = FALSE
+)
+
+get_logs <- function(res_folders) {
+  files <- c()
+  for (folder in res_folders) {
+    new_logs <- list.files(folder,
+      pattern = ".log",
+      full.names = TRUE
+    )
+    files <- c(files, new_logs)
+  }
+  return(files)
+}
+
+files <- get_logs(res_folders)
+
+
+
+# remove any from files that don't have 'alder' in  the name
+files <- files[grepl("_alder", files)]
+
+# use readLines to read each of files
+logs <- lapply(files, readLines)
+
+# Extract "DATA:" lines from each log file in the list
+data_lines <- lapply(
+  logs,
+  function(log_file) {
+    log_file[grepl("^DATA:",
+      log_file,
+      ignore.case = TRUE
+    )]
+  }
+)
+
+
+# Extract the first line from each element in data_lines
+first_lines <- sapply(data_lines, function(x) if (length(x) > 0) x[1] else NA)
+
+# Split each first "DATA:" line by backslash "\\"
+split_data <- lapply(first_lines, function(x) strsplit(x, "\t")[[1]])
+
+result <- do.call(rbind, split_data)
+result <- as.data.frame(result, stringsAsFactors = FALSE)
+# remove NA row
+result <- result[complete.cases(result), ]
+
+
+
+
+# Extract the second line from each element in data_lines
+second_lines <- sapply(data_lines, function(x) if (length(x) > 0) x[2] else NA)
+
+# split second lines by "\"
+split_data2 <- lapply(second_lines, function(x) strsplit(x, "\t")[[1]])
+# apply colnames
+colnames(result) <- split_data2[[2]]
+# remove first two columns
+result <- result[, -c(1, 2)]
+
+# split $`2-ref decay` into 2 columns
+split_dates <- do.call(rbind, strsplit(result$`2-ref decay`, " "))
+# remove the middle column
+split_dates <- split_dates[, -2]
+# add column names
+colnames(split_dates) <- c("admixture_date", "CI")
+# turn into a dataframe
+split_dates <- as.data.frame(split_dates)
+# make numeric
+split_dates$admixture_date <- as.numeric(split_dates$admixture_date)
+split_dates$CI <- as.numeric(split_dates$CI)
+result <- cbind(result, split_dates)
+
+# split $`2-ref amp_exp` into 2 columns
+split_amp <- do.call(rbind, strsplit(result$`2-ref amp_exp`, " "))
+# remove the middle column
+split_amp <- split_amp[, -2]
+# add column names
+colnames(split_amp) <- c("amp_exp", "amp_exp_CI")
+# turn into a dataframe
+split_amp <- as.data.frame(split_amp)
+# make numeric
+split_amp$amp_exp <- as.numeric(split_amp$amp_exp)
+split_amp$amp_exp_CI <- as.numeric(split_amp$amp_exp_CI)
+result <- cbind(result, split_amp)
+
+
+# Process each log file
+amp_aff_lines <- lapply(logs, function(log_text) {
+  # Find the index of the header
+  header_index <- grep("Computing 2-ref weighted LD with weights...", log_text)
+
+  if (length(header_index) == 0) {
+    return(NA) # Return NA if the header is not found
+  }
+
+  # Search for 'amp_aff:' after the header
+  amp_aff_index <- grep(
+    "amp_aff:",
+    log_text[(header_index + 1):length(log_text)]
+  )
+
+  if (length(amp_aff_index) == 0) {
+    return(NA) # Return NA if no 'amp_aff:' line is found
+  }
+
+  # Extract the first matching line
+  log_text[header_index + amp_aff_index[1]]
+})
+
+amp_aff_lines <- do.call(rbind, amp_aff_lines)
+amp_aff_lines <- amp_aff_lines[complete.cases(amp_aff_lines), ]
+amp_aff_lines <- do.call(rbind, strsplit(amp_aff_lines, " "))
+result$amp_aff <- as.numeric(amp_aff_lines[, 8])
+
+result$`test pop` <- factor(result$`test pop`,
+  levels = c(
+    "Betsimisaraka", "Temoro", "MerinaB",
+    "Betsileo", "Mikea", "Merina",
+    "Sakalava_Tsimihety", "Vezo", "MerinaA",
+    "Diego"
+  )
+)
+
+# save result
+saveRDS(result, "../results/s07_ALDER/alder_results_all.RData")
+```
+
+'Also note that we do not use the jackknife to
+   estimate bias: i.e., for any inference of the form "x +/- y", x is
+   computed using data from all chromosomes and y is the standard
+   error obtained from the jackknife.' README file for ALDER
+
+
+# Different African populations, using Borneo
+
+```{r plot_afr_pops}
+borneo_res <- subset(result, result$`ref A` == "Borneo")
+
+p1 <- ggplot(borneo_res, aes(x = `ref B`, y = admixture_date, colour = `ref B`)) +
+  geom_boxplot() +
+  facet_wrap(~`test pop`) +
+  scale_y_continuous(
+    "Admixture date (generations BP)",
+    sec.axis = sec_axis(~ . * 30, name = "Admixture date (years BP)")
+  ) +
+  geom_errorbar(
+    aes(
+      ymin = admixture_date - CI,
+      ymax = admixture_date + CI
+    ),
+    width = 0.2
+  ) +
+  labs(
+    x = element_blank(), y = "Admixture date (generations BP)",
+    colour = "African Reference"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.8, 0.15),
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white")
+  )
+p1
+
+ggsave("../results/s07_ALDER/varied_african_pops.jpg",
+  width = 10, height = 6, dpi = 300
+)
+```
+
+# Different Asian populations, using Mozambique_Chopi
+
+```{r plot_asn_pops}
+mozambique_res <- subset(result, result$`ref B` == "Mozambique_Chopi")
+
+p2 <- ggplot(mozambique_res, aes(x = `ref A`, y = admixture_date, colour = `ref A`)) +
+  geom_boxplot() +
+  facet_wrap(~`test pop`) +
+  scale_y_continuous(
+    "Admixture date (generations BP)",
+    sec.axis = sec_axis(~ . * 30, name = "Admixture date (years BP)")
+  ) +
+  geom_errorbar(
+    aes(
+      ymin = admixture_date - CI,
+      ymax = admixture_date + CI
+    ),
+    width = 0.2
+  ) +
+  labs(
+    x = element_blank(), y = "Admixture date (generations BP)",
+    colour = "Asian Reference"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.8, 0.15),
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white")
+  )
+p2 
+
+ggsave("../results/s07_ALDER/varied_asian_pops.jpg",
+  width = 10, height = 6, dpi = 300
+)
+```
+
+
+
+# Example LD curve plots
+
+'Weighted LD curves computed on real populations often exhibit a nonzero
+horizontal asymptote contrary to the exact exponential decay formulas we
+have derived above. Such behavior can be caused by assortative mating
+resulting in subpopulations structured by ancestry percentage in
+violation of our model. We show in Appendix A that if we instead model
+the admixed population as consisting of randomly mating subpopulations
+with heterogeneous amounts α—now a random variable—of mixed ancestry,
+our equations for the curves take the form' (Loh et al 2013)
+
+$$
+E[\alpha(d)] = M e^{-nd} + K
+$$
+
+'We fit discretized weighted LD curves as from Equation 9, using
+least-squares to find best-fit parameters.' (Loh et al 2013)
+
+The following plotting code is adapted from
+<https://comppopgenworkshop2019.readthedocs.io/en/latest/contents/06_alder/alder.html>
+Which describes as: E[Y] = M times e \ ^-nd + K
+
+Adjusting the parameters refA and refB will print all LD curves for this combination.
+
+```{r plot_curves}
+result <- readRDS("../results/s07_ALDER/alder_results_all.RData")
+
+res_folders <- list.dirs("../code/s07_ALDER_par_files",
+  full.names = TRUE,
+  recursive = FALSE
+)
+
+get_txt <- function(res_folders) {
+  files <- c()
+  for (folder in res_folders) {
+    new_logs <- list.files(folder,
+      pattern = ".txt",
+      full.names = TRUE
+    )
+    files <- c(files, new_logs)
+  }
+  return(files)
+}
+
+files <- get_txt(res_folders)
+
+# remove jackknifing per-chromosome .txt files
+files <- files[!grepl(".txt-", files)]
+
+plot_curves <- function(refA, refB, files, result) {
+  result_sub <- subset(
+    result,
+    result$`ref A` == refA & result$`ref B` == refB
+  )
+
+  ref_combo <- paste0(refA, "_", refB)
+  files <- files[grepl(ref_combo, files)]
+
+  counter <- 1
+  plot_list <- list()
+
+  for (i in files) {
+    d1 <- read.table(i, header = FALSE)
+
+    n <- result_sub[counter, ]$admixture_date ## decay - estimated admixture date
+    M <- result_sub[counter, ]$amp_exp ## amp_exp -
+    K <- result_sub[counter, ]$amp_aff ## amp_aff -
+
+    d1 <- d1[-nrow(d1), ]
+
+    colnames(d1) <- c("Dist", "weightedLD", "npairs")
+    xv <- as.vector(d1$Dist) ## distance between SNP bins (cM) - genetic distance
+
+    prdv <- M * exp(-1 * n * xv / 100) + K # E[Y] = M times e^-nd + K
+
+    this_plot <- ggplot(d1, aes(x = Dist, y = weightedLD)) +
+      geom_point(color = "blue", shape = 4) +
+      geom_line(aes(y = prdv), color = "red", linewidth = 1) +
+      labs(
+        x = "Genetic distance (cM)",
+        y = "Weighted LD",
+        title = paste("Weighted LD decay curve for", result_sub[counter, ]$`test pop`)
+      ) +
+      theme_minimal()
+
+    plot_list[[counter]] <- this_plot
+    counter <- counter + 1
+  }
+  return(plot_list)
+}
+
+# Run the function
+refA <- "Borneo"
+refB <- "Mozambique_Chopi"
+res <- plot_curves(refA, refB, files, result)
+
+for (p in res) print(p)
+```
+
+
+------------------------------------------------------------------------
+
+## Recording R environment
+
+Part of ensuring our workflow is reproducible is to keep track of the R
+environment. We will automatically save our R environment into a file
+called `r_environment.json`.
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s07_ALDER.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+
+```

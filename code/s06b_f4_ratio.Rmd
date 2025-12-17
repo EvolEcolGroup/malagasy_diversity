@@ -1,0 +1,169 @@
+---
+title: "f4 Ratio"
+output: html_document
+date: "2025-12-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidypopgen)
+library(bigsnpr)
+library(httr)
+library(parallel)
+```
+
+```{r}
+mad_bor_g1000_sum <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
+```
+
+# Use liftOver to lift hg19 snps to PanTro6
+
+```{r}
+bim <- show_loci(mad_bor_g1000_sum)[, c("chr_int", "name", "genetic_dist", "position", "allele_ref", "allele_alt")]
+
+names(bim) <- c("chr", "name", "genetic_dist", "pos", "a1", "a0")
+
+pan_bim <- snp_modifyBuild(
+  info_snp = bim,
+  liftOver = "/usr/local/bin/liftOver",
+  from = "hg19",
+  to = "PanTro6",
+  check_reverse = FALSE,
+  local_chain = NULL,
+  base_url = "https://hgdownload.soe.ucsc.edu/goldenPath/"
+)
+
+pan_bim <- na.omit(pan_bim)
+
+```
+
+# Get chimp reference base for each SNP
+
+```{r}
+get_chimp_base <- function(chr, pos, sleep_time = 0.1) {
+  # Build region string (example: "1:123456-123456")
+  region <- paste0(chr, ":", pos, "-", pos)
+
+  # Ensembl species name for chimp
+  species <- "pan_troglodytes"
+
+  # Use the main Ensembl REST API
+  url <- paste0(
+    "https://rest.ensembl.org/sequence/region/",
+    species, "/", region,
+    "?content-type=text/plain"
+  )
+
+  # Pause briefly to avoid hitting rate limits
+  Sys.sleep(sleep_time)
+
+  # Query the API
+  r <- GET(url)
+
+  # Check for failure
+  if (status_code(r) != 200) {
+    warning(paste("Query failed for", chr, pos))
+    return(NA)
+  }
+
+  # Return the sequence (single base for SNP)
+  return(content(r, "text", encoding = "UTF-8"))
+}
+```
+
+```{r}
+tictoc::tic()
+
+pan_bim$chimp_base <- mcmapply(
+  get_chimp_base,
+  chr = pan_bim$chr,
+  pos = pan_bim$pos,
+  mc.cores = 4
+)
+tictoc::toc()
+```
+
+# Save chimp reference data
+
+```{r}
+colnames(pan_bim) <- c("chr_int", "name", "genetic_dist", "position", "allele_ref", "allele_alt", "chimp_ref_base")
+saveRDS(pan_bim, "../results/s06_f_stats/mad_bor_g1000_sum_snps_with_chimp.rds")
+```
+
+# Clean up chimp reference data
+
+```{r}
+# remove NAs
+pan_bim_no_na <- na.omit(pan_bim)
+pan_bim$triallelic <- NA
+remove_triallelic <- function(pan_bim){
+  three_alleles <- c(pan_bim["allele_ref"], pan_bim["allele_alt"], pan_bim["chimp_ref_base"])
+  if(length(unique(three_alleles))==3){
+    pan_bim["triallelic"] <- TRUE
+  } else {
+    pan_bim["triallelic"] <- FALSE
+  }
+}
+
+pan_bim_no_na$triallelic <- apply(pan_bim_no_na, 1, remove_triallelic)
+
+# filter out triallelics
+pan_bim_filtered <- pan_bim_no_na[pan_bim_no_na$triallelic == FALSE, ]
+```
+
+```{r}
+nrow(pan_bim_filtered)
+```
+
+# Subset original hg19 gt to only those in chimp reference
+
+```{r}
+mad_bor_g1000_sum_chimp <- mad_bor_g1000_sum %>%
+  select_loci_if(loci_names(genotypes) %in% pan_bim_filtered$name)
+```
+
+# Save
+
+```{r}
+if(file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_chimp.gt")){
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_chimp.gt")
+}
+```
+
+
+```{r}
+gt_save(
+  mad_bor_g1000_sum_chimp,
+  "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_chimp.gt"
+)
+```
+
+# Create a gen_tibble of the chimp reference alleles
+
+```{r}
+if(file.exists("../data/intermediate/pan_tro_liftover/chimp_ref.gt")){
+  file.remove("../data/intermediate/pan_tro_liftover/chimp_ref.gt")
+  file.remove("../data/intermediate/pan_tro_liftover/chimp_ref.bk")
+  file.remove("../data/intermediate/pan_tro_liftover/chimp_ref.rds")
+}
+```
+
+```{r}
+loci <- show_loci(mad_bor_g1000_sum_chimp)
+indiv_meta <- data.frame(id = "chimp_ref", population = "chimp_ref")
+genotypes <- matrix(rep(1, nrow(loci)), nrow = 1, ncol = nrow(loci))
+
+chimp <- gen_tibble(
+  loci = loci,
+  indiv_meta = indiv_meta,
+  x = genotypes,
+  backingfile = "../data/intermediate/pan_tro_liftover/chimp_ref"
+)
+```
+
+
+```{r}
+
+```
+

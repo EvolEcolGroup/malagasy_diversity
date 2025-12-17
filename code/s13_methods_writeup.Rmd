@@ -1,0 +1,98 @@
+---
+title: "Cleaning and Merging Datasets"
+date: "2025-05-16"
+knit: resrepo::knit_to_results
+output: pdf_document
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidypopgen)
+```
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+madagascar <- gt_load("../data/raw/data_input/Madagascar_full.gt")
+pop_table <- read.table("../data/raw/data_input/Madagascar_Borneo.poptable",
+  sep = "\t", fill = TRUE
+)
+colnames(pop_table) <- c("IID", "V2", "FID", "Population", "V5", "V6", "V7")
+pop_table$IID <- paste0(pop_table$IID, "RR")
+pop_table_sub <-
+  subset(
+    pop_table,
+    pop_table$IID %in% madagascar$id & pop_table$V5 == "Madagascar"
+  )
+matching_m <- match(madagascar$id, pop_table_sub$IID)
+madagascar$population <-
+  ifelse(!is.na(matching_m),
+    pop_table_sub$Population[matching_m], madagascar$population
+  )
+
+madagascar_p <- gt_load("../data/raw/data_input/Pierron_Malagasy.gt")
+
+g1000 <- gt_load("../data/raw/data_input/1000_Genomes_b37_clean.gt")
+pop_table <- read.table("../data/raw/data_input/Madagascar_Borneo.poptable",
+  sep = "\t", fill = TRUE
+)
+colnames(pop_table) <- c("IID", "V2", "FID", "Population", "V5", "V6", "V7")
+pop_table_sub <- subset(pop_table, pop_table$IID %in% g1000$id)
+matching_m <- match(g1000$id, pop_table_sub$IID)
+g1000$population <- ifelse(!is.na(matching_m),
+  pop_table_sub$V2[matching_m],
+  g1000$population
+)
+pop <- c("KHV", "BEB", "YRI", "PJL", "GWD", "MSL", "ESN", "LWK", "CHS")
+g1000 <- g1000 %>% filter(population %in% pop)
+
+borneo <- gt_load("../data/raw/data_input/Borneo_raw_data.gt")
+sumba <- gt_load("../data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.gt")
+timor <- read.table("../data/raw/data_input/timor")
+bantu_african <- gt_load("../data/intermediate/rbind_data/NEO_full.gt")
+
+malagasy_merged <- gt_load("../data/intermediate/rbind_data/malagasy_merge_clean")
+malagasy_merged_ld <- gt_load("../data/intermediate/rbind_data/malagasy_merge_clean_ld.gt")
+
+mad_bor_g1000_sum <- gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.gt")
+mad_bor_g1000_sum_ld <- gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
+
+mad_bor_g1000_sum_subsample_pca <- gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_clean_neo_ld_subsampled.gt")
+
+# Fastmixture
+K <- 2:10
+runs <- 3
+
+# ALDER
+mindis <- 0.005
+binsize <- 0.0005
+mad_bor_g1000_sum_neo_alder <-
+  gt_load("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_no_ld.gt")
+```
+
+# Methods
+
+Genetic and phenotypic data were collected by the team of Dr George Perry at Pennsylvania State University with the University of Antananarivo. Dr Jason Hodgson and Dr Rindra Rakotoarivony led this data collection in 2015. These data comprise of `r nrow(madagascar)` individuals from five regions: Merina people from the Central Highlands (n = `r madagascar %>% filter(population == "Merina") %>% nrow()`), Betsileo people from the southern Highlands (n = `r madagascar %>% filter(population == "Betsileo") %>% nrow()`), Sakalava and Tsimihety people from the northwestern coast (n = `r madagascar %>% filter(population == "Sakalava_Tsimihety") %>% nrow()`), Betsimisaraka people from the eastern coast (n = `r madagascar %>% filter(population == "Betsimisaraka") %>% nrow()`), and people of various ethnic groups from the extreme north in the town of Diego (n = `r madagascar %>% filter(population == "Diego") %>% nrow()`). Samples were collected from married couples, and \~690,000 SNPs were typed using the Illumina HumanOmniExpress-24 array.
+
+Two main datasets were created, a Malagasy only dataset and a global dataset combining Malagasy samples with comparative data. The Malagasy dataset was created by merging the data from this study with Malagasy data from [@pierron2014] (n = `r nrow(madagascar_p)`). For a comparative global dataset, this data was combined with data from southeast Asian and African populations in the [@auton2015] dataset (n = `r nrow(g1000)`), Bantu African individuals from [@fortes-lima2024] (n = `r nrow(bantu_african)`), individuals from Borneo from [@brucato2016] (n = `r nrow(borneo)`), and individuals from the islands of Sumba (n = 30, subsampled at random from the full dataset of `r nrow(sumba)` individuals) and Timor (n = `r nrow(timor)`) from [@cox2016].
+
+Data were cleaned and merged in R with package tidypopgen [@carter2025]. Only autosomal SNPs were analysed. All SNPs with a missingness rate above 0.01 across all samples were removed. All individuals with a genotype call rate less than 0.9 (missingness exceeding 0.1) were removed. All SNPs with minor allele frequency below a threshold of 0.025 were removed. All SNPs with a Hardy-Weinberg equilibrium test p-value below 0.01 were removed. Close relatives were removed using the KING robust kinship coefficient [@manichaikul2010], implemented in tidypopgen. One individual was removed from each pair with a kinship coefficient greater than 0.0884, equivalent to removing relatives up to the second degree. After this filtering, the Malagasy dataset consisted of `r nrow(malagasy_merged)` individuals and `r count_loci(malagasy_merged)` SNPs, and the global dataset consisted of `r nrow(mad_bor_g1000_sum)` individuals and `r count_loci(mad_bor_g1000_sum)` SNPs.
+
+SNPs in linkage were then removed by LD clumping [@privé2018], using tidypopgen. Those with an r2 value greater than 0.2 in a sliding window of 100 kilobases were removed. After pruning, the Malagasy dataset consisted of `r count_loci(malagasy_merged_ld)` SNPs and the global dataset consisted of `r count_loci(mad_bor_g1000_sum_ld)` SNPs.
+
+Principal components analysis was used to visualise Malagasy individuals compared to global comparative data. Non-malagasy populations were randomly subsampled to a maximum of 30 individuals to avoid bias through uneven sample sizes. This left a total of `r nrow(mad_bor_g1000_sum_subsample_pca)` individuals.
+
+Unsupervised clustering using the model-based method fastmixture [@santander2024] was run on the full, cleaned dataset of `r nrow(mad_bor_g1000_sum)` individuals and `r count_loci(mad_bor_g1000_sum)` SNPs using the package tidygenclust (ref). Fastmixture has been shown to be computationally efficient for large datasets while providing comparable results to other model-based clustering algorithms such as STRUCTURE [@pritchard2000] and ADMIXTURE [@alexander2009], with reported speeds up to 30 times faster than ADMIXTURE [@fumagalli2024].
+
+The algorithm was run for `r length(K)` values of K (`r min(K)` to `r max(K)`) and `r runs` runs per K. Subsequently, we analysed the fastmixture output using the Clumppling algorithm of [@liu2024], also implemented in tidygenclust (ref). Clumppling aligns replicated runs of unsupervised clustering across multiple values of K to identify modes across replicates. A single mode was found for each value of K across `r runs` replicates.
+
+f2 statistics were calculated in tidypopgen (Carter and Manica, 2025), f3 and f4 ratio statistics were then calculated in Admixtools2 from these  f2 blocks(Maier and Patterson, 2024). Admixture f3 statistics were used in the configuration f3(Malagasy; Asian, African) to test whether the Malagasy population could be modelled as an admixture between the given African and Asian reference populations. 
+
+F4 ratio statistics were used to examine the proportion of ancestry derived from Asian  versus African sources for each population. To obtain these ratios, the global dataset was merged with 1000 Genomes GBR and a chimpanzee reference (PanTro6) (refs) to act as an outgroup, and calculated in the configurations  f4(French,Chimpanzee;Malagasy,Borneo) / f4(French,Chimpanzee;Esan,Borneo) and f4(French,Chimpanzee;Malagasy,Esan) / f4(French,Chimpanzee;Borneo,Esan).
+
+ALDER (version 1.03) [@loh2013] was used to date the timing of admixture across different Malagasy groups. As ALDER requires accurate genetic distances across loci, we used gt_order_loci() to create a subset of the full dataset containing only SNPs with known genetic map positions in correct order, and we did not prune this dataset for linkage disequilibrium. This subset consisted of `r count_loci(mad_bor_g1000_sum_neo_alder)` SNPs. ALDER was run using the default -binsize of `r binsize` (describing the size, in Morgans, of the bins that SNPs are split up into. Instead of directly calculating distance between each SNP pair, ALDER uses the distance between the bins of each SNP pair.), and the –mindis parameter (minimum genetic distance to begin LD decay curve fitting) set to `r mindis`. Standard error of estimated dates were calculated through leave-one-chromosome-out jackknifing, with the flag -jackknife. 
+
+To relate estimated generation times to calendar years, we assumed a generation time of 30 years (refs).
+
+Pairwise Fst distances between malagasy populations were calculated in tidypopgen, using the method of Weir and Cockerham, 1984 (ref).
+
+Bibliography:

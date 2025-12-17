@@ -1,5 +1,5 @@
 ---
-title: "s01_qc_merge_genetic_dist"
+title: "s02_qc_merge_genetic_dist"
 date: "2025-03-03"
 knit: resrepo::knit_to_results
 output: pdf_document
@@ -14,10 +14,10 @@ library(grid)
 ```
 
 ```{r set-directories}
-res_dir <- "../results/s02_qc_merge_genetic_dist/"
+res_dir <- "../results/s02_qc_merge_genetic_dist_malagasy/"
 ```
 
-This script repeats the steps in s01a_qc_merge to merge malagasy data, while retaining and ordering the genetic distance of SNPs, for ALDER analysis.
+This script repeats the steps in s01_qc_merge to merge malagasy data, while retaining and ordering the genetic distance of SNPs, for ALDER analysis.
 
 # Generate gen tibble
 
@@ -25,13 +25,20 @@ This script repeats the steps in s01a_qc_merge to merge malagasy data, while ret
 if (file.exists("../data/raw/data_input/Madagascar_full.gt")) {
   madagascar <- gt_load("../data/raw/data_input/Madagascar_full.gt")
 } else {
-  madagascar <- gen_tibble("../data/raw/data_input/Madagascar_full.bed", quiet = TRUE, valid_alleles = c("T", "G", "A", "C", "I"))
+  madagascar <- gen_tibble("../data/raw/data_input/Madagascar_full.bed", quiet = TRUE, valid_alleles = c("T", "G", "A", "C", "I"), allow_duplicates = TRUE)
 }
 
 cat("Number of individuals:", nrow(madagascar), "\n")
 cat("Number of loci:", count_loci(madagascar))
 ```
 
+```{r}
+if (file.exists("../data/raw/data_input/Madagascar_full_v2.bk")) {
+  file.remove("../data/raw/data_input/Madagascar_full_v2.gt")
+  file.remove("../data/raw/data_input/Madagascar_full_v2.bk")
+  file.remove("../data/raw/data_input/Madagascar_full_v2.rds")
+}
+```
 
 Our raw dataset has 713014 SNPs and 192 individuals
 
@@ -39,27 +46,31 @@ Our raw dataset has 713014 SNPs and 192 individuals
 
 ```{r}
 # Read in Pierron Malagasy metadata
-pop_table <- read.table("../data/raw/data_input/Madagascar_Borneo.poptable", sep = "\t", fill = TRUE)
+pop_table <- read.table("../data/raw/data_input/Madagascar_Borneo.poptable",
+  sep = "\t", fill = TRUE
+)
 colnames(pop_table) <- c("IID", "V2", "FID", "Population", "V5", "V6", "V7")
 
 # Add "RR" to pop_table$IID
 pop_table$IID <- paste0(pop_table$IID, "RR")
 
-# Remove "RR" from madagascar$id
-#madagascar$id <- gsub("RR", "", madagascar$id)
-
 # Find Malagasy entries
-pop_table_sub <- subset(pop_table, pop_table$IID %in% madagascar$id & pop_table$V5 == "Madagascar")
+pop_table_sub <-
+  subset(
+    pop_table,
+    pop_table$IID %in% madagascar$id & pop_table$V5 == "Madagascar"
+  )
 
 # match up the ID's with pop table metadata
 matching_m <- match(madagascar$id, pop_table_sub$IID)
 
-madagascar$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], madagascar$population)
+madagascar$population <-
+  ifelse(!is.na(matching_m),
+    pop_table_sub$Population[matching_m], madagascar$population
+  )
 ```
 
 # Remove the random "I" loci
-
-# Check and remove the random "I" loci
 
 ```{r}
 remove <- which(show_loci(madagascar)$allele_ref == "I")
@@ -67,98 +78,26 @@ madagascar <- madagascar %>% select_loci(-all_of(c(remove)))
 count_loci(madagascar)
 ```
 
-# Update build
+# Subset to autosomes only
 
-Add a section here with the biomart function/find a better way to do this?
-
-First, new bim
 ```{r}
-new_bim_no_NA <- read.table("../data/intermediate/Madagascar_full_HG38.bim", header = FALSE)
-colnames(new_bim_no_NA) <- c("chromosome", "snp_id", "genetic_dist", "physical_pos", "allele1", "allele2")
-
-nrow(new_bim_no_NA)
-new_bim_no_NA <- as_tibble(new_bim_no_NA)
-
-# subset to only autosomes
-new_bim_no_NA <- new_bim_no_NA %>% filter(chromosome %in% c(1:22))
-
-# order by chromosome
-new_bim_no_NA$chromosome <- as.integer(new_bim_no_NA$chromosome)
-new_bim_no_NA <- new_bim_no_NA %>% arrange(chromosome, physical_pos)
-
-# remove any entries where genetic_dist = 0
-new_bim_no_NA <- new_bim_no_NA %>% filter(genetic_dist != 0)
-
-# check for duplicated genetic_dist within each chromosome
-duplicates <- new_bim_no_NA %>%
-  group_by(chromosome) %>%
-  group_map(~ duplicated(.x$genetic_dist))
-
-dups <- unlist(duplicates)
-
-# remove duplicates
-new_bim_no_NA <- new_bim_no_NA %>% filter(!dups)
-
-find_order <- function(x) {
-  # store the first value in x$genetic_dist
-  j <- x$genetic_dist[1]
-  problematic <- c()
-
-  for (i in 2:length(x$genetic_dist)) {
-    if (x$genetic_dist[i] >= j) {
-      j <- x$genetic_dist[i]
-    } else {
-      problematic <- c(problematic, x$snp_id[i])
-    }
-  }
-  return(problematic)
-}
-
-# apply find_order to each chromosome
-grouped_bim <- new_bim_no_NA %>%
-  group_by(chromosome) %>%
-  group_map(~ find_order(.x))
-
-# remove problematic SNPs
-remove <- unlist(grouped_bim)
-new_bim_no_NA <- new_bim_no_NA %>% filter(!snp_id %in% remove)
-
-# check sorting again
-# new_bim_no_NA %>%
-#  group_by(chromosome) %>%
-#  group_map(~ is.unsorted(.x$genetic_dist)) #14 of 22 are still not sorted?
+madagascar <-
+  madagascar %>% select_loci_if(show_loci(genotypes)$chromosome %in% c(1:22))
+count_loci(madagascar)
 ```
 
+# Find and remove duplicates
 
 ```{r}
-# select only the loci with updated positions
-madagascar <- madagascar %>% select_loci_if(loci_names(genotypes) %in% new_bim_no_NA$snp_id)
-
-# find matching indices
-match_indices <- match(show_loci(madagascar)$name, new_bim_no_NA$snp_id)
-matching_rows <- !is.na(match_indices)
-
-# update position in gt
-show_loci(madagascar)$position[matching_rows] <- new_bim_no_NA$physical_pos[match_indices[matching_rows]]
-
-# update chromosome in gt
-show_loci(madagascar)$chromosome <- as.character(show_loci(madagascar)$chromosome)
-show_loci(madagascar)$chromosome[matching_rows] <- new_bim_no_NA$chromosome[match_indices[matching_rows]]
-
-# update chr_int in gt
-show_loci(madagascar)$chr_int <- as.integer(show_loci(madagascar)$chromosome)
+dups <- find_duplicated_loci(madagascar)
+madagascar <- madagascar %>% select_loci(-all_of(dups))
 count_loci(madagascar)
-
-# update genetic distance in gt
-show_loci(madagascar)$genetic_dist[matching_rows] <- new_bim_no_NA$genetic_dist[match_indices[matching_rows]]
 
 # remove entries with genetic distance == 0
 no_dist <- which(show_loci(madagascar)$genetic_dist == 0)
-madagascar <- madagascar %>% select_loci(-no_dist)
-
-testthat::expect_false(is_loci_table_ordered(madagascar, error_on_false = FALSE, ignore_genetic_dist = FALSE))
+madagascar <- madagascar %>% select_loci(-all_of(no_dist))
+count_loci(madagascar)
 ```
-
 
 # Malagasy Pierron data
 
@@ -166,7 +105,11 @@ testthat::expect_false(is_loci_table_ordered(madagascar, error_on_false = FALSE,
 if (file.exists("../data/raw/data_input/Pierron_Malagasy.gt")) {
   madagascar_p <- gt_load("../data/raw/data_input/Pierron_Malagasy.gt")
 } else {
-  madagascar_p <- gen_tibble("../data/raw/data_input/Pierron_Malagasy.bed", quiet = TRUE)
+  madagascar_p <-
+    gen_tibble("../data/raw/data_input/Pierron_Malagasy.bed",
+      quiet = TRUE,
+      allow_duplicates = TRUE
+    )
 }
 
 cat("Number of individuals:", nrow(madagascar_p), "\n")
@@ -176,13 +119,34 @@ cat("Number of loci:", count_loci(madagascar_p))
 # Append population info
 
 ```{r}
-pop_table <- read.table("../data/raw/data_input/Madagascar_Borneo.poptable", sep = "\t", fill = TRUE)
+pop_table <- read.table("../data/raw/data_input/Madagascar_Borneo.poptable",
+  sep = "\t", fill = TRUE
+)
 colnames(pop_table) <- c("IID", "V2", "FID", "Population", "V5", "V6", "V7")
 
-pop_table_sub <- subset(pop_table, pop_table$IID %in% madagascar_p$id & pop_table$V5 == "Madagascar")
+pop_table_sub <-
+  subset(
+    pop_table,
+    pop_table$IID %in% madagascar_p$id & pop_table$V5 == "Madagascar"
+  )
 
 matching_m <- match(madagascar_p$id, pop_table_sub$IID)
-madagascar_p$population <- ifelse(!is.na(matching_m), pop_table_sub$Population[matching_m], madagascar_p$population)
+madagascar_p$population <- ifelse(!is.na(matching_m),
+  pop_table_sub$Population[matching_m],
+  madagascar_p$population
+)
+```
+
+# Find and remove duplicates
+
+```{r}
+dups <- find_duplicated_loci(madagascar_p)
+madagascar_p <- madagascar_p %>% select_loci(-all_of(dups))
+
+# remove entries with no allele_ref & no allele_alt
+no_allele <- which(is.na(show_loci(madagascar_p)$allele_ref) & is.na(show_loci(madagascar_p)$allele_alt))
+madagascar_p <- madagascar_p %>% select_loci(-all_of(no_allele))
+count_loci(madagascar_p)
 ```
 
 ```{r}
@@ -206,18 +170,29 @@ if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_
 ```{r}
 malagasy_merged <- rbind(madagascar, madagascar_p,
   as_is = FALSE, flip_strand = TRUE,
-  quiet = FALSE, backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge"
+  use_position = FALSE, quiet = FALSE,
+  backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge"
 )
+```
+
+```{r}
+if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_v2.bk")) {
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_v2.bk")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_v2.rds")
+}
 ```
 
 # Sort the order
 ```{r}
-testthat::expect_false(is_loci_table_ordered(malagasy_merged, error_on_false = FALSE))
 # reorder the loci
-malagasy_merged <- gt_order_loci(malagasy_merged, use_current_table = FALSE, ignore_genetic_dist = FALSE)
+malagasy_merged <- gt_order_loci(malagasy_merged,
+  use_current_table = FALSE,
+  ignore_genetic_dist = FALSE
+)
 ```
 
-# Filter the merged dataset
+
+# Quality control on the merged dataset
 
 ```{r}
 malagasy_merged <- malagasy_merged %>% group_by(population)
@@ -225,28 +200,37 @@ loci_report_m <- qc_report_loci(malagasy_merged)
 malagasy_merged <- malagasy_merged %>% ungroup()
 ```
 
-# Loci
+# Filter loci
 
 ```{r}
 to_keep <- which(loci_report_m$hwe_p > 0.01)
 malagasy_merged <- malagasy_merged %>% select_loci(all_of(to_keep))
 count_loci(malagasy_merged)
-malagasy_merged <- malagasy_merged %>% select_loci_if(loci_missingness(genotypes) < 0.01)
+malagasy_merged <-
+  malagasy_merged %>% select_loci_if(loci_missingness(genotypes) < 0.01)
 count_loci(malagasy_merged)
-malagasy_merged <- malagasy_merged %>% select_loci_if(loci_maf(genotypes) > 0.025)
-count_loci(malagasy_merged)
-malagasy_merged <- malagasy_merged %>% select_loci_if(show_loci(genotypes)$chromosome %in% c(1:22))
+malagasy_merged <-
+  malagasy_merged %>% select_loci_if(loci_maf(genotypes) > 0.025)
 count_loci(malagasy_merged)
 ```
 
-# Indiv
+# Filter individuals
 
 ```{r}
 malagasy_merged <- malagasy_merged %>% group_by(population)
-individual_report_m <- qc_report_indiv(malagasy_merged, kings_threshold = 0.0884)
+individual_report_m <-
+  qc_report_indiv(malagasy_merged, kings_threshold = 0.0884)
 malagasy_merged <- malagasy_merged %>% ungroup()
-malagasy_merged <- malagasy_merged %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
-malagasy_merged <- malagasy_merged %>% filter(indiv_missingness(genotypes) < 0.1)
+malagasy_merged <-
+  malagasy_merged %>%
+  filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
+malagasy_merged <-
+  malagasy_merged %>% filter(indiv_missingness(genotypes) < 0.1)
+```
+
+# Loci and sample count
+
+```{r}
 nrow(malagasy_merged)
 count_loci(malagasy_merged)
 ```
@@ -260,8 +244,13 @@ if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_
 ```
 
 ```{r}
-gt_save(malagasy_merged, file_name = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean")
-malagasy_merged <- gt_update_backingfile(malagasy_merged, backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean")
+gt_save(malagasy_merged,
+  file_name = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean"
+)
+malagasy_merged <-
+  gt_update_backingfile(malagasy_merged,
+    backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean"
+  )
 ```
 
 # Impute
@@ -273,7 +262,10 @@ malagasy_merged <- gt_impute_simple(malagasy_merged, method = "mean")
 # LD clumping
 
 ```{r}
-to_keep_LD <- loci_ld_clump(malagasy_merged, thr_r2 = 0.2, size = 100, return_id = TRUE, use_positions = TRUE)
+to_keep_LD <- loci_ld_clump(malagasy_merged,
+  thr_r2 = 0.2, size = 100,
+  return_id = TRUE, use_positions = TRUE
+)
 
 malagasy_merged_ld <- malagasy_merged %>% select_loci(all_of(to_keep_LD))
 ```
@@ -294,21 +286,37 @@ if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_
 ```
 
 ```{r}
-gt_save(malagasy_merged_ld, file_name = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld")
-malagasy_merged_ld <- gt_update_backingfile(malagasy_merged_ld, backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld")
+gt_save(malagasy_merged_ld,
+  file_name = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld"
+)
+malagasy_merged_ld <-
+  gt_update_backingfile(malagasy_merged_ld,
+    backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld"
+  )
 ```
 
-
-# Borneo
+# Load Borneo data
 
 ```{r}
 if (file.exists("../data/raw/data_input/Borneo_raw_data.gt")) {
   borneo <- gt_load("../data/raw/data_input/Borneo_raw_data.gt")
 } else {
-  borneo <- gen_tibble("../data/raw/data_input/Borneo_raw_data.bed", valid_alleles = c("A", "T", "C", "G", "I", "N"), quiet = TRUE)
+  borneo <-
+    gen_tibble("../data/raw/data_input/Borneo_raw_data.bed",
+      valid_alleles = c("A", "T", "C", "G", "I", "N"),
+      quiet = TRUE,
+      allow_duplicates = TRUE
+    )
 }
 
 borneo$population <- "Borneo"
+```
+
+# Find and remove duplicates
+
+```{r}
+dups <- find_duplicated_loci(borneo)
+borneo <- borneo %>% select_loci(-all_of(dups))
 ```
 
 ```{r}
@@ -319,14 +327,19 @@ if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_borneo
 }
 ```
 
+# Merge
+
 ```{r}
+malagasy_merged <-
+  gt_load("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean.gt")
 malagasy_borneo <- rbind(malagasy_merged, borneo,
   as_is = FALSE, flip_strand = TRUE,
-  quiet = FALSE, backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_borneo"
+  use_position = FALSE, quiet = FALSE,
+  backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_borneo"
 )
 ```
 
-# 1000 G
+# Load 1000 Genomes data 
 
 Cutting down to populations of interest
 
@@ -334,17 +347,26 @@ Cutting down to populations of interest
 if (file.exists("../data/raw/data_input/1000_Genomes_b37_clean.gt")) {
   g1000 <- gt_load("../data/raw/data_input/1000_Genomes_b37_clean.gt")
 } else {
-  g1000 <- gen_tibble("../data/raw/data_input/1000_Genomes_b37_clean.bed", quiet = TRUE)
+  g1000 <-
+    gen_tibble("../data/raw/data_input/1000_Genomes_b37_clean.bed",
+      quiet = TRUE,
+      allow_duplicates = TRUE
+    )
 }
 
 # append population info
-pop_table <- read.table("../data/raw/data_input/Madagascar_Borneo.poptable", sep = "\t", fill = TRUE)
+pop_table <- read.table("../data/raw/data_input/Madagascar_Borneo.poptable",
+  sep = "\t", fill = TRUE
+)
 colnames(pop_table) <- c("IID", "V2", "FID", "Population", "V5", "V6", "V7")
 
 pop_table_sub <- subset(pop_table, pop_table$IID %in% g1000$id)
 
 matching_m <- match(g1000$id, pop_table_sub$IID)
-g1000$population <- ifelse(!is.na(matching_m), pop_table_sub$V2[matching_m], g1000$population)
+g1000$population <- ifelse(!is.na(matching_m),
+  pop_table_sub$V2[matching_m],
+  g1000$population
+)
 
 pop <- c("KHV", "BEB", "YRI", "PJL", "GWD", "MSL", "ESN", "LWK", "CHS")
 #- Kinh in Ho Chi Minh City, Vietnam
@@ -363,6 +385,15 @@ count_loci(g1000)
 nrow(g1000)
 ```
 
+# Find and remove duplicates
+
+```{r}
+dups <- find_duplicated_loci(g1000)
+g1000 <- g1000 %>% select_loci(-all_of(dups))
+```
+
+# Merge
+
 ```{r}
 if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000.gt")) {
   file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000.gt")
@@ -372,17 +403,22 @@ if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000.g
 
 mad_bor_g1000 <- rbind(malagasy_borneo, g1000,
   as_is = FALSE, flip_strand = TRUE,
-  quiet = FALSE, backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000"
+  use_position = FALSE, quiet = FALSE,
+  backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000"
 )
 ```
 
-# Sumba
+# Load Sumba data
 
 ```{r}
 if (file.exists("../data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.gt")) {
   sumba <- gt_load("../data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.gt")
 } else {
-  sumba <- gen_tibble("../data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.bed", quiet = TRUE)
+  sumba <-
+    gen_tibble("../data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.bed",
+      quiet = TRUE,
+      allow_duplicates = TRUE
+    )
 }
 
 sumba$population <- "Sumba"
@@ -391,30 +427,42 @@ timor <- read.table("../data/raw/data_input/timor")
 timor$population <- "Timor"
 
 matching_m <- match(sumba$id, timor$V2)
-sumba$population <- ifelse(!is.na(matching_m), timor$population[matching_m], sumba$population)
+sumba$population <- ifelse(!is.na(matching_m),
+  timor$population[matching_m],
+  sumba$population
+)
 
 count_loci(sumba)
 nrow(sumba)
 
 set.seed(1)
 
-subsample <- function(x){
-  
-  if(nrow(x)<=30){
+subsample <- function(x) {
+  if (nrow(x) <= 30) {
     return(x)
   } else {
     sample_n(x, size = 30)
   }
 }
 
-sumba <- sumba %>%
+sumba_only <- sumba %>%
   group_by(population) %>%
   group_modify(~ subsample(.x)) %>%
   ungroup()
 
+sumba <- sumba %>% filter(id %in% sumba_only$id)
+
 nrow(sumba)
 ```
 
+# Find and remove duplicates
+
+```{r}
+dups <- find_duplicated_loci(sumba)
+sumba <- sumba %>% select_loci(-all_of(dups))
+```
+
+# Merge
 
 ```{r}
 if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum.gt")) {
@@ -425,88 +473,207 @@ if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_s
 
 mad_bor_g1000_sum <- rbind(mad_bor_g1000, sumba,
   as_is = FALSE, flip_strand = TRUE,
-  quiet = FALSE, backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum"
+  use_position = FALSE, quiet = FALSE,
+  backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum"
 )
 ```
 
-
-# Filter the merged dataset
+# Load NEO data
 
 ```{r}
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
-loci_report_m <- qc_report_loci(mad_bor_g1000_sum)
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% ungroup()
+if (file.exists("../data/intermediate/rbind_data/NEO_full.gt")) {
+  NEO_full <- gt_load("../data/intermediate/rbind_data/NEO_full.gt")
+} else {
+  NEO_full <-
+    gen_tibble("../data/raw/data_input/NEO_full.bed",
+      quiet = TRUE,
+      allow_duplicates = TRUE
+    )
+}
+```
+
+# Find and remove duplicates
+
+```{r}
+dups <- find_duplicated_loci(NEO_full)
+NEO_full <- NEO_full %>% select_loci(-all_of(dups))
+```
+
+# Merge 
+
+```{r}
+if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.gt")) {
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.gt")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.bk")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.rds")
+}
+
+mad_bor_g1000_sum_neo <- rbind(mad_bor_g1000_sum, NEO_full,
+  as_is = FALSE,
+  flip_strand = TRUE,
+  quiet = FALSE,
+  use_position = TRUE,
+  backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo"
+)
+```
+
+# Quality control on the merged dataset
+
+```{r}
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% group_by(population)
+loci_report_m <- qc_report_loci(mad_bor_g1000_sum_neo)
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% ungroup()
 ```
 
 # Loci
 
 ```{r}
 to_keep <- which(loci_report_m$hwe_p > 0.01)
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% select_loci(all_of(to_keep))
-count_loci(mad_bor_g1000_sum)
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% select_loci_if(loci_missingness(genotypes) < 0.01)
-count_loci(mad_bor_g1000_sum)
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% select_loci_if(loci_maf(genotypes) > 0.025)
-count_loci(mad_bor_g1000_sum)
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% select_loci_if(show_loci(genotypes)$chromosome %in% c(1:22))
-count_loci(mad_bor_g1000_sum)
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% select_loci(all_of(to_keep))
+count_loci(mad_bor_g1000_sum_neo)
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% select_loci_if(loci_missingness(genotypes) < 0.01)
+count_loci(mad_bor_g1000_sum_neo)
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% select_loci_if(loci_maf(genotypes) > 0.025)
+count_loci(mad_bor_g1000_sum_neo)
 ```
 
-# Indiv
+# Filter indiv
 
 ```{r}
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
-individual_report_m <- qc_report_indiv(mad_bor_g1000_sum, kings_threshold = 0.0884)
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% ungroup()
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% filter(indiv_missingness(genotypes) < 0.1)
-nrow(mad_bor_g1000_sum)
-count_loci(mad_bor_g1000_sum)
-```
+# temporarily remove all populations with only one individual
+pop_tbl <- table(mad_bor_g1000_sum_neo$population)
+to_remove <- which(pop_tbl == 1)
+to_remove_pops <- names(to_remove) # this removes a lot of DRC samples and some Mozambique samples (relevant)
 
-```{r}
-if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_no_ld.gt")) {
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_no_ld.gt")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_no_ld.bk")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_no_ld.rds")
+removed_pops <- mad_bor_g1000_sum_neo %>%
+  filter(population %in% to_remove_pops)
+
+mad_bor_g1000_sum_neo <-
+  mad_bor_g1000_sum_neo %>% filter(!population %in% to_remove_pops)
+
+
+# filter indivs
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% group_by(population)
+individual_report_m <-
+  qc_report_indiv(mad_bor_g1000_sum_neo, kings_threshold = 0.0884)
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% ungroup()
+mad_bor_g1000_sum_neo <-
+  mad_bor_g1000_sum_neo %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
+
+if(file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_rebind.bk")){
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_rebind.bk")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_rebind.gt")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_rebind.rds")
 }
-gt_save(mad_bor_g1000_sum, "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_no_ld")
-mad_bor_g1000_sum <- gt_update_backingfile(mad_bor_g1000_sum, backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_no_ld")
-```
 
+# bind them together again
+mad_bor_g1000_sum_neo <- rbind(mad_bor_g1000_sum_neo, removed_pops, backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_rebind")
 
-# Impute
+NEO_full <-
+  NEO_full %>% filter(indiv_missingness(genotypes) < 0.1)
 
-```{r}
-mad_bor_g1000_sum <- gt_impute_simple(mad_bor_g1000_sum, method = "mean")
-```
+# remove all populations with only one individual
+# pop_tbl <- table(mad_bor_g1000_sum_neo$population)
+# to_remove <- which(pop_tbl == 1)
+# to_remove_pops <- names(to_remove) # this removes a lot of DRC samples and some Mozambique samples (relevant)
+# mad_bor_g1000_sum_neo <-
+#   mad_bor_g1000_sum_neo %>% filter(!population %in% to_remove_pops)
 
-# LD clumping
-
-```{r}
-to_keep_LD <- loci_ld_clump(mad_bor_g1000_sum, thr_r2 = 0.2, size = 100, return_id = TRUE, use_positions = TRUE)
-
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% select_loci(all_of(to_keep_LD))
+# run filtering
+# mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% group_by(population)
+# individual_report_m <-
+#   qc_report_indiv(mad_bor_g1000_sum_neo, kings_threshold = 0.0884)
+# mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% ungroup()
+# mad_bor_g1000_sum_neo <-
+#   mad_bor_g1000_sum_neo %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
+mad_bor_g1000_sum_neo <-
+  mad_bor_g1000_sum_neo %>% filter(indiv_missingness(genotypes) < 0.1)
 ```
 
 # Loci and sample count
 
 ```{r}
-nrow(mad_bor_g1000_sum)
-count_loci(mad_bor_g1000_sum)
+nrow(mad_bor_g1000_sum_neo)
+count_loci(mad_bor_g1000_sum_neo)
 ```
 
-
 ```{r}
-if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_clean.gt")) {
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_clean.gt")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_clean.bk")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_clean.rds")
+if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_no_ld.gt")) {
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_no_ld.gt")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_no_ld.bk")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_no_ld.rds")
 }
-gt_save(mad_bor_g1000_sum, "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_clean")
-mad_bor_g1000_sum <- gt_update_backingfile(mad_bor_g1000_sum, backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_clean")
+gt_save(
+  mad_bor_g1000_sum_neo,
+  "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_no_ld"
+)
+mad_bor_g1000_sum_neo <-
+  gt_update_backingfile(mad_bor_g1000_sum_neo,
+    backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_no_ld"
+  )
+```
+
+# Impute
+
+```{r}
+mad_bor_g1000_sum_neo <- gt_impute_simple(mad_bor_g1000_sum_neo,
+  method = "mean"
+)
+```
+
+# LD clumping
+
+```{r}
+to_keep_LD <- loci_ld_clump(mad_bor_g1000_sum_neo,
+  thr_r2 = 0.2, size = 100,
+  return_id = TRUE, use_positions = TRUE
+)
+
+mad_bor_g1000_sum_neo_ld <- mad_bor_g1000_sum_neo %>% select_loci(all_of(to_keep_LD))
+```
+
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum_neo)
+count_loci(mad_bor_g1000_sum_neo)
 ```
 
 
 ```{r}
+if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld.gt")) {
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld.gt")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld.bk")
+  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld.rds")
+}
+gt_save(
+  mad_bor_g1000_sum_neo,
+  "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld"
+)
+mad_bor_g1000_sum_neo <-
+  gt_update_backingfile(mad_bor_g1000_sum_neo,
+    backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld"
+  )
 ```
+
+# Check that we have genetic distances
+
+```{r}
+any(is.na(show_loci(mad_bor_g1000_sum_neo)$genetic_dist))
+```
+
+***
+
+## Recording R environment
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s02_qc_merge_genetic_dist_malagasy.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+
+```
+
