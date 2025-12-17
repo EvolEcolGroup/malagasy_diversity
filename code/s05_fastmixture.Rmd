@@ -49,10 +49,10 @@ if (file.exists("../data/intermediate/fastmixture/fastmixture_m.RData")) {
     readRDS("~/Dropbox/gitdata/malagasy_diversity/data/intermediate/fastmixture/fastmixture_m.RData")
 } else {
   tictoc::tic()
-  k <- c(3:4)
+  k <- c(2:10)
   qmats <- gt_fastmixture(mad_bor_g1000_sum,
     k,
-    n_runs = 1,
+    n_runs = 3,
     threads = 1,
     batches = 16,
     seed = 1,

@@ -459,7 +459,7 @@ second_lines <- sapply(data_lines, function(x) if (length(x) > 0) x[2] else NA)
 # split second lines by "\"
 split_data2 <- lapply(second_lines, function(x) strsplit(x, "\t")[[1]])
 # apply colnames
-colnames(result) <- split_data2[[1]]
+colnames(result) <- split_data2[[2]]
 # remove first two columns
 result <- result[, -c(1, 2)]
 
@@ -693,7 +693,6 @@ plot_curves <- function(refA, refB, files, result) {
     xv <- as.vector(d1$Dist) ## distance between SNP bins (cM) - genetic distance
 
     prdv <- M * exp(-1 * n * xv / 100) + K # E[Y] = M times e^-nd + K
-    browser()
 
     this_plot <- ggplot(d1, aes(x = Dist, y = weightedLD)) +
       geom_point(color = "blue", shape = 4) +
@@ -717,19 +716,6 @@ refB <- "Mozambique_Chopi"
 res <- plot_curves(refA, refB, files, result)
 
 for (p in res) print(p)
-```
-
-# Admixture Proportions
-
-2a=1 2 a  a0=F2A; C2 Loh et al 2013
-
-F2(A;C) = b2F2(A;B)
-
-https://www.jstor.org/stable/10.13110/humanbiology.89.1.02?seq=21 
-
-```{r}
-# Step 1: Estimate F2(A; C)
-
 ```
 
 

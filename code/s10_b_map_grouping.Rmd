@@ -20,7 +20,7 @@ library(tidypopgen)
 ```
 
 
-# Plot metadata
+# Plot main metadata table
 
 ```{r}
 dat2 <- as.data.frame(read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx", sheet = 2))
@@ -59,10 +59,16 @@ p4 <- ggplot() +
   geom_sf(data = dat2, aes(color = Country), size = 2, alpha = 0.7) +
   theme(panel.background = element_rect(fill = "white", color = NA))
 p4
-grid.arrange(p2, p3, p4, ncol = 1)
+#grid.arrange(p2, p3, p4, ncol = 1)
 
 # 
 ```
+
+The metadata plotted above contain 111 populations - the data in the 'Only African' dataset in Fortez-Lima et al 2023.
+
+I suspect we have some data data from the 'Full-genotyped' dataset as this contains '81 populations with sample sizes lower than 10 individuals'
+
+# Read in the full genetic dataset
 
 ```{r}
 NEO_full <- gt_load("../data/intermediate/rbind_data/NEO_full.gt")
@@ -70,15 +76,19 @@ length(unique(NEO_full$population))
 length(unique(dat2$`Population label`))
 ```
 
+Our full dataset contains 164 populations, the main metadata only contain 111.
+
+# Additional metadata sheets
+
+Now we read in all sheets in the excel supplementary data to try and get coordinates for all populations in our full dataset.
+
 ```{r}
 dat1 <- as.data.frame(read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx", sheet = 1))
 colnames(dat1) <- dat1[1, ]
 dat1 <- dat1[-1, ]
 
 NEO_full$dataset <- dat1[match(NEO_full$id, dat1$`ID Lab`),"EGA Dataset"]
-```
 
-```{r}
 dat2 <- as.data.frame(read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx", sheet = 2))
 colnames(dat2) <- dat2[1, ]
 dat2 <- dat2[-1, ]
@@ -116,6 +126,8 @@ dat10 <- dat10[, c("Populations", "Latitude", "Longitude")]
 colnames(dat10)[which(colnames(dat10) == "Populations")] <- "Population"
 ```
 
+# Merge metadata
+
 ```{r}
 all_pops <- rbind(dat2, dat3, dat4, dat10)
 dups <- duplicated(all_pops)
@@ -123,18 +135,23 @@ dups <- duplicated(all_pops)
 all_pops <- all_pops[!dups, ]
 ```
 
-Unfortunately, coordinates are missing for a lot of populations in our full dataset. In some cases the mismatch is a naming issue
+Coordinates are available for 136 populations after merging the metadata.
 
-eg 
-
-Namibia_DamaraKSP in dat$`Population label` is probably "Namibia_Damara" in NEO_full
-
-There are coords for Sotho, but in NEO_full there are southern and northern Sotho
-
-SouthAfrica_Coloured in NEO_full is probably SouthAfrica_ColouredAskham in dat$`Population label` - both have 12 individuals
+However, setdiff shows 106 of the populations in NEO_full are not in the metadata!
 
 ```{r}
+setdiff(NEO_full$population, all_pops$Population)
+```
 
+In some cases the mismatch is a naming issue, eg
+
+ - Namibia_DamaraKSP in dat$`Population label` is probably "Namibia_Damara" in NEO_full)
+ - There are coords for Sotho, but in NEO_full there are southern and northern Sotho...
+ - SouthAfrica_Coloured in NEO_full is probably SouthAfrica_ColouredAskham in dat$`Population label` - both have 12 individuals
+
+# Fix some naming issues
+
+```{r}
 all_pops$Population <- ifelse(all_pops$Population == "Tanzania_TanzaniaMixed",
   "Tanzania_Mixed",
   all_pops$Population
@@ -146,9 +163,10 @@ NEO_full$population <- ifelse(NEO_full$population == "DRC_Bangubangu",
   NEO_full$population
 )
 
-
 setdiff(NEO_full$population, all_pops$Population)
 ```
+
+# Plot populations with genetic data AND coordinates
 
 ```{r}
 # add coordinates to NEO_full based on matching population labels
@@ -175,7 +193,7 @@ ggplot() +
   theme_minimal()
 ```
 
-
+Given this, we can't use coordinates very easily to merge populations.
 
 
 

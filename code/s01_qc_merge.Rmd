@@ -20,6 +20,17 @@ res_dir <- "../results/s01_qc_merge/"
 
 This script merges our data with additional data from Madagascar, Borneo, Sumba, and 1000 Genomes Project, creating two datasets: one Malagasy only and another including Malagasy alongside all additional populations.
 
+## Build of each dataset
+
+Madagascar_full: GRC37 (hg19)
+1000_Genomes_b37_clean: GRC37 (hg19)
+NEO_full: GRC37 (hg19) - build noted in metadata
+Pierron_Malagasy: GRC37 (hg19) - verified using `bigsnpr::snp_modifyBuild()`
+Borneo_raw_data: GRC37 (hg19) - verified using `bigsnpr::snp_modifyBuild()`
+GSE76645_INDONESIA_SUMBA_TIMOR: GRC37 (hg19) - verified using `bigsnpr::snp_modifyBuild()`
+
+Note: `snp_modifyBuild` calls LiftOver from UCSC (downloaded at https://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/liftOver) to perform the build conversion. For datasets where build is not verified, this function is used to check chromosome, position, and rsID against data with known build.
+
 # Generate gen tibble
 
 ```{r}

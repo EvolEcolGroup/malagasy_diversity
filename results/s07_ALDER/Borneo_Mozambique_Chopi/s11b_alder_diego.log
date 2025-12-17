@@ -79,7 +79,7 @@ number of chromosomes (with data) used: 22
 
 Form of ALDER to run: 2-reference weighted LD
 
-==> Time to process data: 0.992572
+==> Time to process data: 0.580728
 
 -------------------------------------------------------------------------------
 
@@ -94,7 +94,7 @@ decay curves will be fit starting at d = 0.005 Morgans, as specified
 
 analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
 
-==> Time to run alder: 0.134088
+==> Time to run alder: 0.0896101
 
      0.050	 0.00325436	      1358440
      0.100	 0.00248239	      1237529
@@ -191,7 +191,7 @@ d>0.70     amp_tot:  0.00153602 +/- 0.00005917
 d>0.70     amp_exp:  0.00150904 +/- 0.00005801   z = 26.01 *
 d>0.70     amp_aff:  0.00005395 +/- 0.00000796
 
-==> Time to run fits: 0.14637
+==> Time to run fits: 0.101174
 
 -------------------------------------------------------------------------------
 
@@ -203,7 +203,7 @@ d>0.70     amp_aff:  0.00005395 +/- 0.00000796
 
 analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
 
-==> Time to run alder: 1.00724
+==> Time to run alder: 0.70973
 
 ---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
 d>0.30       decay:       20.31 +/- 0.72         z = 28.15 *
@@ -235,7 +235,7 @@ d>0.70     amp_tot:  0.00072289 +/- 0.00002835
 d>0.70     amp_exp:  0.00071014 +/- 0.00002782   z = 25.53 *
 d>0.70     amp_aff:  0.00002551 +/- 0.00000387
 
-==> Time to run fits: 0.128335
+==> Time to run fits: 0.0853269
 
 -------------------------------------------------------------------------------
 
@@ -243,7 +243,7 @@ d>0.70     amp_aff:  0.00002551 +/- 0.00000387
 
 analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
 
-==> Time to run alder: 0.998491
+==> Time to run alder: 0.756641
 
 ---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
 d>0.30       decay:       24.56 +/- 1.41         z = 17.45 *
@@ -275,7 +275,7 @@ d>0.70     amp_tot:  0.00016169 +/- 0.00000867
 d>0.70     amp_exp:  0.00015894 +/- 0.00000857   z = 18.55 *
 d>0.70     amp_aff:  0.00000550 +/- 0.00000083
 
-==> Time to run fits: 0.130905
+==> Time to run fits: 0.0863318
 
 -------------------------------------------------------------------------------
 
