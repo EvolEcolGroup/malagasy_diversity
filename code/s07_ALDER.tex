@@ -608,7 +608,7 @@ leave-one-chromosome-out jackknifing
 \CommentTok{\# split second lines by "\textbackslash{}"}
 \NormalTok{split\_data2 }\OtherTok{\textless{}{-}} \FunctionTok{lapply}\NormalTok{(second\_lines, }\ControlFlowTok{function}\NormalTok{(x) }\FunctionTok{strsplit}\NormalTok{(x, }\StringTok{"}\SpecialCharTok{\textbackslash{}t}\StringTok{"}\NormalTok{)[[}\DecValTok{1}\NormalTok{]])}
 \CommentTok{\# apply colnames}
-\FunctionTok{colnames}\NormalTok{(result) }\OtherTok{\textless{}{-}}\NormalTok{ split\_data2[[}\DecValTok{1}\NormalTok{]]}
+\FunctionTok{colnames}\NormalTok{(result) }\OtherTok{\textless{}{-}}\NormalTok{ split\_data2[[}\DecValTok{2}\NormalTok{]]}
 \CommentTok{\# remove first two columns}
 \NormalTok{result }\OtherTok{\textless{}{-}}\NormalTok{ result[, }\SpecialCharTok{{-}}\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{)]}
 
@@ -860,7 +860,6 @@ combination.
 \NormalTok{    xv }\OtherTok{\textless{}{-}} \FunctionTok{as.vector}\NormalTok{(d1}\SpecialCharTok{$}\NormalTok{Dist) }\DocumentationTok{\#\# distance between SNP bins (cM) {-} genetic distance}
 
 \NormalTok{    prdv }\OtherTok{\textless{}{-}}\NormalTok{ M }\SpecialCharTok{*} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{1} \SpecialCharTok{*}\NormalTok{ n }\SpecialCharTok{*}\NormalTok{ xv }\SpecialCharTok{/} \DecValTok{100}\NormalTok{) }\SpecialCharTok{+}\NormalTok{ K }\CommentTok{\# E[Y] = M times e\^{}{-}nd + K}
-    \FunctionTok{browser}\NormalTok{()}
 
 \NormalTok{    this\_plot }\OtherTok{\textless{}{-}} \FunctionTok{ggplot}\NormalTok{(d1, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ Dist, }\AttributeTok{y =}\NormalTok{ weightedLD)) }\SpecialCharTok{+}
       \FunctionTok{geom\_point}\NormalTok{(}\AttributeTok{color =} \StringTok{"blue"}\NormalTok{, }\AttributeTok{shape =} \DecValTok{4}\NormalTok{) }\SpecialCharTok{+}
@@ -882,156 +881,7 @@ combination.
 \NormalTok{refA }\OtherTok{\textless{}{-}} \StringTok{"Borneo"}
 \NormalTok{refB }\OtherTok{\textless{}{-}} \StringTok{"Mozambique\_Chopi"}
 \NormalTok{res }\OtherTok{\textless{}{-}} \FunctionTok{plot\_curves}\NormalTok{(refA, refB, files, result)}
-\end{Highlighting}
-\end{Shaded}
 
-\begin{verbatim}
-## Called from: plot_curves(refA, refB, files, result)
-## debug: this_plot <- ggplot(d1, aes(x = Dist, y = weightedLD)) + geom_point(color = "blue", 
-##     shape = 4) + geom_line(aes(y = prdv), color = "red", linewidth = 1) + 
-##     labs(x = "Genetic distance (cM)", y = "Weighted LD", title = paste("Weighted LD decay curve for", 
-##         result_sub[counter, ]$`test pop`)) + theme_minimal()
-## debug: plot_list[[counter]] <- this_plot
-## debug: counter <- counter + 1
-## debug: d1 <- read.table(i, header = FALSE)
-## debug: n <- result_sub[counter, ]$admixture_date
-## debug: M <- result_sub[counter, ]$amp_exp
-## debug: K <- result_sub[counter, ]$amp_aff
-## debug: d1 <- d1[-nrow(d1), ]
-## debug: colnames(d1) <- c("Dist", "weightedLD", "npairs")
-## debug: xv <- as.vector(d1$Dist)
-## debug: prdv <- M * exp(-1 * n * xv/100) + K
-## debug: browser()
-## debug: this_plot <- ggplot(d1, aes(x = Dist, y = weightedLD)) + geom_point(color = "blue", 
-##     shape = 4) + geom_line(aes(y = prdv), color = "red", linewidth = 1) + 
-##     labs(x = "Genetic distance (cM)", y = "Weighted LD", title = paste("Weighted LD decay curve for", 
-##         result_sub[counter, ]$`test pop`)) + theme_minimal()
-## debug: plot_list[[counter]] <- this_plot
-## debug: counter <- counter + 1
-## debug: d1 <- read.table(i, header = FALSE)
-## debug: n <- result_sub[counter, ]$admixture_date
-## debug: M <- result_sub[counter, ]$amp_exp
-## debug: K <- result_sub[counter, ]$amp_aff
-## debug: d1 <- d1[-nrow(d1), ]
-## debug: colnames(d1) <- c("Dist", "weightedLD", "npairs")
-## debug: xv <- as.vector(d1$Dist)
-## debug: prdv <- M * exp(-1 * n * xv/100) + K
-## debug: browser()
-## debug: this_plot <- ggplot(d1, aes(x = Dist, y = weightedLD)) + geom_point(color = "blue", 
-##     shape = 4) + geom_line(aes(y = prdv), color = "red", linewidth = 1) + 
-##     labs(x = "Genetic distance (cM)", y = "Weighted LD", title = paste("Weighted LD decay curve for", 
-##         result_sub[counter, ]$`test pop`)) + theme_minimal()
-## debug: plot_list[[counter]] <- this_plot
-## debug: counter <- counter + 1
-## debug: d1 <- read.table(i, header = FALSE)
-## debug: n <- result_sub[counter, ]$admixture_date
-## debug: M <- result_sub[counter, ]$amp_exp
-## debug: K <- result_sub[counter, ]$amp_aff
-## debug: d1 <- d1[-nrow(d1), ]
-## debug: colnames(d1) <- c("Dist", "weightedLD", "npairs")
-## debug: xv <- as.vector(d1$Dist)
-## debug: prdv <- M * exp(-1 * n * xv/100) + K
-## debug: browser()
-## debug: this_plot <- ggplot(d1, aes(x = Dist, y = weightedLD)) + geom_point(color = "blue", 
-##     shape = 4) + geom_line(aes(y = prdv), color = "red", linewidth = 1) + 
-##     labs(x = "Genetic distance (cM)", y = "Weighted LD", title = paste("Weighted LD decay curve for", 
-##         result_sub[counter, ]$`test pop`)) + theme_minimal()
-## debug: plot_list[[counter]] <- this_plot
-## debug: counter <- counter + 1
-## debug: d1 <- read.table(i, header = FALSE)
-## debug: n <- result_sub[counter, ]$admixture_date
-## debug: M <- result_sub[counter, ]$amp_exp
-## debug: K <- result_sub[counter, ]$amp_aff
-## debug: d1 <- d1[-nrow(d1), ]
-## debug: colnames(d1) <- c("Dist", "weightedLD", "npairs")
-## debug: xv <- as.vector(d1$Dist)
-## debug: prdv <- M * exp(-1 * n * xv/100) + K
-## debug: browser()
-## debug: this_plot <- ggplot(d1, aes(x = Dist, y = weightedLD)) + geom_point(color = "blue", 
-##     shape = 4) + geom_line(aes(y = prdv), color = "red", linewidth = 1) + 
-##     labs(x = "Genetic distance (cM)", y = "Weighted LD", title = paste("Weighted LD decay curve for", 
-##         result_sub[counter, ]$`test pop`)) + theme_minimal()
-## debug: plot_list[[counter]] <- this_plot
-## debug: counter <- counter + 1
-## debug: d1 <- read.table(i, header = FALSE)
-## debug: n <- result_sub[counter, ]$admixture_date
-## debug: M <- result_sub[counter, ]$amp_exp
-## debug: K <- result_sub[counter, ]$amp_aff
-## debug: d1 <- d1[-nrow(d1), ]
-## debug: colnames(d1) <- c("Dist", "weightedLD", "npairs")
-## debug: xv <- as.vector(d1$Dist)
-## debug: prdv <- M * exp(-1 * n * xv/100) + K
-## debug: browser()
-## debug: this_plot <- ggplot(d1, aes(x = Dist, y = weightedLD)) + geom_point(color = "blue", 
-##     shape = 4) + geom_line(aes(y = prdv), color = "red", linewidth = 1) + 
-##     labs(x = "Genetic distance (cM)", y = "Weighted LD", title = paste("Weighted LD decay curve for", 
-##         result_sub[counter, ]$`test pop`)) + theme_minimal()
-## debug: plot_list[[counter]] <- this_plot
-## debug: counter <- counter + 1
-## debug: d1 <- read.table(i, header = FALSE)
-## debug: n <- result_sub[counter, ]$admixture_date
-## debug: M <- result_sub[counter, ]$amp_exp
-## debug: K <- result_sub[counter, ]$amp_aff
-## debug: d1 <- d1[-nrow(d1), ]
-## debug: colnames(d1) <- c("Dist", "weightedLD", "npairs")
-## debug: xv <- as.vector(d1$Dist)
-## debug: prdv <- M * exp(-1 * n * xv/100) + K
-## debug: browser()
-## debug: this_plot <- ggplot(d1, aes(x = Dist, y = weightedLD)) + geom_point(color = "blue", 
-##     shape = 4) + geom_line(aes(y = prdv), color = "red", linewidth = 1) + 
-##     labs(x = "Genetic distance (cM)", y = "Weighted LD", title = paste("Weighted LD decay curve for", 
-##         result_sub[counter, ]$`test pop`)) + theme_minimal()
-## debug: plot_list[[counter]] <- this_plot
-## debug: counter <- counter + 1
-## debug: d1 <- read.table(i, header = FALSE)
-## debug: n <- result_sub[counter, ]$admixture_date
-## debug: M <- result_sub[counter, ]$amp_exp
-## debug: K <- result_sub[counter, ]$amp_aff
-## debug: d1 <- d1[-nrow(d1), ]
-## debug: colnames(d1) <- c("Dist", "weightedLD", "npairs")
-## debug: xv <- as.vector(d1$Dist)
-## debug: prdv <- M * exp(-1 * n * xv/100) + K
-## debug: browser()
-## debug: this_plot <- ggplot(d1, aes(x = Dist, y = weightedLD)) + geom_point(color = "blue", 
-##     shape = 4) + geom_line(aes(y = prdv), color = "red", linewidth = 1) + 
-##     labs(x = "Genetic distance (cM)", y = "Weighted LD", title = paste("Weighted LD decay curve for", 
-##         result_sub[counter, ]$`test pop`)) + theme_minimal()
-## debug: plot_list[[counter]] <- this_plot
-## debug: counter <- counter + 1
-## debug: d1 <- read.table(i, header = FALSE)
-## debug: n <- result_sub[counter, ]$admixture_date
-## debug: M <- result_sub[counter, ]$amp_exp
-## debug: K <- result_sub[counter, ]$amp_aff
-## debug: d1 <- d1[-nrow(d1), ]
-## debug: colnames(d1) <- c("Dist", "weightedLD", "npairs")
-## debug: xv <- as.vector(d1$Dist)
-## debug: prdv <- M * exp(-1 * n * xv/100) + K
-## debug: browser()
-## debug: this_plot <- ggplot(d1, aes(x = Dist, y = weightedLD)) + geom_point(color = "blue", 
-##     shape = 4) + geom_line(aes(y = prdv), color = "red", linewidth = 1) + 
-##     labs(x = "Genetic distance (cM)", y = "Weighted LD", title = paste("Weighted LD decay curve for", 
-##         result_sub[counter, ]$`test pop`)) + theme_minimal()
-## debug: plot_list[[counter]] <- this_plot
-## debug: counter <- counter + 1
-## debug: d1 <- read.table(i, header = FALSE)
-## debug: n <- result_sub[counter, ]$admixture_date
-## debug: M <- result_sub[counter, ]$amp_exp
-## debug: K <- result_sub[counter, ]$amp_aff
-## debug: d1 <- d1[-nrow(d1), ]
-## debug: colnames(d1) <- c("Dist", "weightedLD", "npairs")
-## debug: xv <- as.vector(d1$Dist)
-## debug: prdv <- M * exp(-1 * n * xv/100) + K
-## debug: browser()
-## debug: this_plot <- ggplot(d1, aes(x = Dist, y = weightedLD)) + geom_point(color = "blue", 
-##     shape = 4) + geom_line(aes(y = prdv), color = "red", linewidth = 1) + 
-##     labs(x = "Genetic distance (cM)", y = "Weighted LD", title = paste("Weighted LD decay curve for", 
-##         result_sub[counter, ]$`test pop`)) + theme_minimal()
-## debug: plot_list[[counter]] <- this_plot
-## debug: counter <- counter + 1
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \ControlFlowTok{for}\NormalTok{ (p }\ControlFlowTok{in}\NormalTok{ res) }\FunctionTok{print}\NormalTok{(p)}
 \end{Highlighting}
 \end{Shaded}
@@ -1046,20 +896,6 @@ combination.
 \pandocbounded{\includegraphics[keepaspectratio]{s07_ALDER_files/figure-latex/plot_curves-8.pdf}}
 \pandocbounded{\includegraphics[keepaspectratio]{s07_ALDER_files/figure-latex/plot_curves-9.pdf}}
 \pandocbounded{\includegraphics[keepaspectratio]{s07_ALDER_files/figure-latex/plot_curves-10.pdf}}
-
-\section{Admixture Proportions}\label{admixture-proportions}
-
-2a=1 2 a  a0=F2A; C2 Loh et al 2013
-
-F2(A;C) = b2F2(A;B)
-
-\url{https://www.jstor.org/stable/10.13110/humanbiology.89.1.02?seq=21}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# Step 1: Estimate F2(A; C)}
-\end{Highlighting}
-\end{Shaded}
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
