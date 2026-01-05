@@ -676,6 +676,8 @@ f4_merged_data <- rbind(f4_merged_data, GBR,
   quiet = FALSE, use_position = FALSE,
   backingfile = tempfile()
 )
+
+nrow(f4_merged_data)
 ```
 
 ```{r}

@@ -244,9 +244,6 @@ if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_
 ```
 
 ```{r}
-gt_save(malagasy_merged,
-  file_name = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean"
-)
 malagasy_merged <-
   gt_update_backingfile(malagasy_merged,
     backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean"
@@ -286,9 +283,6 @@ if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_
 ```
 
 ```{r}
-gt_save(malagasy_merged_ld,
-  file_name = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld"
-)
 malagasy_merged_ld <-
   gt_update_backingfile(malagasy_merged_ld,
     backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld"
@@ -603,10 +597,6 @@ if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_s
   file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_no_ld.bk")
   file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_no_ld.rds")
 }
-gt_save(
-  mad_bor_g1000_sum_neo,
-  "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_no_ld"
-)
 mad_bor_g1000_sum_neo <-
   gt_update_backingfile(mad_bor_g1000_sum_neo,
     backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_no_ld"
@@ -646,10 +636,6 @@ if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_s
   file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld.bk")
   file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld.rds")
 }
-gt_save(
-  mad_bor_g1000_sum_neo,
-  "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld"
-)
 mad_bor_g1000_sum_neo <-
   gt_update_backingfile(mad_bor_g1000_sum_neo,
     backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld"

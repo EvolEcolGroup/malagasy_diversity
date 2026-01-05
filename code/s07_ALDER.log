@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.12.12)  18 DEC 2025 09:37
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.12.12)  5 JAN 2026 12:14
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -419,45 +419,71 @@ LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
 [1
 
 {/home/EJC199/.TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/home/EJC199/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}]
-LaTeX Font Info:    Trying to load font information for TS1+lmtt on input line 238.
+Overfull \hbox (265.24284pt too wide) in paragraph at lines 191--191
+[]\T1/lmtt/m/n/10 ## gen_tibble saved to /home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_no_ld_cdx.gt[] 
+ []
+
+
+Overfull \hbox (244.2429pt too wide) in paragraph at lines 195--195
+[]\T1/lmtt/m/n/10 ## using FBM RDS: /home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_no_ld_cdx.rds[] 
+ []
+
+
+Overfull \hbox (280.9928pt too wide) in paragraph at lines 199--199
+[]\T1/lmtt/m/n/10 ## with FBM backing file: /home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_no_ld_cdx.bk[] 
+ []
+
+
+Overfull \hbox (217.99298pt too wide) in paragraph at lines 211--211
+[]\T1/lmtt/m/n/10 ## gt_load('/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_no_ld_cdx.gt')[] 
+ []
+
+[2]
+LaTeX Font Info:    Trying to load font information for TS1+lmtt on input line 322.
 (/home/EJC199/.TinyTeX/texmf-dist/tex/latex/lm/ts1lmtt.fd
 File: ts1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) [2{/home/EJC199/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}] [3] [4]
+) [3] [4{/home/EJC199/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}] [5]
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 411.
+(Font)              <10> on input line 495.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 411.
+(Font)              <7> on input line 495.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 411.
-[5]
-Underfull \vbox (badness 10000) detected at line 514
+(Font)              <5> on input line 495.
+[6]
+Underfull \vbox (badness 10000) detected at line 601
  []
 
 
-Underfull \vbox (badness 10000) detected at line 514
+Underfull \vbox (badness 10000) detected at line 601
  []
 
-[6] [7] [8]
-Underfull \vbox (badness 10000) detected at line 682
+[7] [8] [9]
+Underfull \vbox (badness 10000) detected at line 774
  []
 
 
-Underfull \vbox (badness 10000) detected at line 682
+Underfull \vbox (badness 10000) detected at line 774
  []
 
-[9] [10]
-<s07_ALDER_files/figure-latex/plot_afr_pops-1.pdf, id=75, 469.755pt x 325.215pt>
+[10] [11]
+<s07_ALDER_files/figure-latex/plot_afr_pops-1.pdf, id=82, 469.755pt x 325.215pt>
 File: s07_ALDER_files/figure-latex/plot_afr_pops-1.pdf Graphic file (type pdf)
 <use s07_ALDER_files/figure-latex/plot_afr_pops-1.pdf>
-Package pdftex.def Info: s07_ALDER_files/figure-latex/plot_afr_pops-1.pdf  used on input line 728.
+Package pdftex.def Info: s07_ALDER_files/figure-latex/plot_afr_pops-1.pdf  used on input line 820.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
-[11 <./s07_ALDER_files/figure-latex/plot_afr_pops-1.pdf>]
-<s07_ALDER_files/figure-latex/plot_asn_pops-1.pdf, id=85, 469.755pt x 325.215pt>
+[12 <./s07_ALDER_files/figure-latex/plot_afr_pops-1.pdf>]
+<s07_ALDER_files/figure-latex/plot_asn_pops-1.pdf, id=92, 469.755pt x 325.215pt>
 File: s07_ALDER_files/figure-latex/plot_asn_pops-1.pdf Graphic file (type pdf)
 <use s07_ALDER_files/figure-latex/plot_asn_pops-1.pdf>
-Package pdftex.def Info: s07_ALDER_files/figure-latex/plot_asn_pops-1.pdf  used on input line 777.
+Package pdftex.def Info: s07_ALDER_files/figure-latex/plot_asn_pops-1.pdf  used on input line 869.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
-[12]
+[13] [14 <./s07_ALDER_files/figure-latex/plot_asn_pops-1.pdf>]
+<s07_ALDER_files/figure-latex/unnamed-chunk-2-1.pdf, id=109, 469.755pt x 325.215pt>
+File: s07_ALDER_files/figure-latex/unnamed-chunk-2-1.pdf Graphic file (type pdf)
+<use s07_ALDER_files/figure-latex/unnamed-chunk-2-1.pdf>
+Package pdftex.def Info: s07_ALDER_files/figure-latex/unnamed-chunk-2-1.pdf  used on input line 950.
+(pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
+[15]
 
 ! LaTeX Error: Unicode character α (U+03B1)
                not set up for use with LaTeX.
@@ -466,18 +492,18 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.795 with heterogeneous amounts α
+l.960 with heterogeneous amounts α
                                    ---now a random variable---of mixed
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
  
 Here is how much of TeX's memory you used:
- 11599 strings out of 469519
- 176435 string characters out of 5469814
+ 11618 strings out of 469519
+ 176960 string characters out of 5469814
  598602 words of memory out of 5000000
- 40049 multiletter control sequences out of 15000+600000
- 669344 words of font info for 82 fonts, out of 8000000 for 9000
+ 40061 multiletter control sequences out of 15000+600000
+ 672342 words of font info for 83 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  89i,5n,93p,459b,487s stack positions out of 10000i,1000n,20000p,3000000b,200000s
 !  ==> Fatal error occurred, no output PDF file produced!

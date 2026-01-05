@@ -55,7 +55,7 @@ if (file.exists("../data/intermediate/fastmixture/fastmixture_m.RData")) {
     n_runs = 3,
     threads = 1,
     batches = 16,
-    seed = 1,
+    seed = c(1,2,3),
     no_freqs = TRUE
   )
   saveRDS(qmats, "../data/intermediate/fastmixture/fastmixture_m.RData")

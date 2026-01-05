@@ -1,7 +1,8 @@
 ---
 title: "Merging African Neolithic datasets"
-output: html_document
 date: "2025-08-20"
+knit: resrepo::knit_to_results
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -17,6 +18,11 @@ library(tidyverse)
 library(resrepo)
 ```
 
+```{r set-directories}
+res_dir <- "../results/s00_merge_neo_dataset/"
+```
+
+This script merges the African Neolithic datasets from EGAD50000000006 to EGAD50000000011 into a single gen_tibble object.
 
 # EGAD50000000011
 
@@ -26,30 +32,26 @@ if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_2
 } else {
   NEO_E_TC_A <- gen_tibble("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_A.bed", allow_duplicates = TRUE, quiet = TRUE, valid_alleles = c("T", "G", "A", "C", "I", "D"))
   nrow(NEO_E_TC_A) # 41
-count_loci(NEO_E_TC_A) # 2221421
-NEO_E_TC_A <- NEO_E_TC_A %>% select_loci(-all_of(c(which(show_loci(NEO_E_TC_A)$allele_ref %in% c("I", "D")))))
-count_loci(NEO_E_TC_A)
-double_NA_NEO_E_TC_A <- which(is.na(show_loci(NEO_E_TC_A)$allele_ref) & is.na(show_loci(NEO_E_TC_A)$allele_alt))
-NEO_E_TC_A <- NEO_E_TC_A %>% select_loci(-all_of(double_NA_NEO_E_TC_A))
-count_loci(NEO_E_TC_A)
-table(NEO_E_TC_A$population)
-dups <- NEO_E_TC_A %>% find_duplicated_loci()
-NEO_E_TC_A <- NEO_E_TC_A %>% select_loci(-all_of(dups))
+  count_loci(NEO_E_TC_A) # 2221421
+  NEO_E_TC_A <- NEO_E_TC_A %>% select_loci(-all_of(c(which(show_loci(NEO_E_TC_A)$allele_ref %in% c("I", "D")))))
+  count_loci(NEO_E_TC_A)
+  double_NA_NEO_E_TC_A <- which(is.na(show_loci(NEO_E_TC_A)$allele_ref) & is.na(show_loci(NEO_E_TC_A)$allele_alt))
+  NEO_E_TC_A <- NEO_E_TC_A %>% select_loci(-all_of(double_NA_NEO_E_TC_A))
+  count_loci(NEO_E_TC_A)
+  table(NEO_E_TC_A$population)
+  dups <- NEO_E_TC_A %>% find_duplicated_loci()
+  NEO_E_TC_A <- NEO_E_TC_A %>% select_loci(-all_of(dups))
 
-if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_A_no_I_D.bk")) {
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_A_no_I_D.bk")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_A_no_I_D.rds")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_A_no_I_D.gt")
+  if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_A_no_I_D.bk")) {
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_A_no_I_D.bk")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_A_no_I_D.rds")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_A_no_I_D.gt")
+  }
+
+  NEO_E_TC_A <- gt_update_backingfile(NEO_E_TC_A,
+    backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_A_no_I_D"
+  )
 }
-
-NEO_E_TC_A <- gt_update_backingfile(NEO_E_TC_A,
-  backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_A_no_I_D"
-)
-
-gt_save(NEO_E_TC_A, file_name = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_A_no_I_D")
-
-}
-
 ```
 
 ```{r}
@@ -58,25 +60,24 @@ if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_2
 } else {
   NEO_E_TC_B <- gen_tibble("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_B.bed", allow_duplicates = TRUE, quiet = TRUE, valid_alleles = c("T", "G", "A", "C", "I", "D"))
   nrow(NEO_E_TC_B) # 59
-count_loci(NEO_E_TC_B) # 2221421
-NEO_E_TC_B <- NEO_E_TC_B %>% select_loci(-all_of(c(which(show_loci(NEO_E_TC_B)$allele_ref %in% c("I", "D")))))
-count_loci(NEO_E_TC_B)
-double_NA_NEO_E_TC_B <- which(is.na(show_loci(NEO_E_TC_B)$allele_ref) & is.na(show_loci(NEO_E_TC_B)$allele_alt))
-NEO_E_TC_B <- NEO_E_TC_B %>% select_loci(-all_of(double_NA_NEO_E_TC_B))
-count_loci(NEO_E_TC_B)
-table(NEO_E_TC_B$population)
-dups <- NEO_E_TC_B %>% find_duplicated_loci()
-NEO_E_TC_B <- NEO_E_TC_B %>% select_loci(-all_of(dups))
+  count_loci(NEO_E_TC_B) # 2221421
+  NEO_E_TC_B <- NEO_E_TC_B %>% select_loci(-all_of(c(which(show_loci(NEO_E_TC_B)$allele_ref %in% c("I", "D")))))
+  count_loci(NEO_E_TC_B)
+  double_NA_NEO_E_TC_B <- which(is.na(show_loci(NEO_E_TC_B)$allele_ref) & is.na(show_loci(NEO_E_TC_B)$allele_alt))
+  NEO_E_TC_B <- NEO_E_TC_B %>% select_loci(-all_of(double_NA_NEO_E_TC_B))
+  count_loci(NEO_E_TC_B)
+  table(NEO_E_TC_B$population)
+  dups <- NEO_E_TC_B %>% find_duplicated_loci()
+  NEO_E_TC_B <- NEO_E_TC_B %>% select_loci(-all_of(dups))
 
-if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_B_no_I_D.bk")) {
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_B_no_I_D.bk")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_B_no_I_D.rds")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_B_no_I_D.gt")
-}
-NEO_E_TC_B <- gt_update_backingfile(NEO_E_TC_B,
-  backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_B_no_I_D"
-)
-gt_save(NEO_E_TC_B, file_name = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_B_no_I_D")
+  if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_B_no_I_D.bk")) {
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_B_no_I_D.bk")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_B_no_I_D.rds")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_B_no_I_D.gt")
+  }
+  NEO_E_TC_B <- gt_update_backingfile(NEO_E_TC_B,
+    backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_E__TC-2508_200401_B_no_I_D"
+  )
 }
 ```
 
@@ -115,29 +116,27 @@ if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__SE-2209_1
       valid_alleles = c("T", "G", "A", "C", "I", "D")
     )
   nrow(NEO_B_SE) # 155
-count_loci(NEO_B_SE) # 2221421
-NEO_B_SE <- NEO_B_SE %>% select_loci(-all_of(c(which(show_loci(NEO_B_SE)$allele_ref %in% c("I", "D")))))
-count_loci(NEO_B_SE)
-double_NA_NEO_B_SE <- which(is.na(show_loci(NEO_B_SE)$allele_ref) & is.na(show_loci(NEO_B_SE)$allele_alt))
-NEO_B_SE <- NEO_B_SE %>% select_loci(-all_of(double_NA_NEO_B_SE))
-count_loci(NEO_B_SE)
-table(NEO_B_SE$population) # Zambia
-dups <- NEO_B_SE %>% find_duplicated_loci()
-NEO_B_SE <- NEO_B_SE %>% select_loci(-all_of(dups))
+  count_loci(NEO_B_SE) # 2221421
+  NEO_B_SE <- NEO_B_SE %>% select_loci(-all_of(c(which(show_loci(NEO_B_SE)$allele_ref %in% c("I", "D")))))
+  count_loci(NEO_B_SE)
+  double_NA_NEO_B_SE <- which(is.na(show_loci(NEO_B_SE)$allele_ref) & is.na(show_loci(NEO_B_SE)$allele_alt))
+  NEO_B_SE <- NEO_B_SE %>% select_loci(-all_of(double_NA_NEO_B_SE))
+  count_loci(NEO_B_SE)
+  table(NEO_B_SE$population) # Zambia
+  dups <- NEO_B_SE %>% find_duplicated_loci()
+  NEO_B_SE <- NEO_B_SE %>% select_loci(-all_of(dups))
 
 
-if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__SE-2209_191110_no_I_D.bk")) {
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__SE-2209_191110_no_I_D.bk")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__SE-2209_191110_no_I_D.rds")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__SE-2209_191110_no_I_D.gt")
+  if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__SE-2209_191110_no_I_D.bk")) {
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__SE-2209_191110_no_I_D.bk")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__SE-2209_191110_no_I_D.rds")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__SE-2209_191110_no_I_D.gt")
+  }
+
+  NEO_B_SE <- gt_update_backingfile(NEO_B_SE,
+    backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__SE-2209_191110_no_I_D"
+  )
 }
-
-NEO_B_SE <- gt_update_backingfile(NEO_B_SE,
-  backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__SE-2209_191110_no_I_D"
-)
-gt_save(NEO_B_SE, file_name = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__SE-2209_191110_no_I_D")
-}
-
 ```
 
 
@@ -147,27 +146,25 @@ if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__TE-2567_2
 } else {
   NEO_B_TE <- gen_tibble("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__TE-2567_201023_2019.bed", allow_duplicates = TRUE, quiet = TRUE, valid_alleles = c("T", "G", "A", "C", "I", "D"))
   nrow(NEO_B_TE) # 1
-count_loci(NEO_B_TE) # 2225121
-NEO_B_TE <- NEO_B_TE %>% select_loci(-all_of(c(which(show_loci(NEO_B_TE)$allele_ref %in% c("I", "D")))))
-count_loci(NEO_B_TE)
-double_NA_NEO_B_TE <- which(is.na(show_loci(NEO_B_TE)$allele_ref) & is.na(show_loci(NEO_B_TE)$allele_alt))
-NEO_B_TE <- NEO_B_TE %>% select_loci(-all_of(double_NA_NEO_B_TE))
-count_loci(NEO_B_TE)
-unique(NEO_B_TE$population) # "Zambia_Kgalagadi"
-dups <- NEO_B_TE %>% find_duplicated_loci()
-NEO_B_TE <- NEO_B_TE %>% select_loci(-all_of(dups))
+  count_loci(NEO_B_TE) # 2225121
+  NEO_B_TE <- NEO_B_TE %>% select_loci(-all_of(c(which(show_loci(NEO_B_TE)$allele_ref %in% c("I", "D")))))
+  count_loci(NEO_B_TE)
+  double_NA_NEO_B_TE <- which(is.na(show_loci(NEO_B_TE)$allele_ref) & is.na(show_loci(NEO_B_TE)$allele_alt))
+  NEO_B_TE <- NEO_B_TE %>% select_loci(-all_of(double_NA_NEO_B_TE))
+  count_loci(NEO_B_TE)
+  unique(NEO_B_TE$population) # "Zambia_Kgalagadi"
+  dups <- NEO_B_TE %>% find_duplicated_loci()
+  NEO_B_TE <- NEO_B_TE %>% select_loci(-all_of(dups))
 
-if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__TE-2567_201023_2019_no_I_D.bk")) {
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__TE-2567_201023_2019_no_I_D.bk")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__TE-2567_201023_2019_no_I_D.rds")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__TE-2567_201023_2019_no_I_D.gt")
+  if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__TE-2567_201023_2019_no_I_D.bk")) {
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__TE-2567_201023_2019_no_I_D.bk")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__TE-2567_201023_2019_no_I_D.rds")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__TE-2567_201023_2019_no_I_D.gt")
+  }
+  NEO_B_TE <- gt_update_backingfile(NEO_B_TE,
+    backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__TE-2567_201023_2019_no_I_D"
+  )
 }
-NEO_B_TE <- gt_update_backingfile(NEO_B_TE,
-  backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__TE-2567_201023_2019_no_I_D"
-)
-gt_save(NEO_B_TE, file_name = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_B__TE-2567_201023_2019_no_I_D")
-}
-
 ```
 
 # Merge NEO_B
@@ -200,29 +197,26 @@ if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_F__OE-0808_1
 } else {
   NEO_F_OE <- gen_tibble("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_F__OE-0808_150625.bed", allow_duplicates = TRUE, quiet = TRUE, valid_alleles = c("T", "G", "A", "C", "I", "D"))
   nrow(NEO_F_OE) # 29
-count_loci(NEO_F_OE) # 2280697
-NEO_F_OE <- NEO_F_OE %>% select_loci(-all_of(c(which(show_loci(NEO_F_OE)$allele_ref %in% c("I", "D")))))
-count_loci(NEO_F_OE)
-double_NA_NEO_F_OE <- which(is.na(show_loci(NEO_F_OE)$allele_ref) & is.na(show_loci(NEO_F_OE)$allele_alt))
-NEO_F_OE <- NEO_F_OE %>% select_loci(-all_of(double_NA_NEO_F_OE))
-count_loci(NEO_F_OE)
-table(NEO_F_OE$population) # "Botswana_Ghanzi"
-dups <- NEO_F_OE %>% find_duplicated_loci()
-NEO_F_OE <- NEO_F_OE %>% select_loci(-all_of(dups))
+  count_loci(NEO_F_OE) # 2280697
+  NEO_F_OE <- NEO_F_OE %>% select_loci(-all_of(c(which(show_loci(NEO_F_OE)$allele_ref %in% c("I", "D")))))
+  count_loci(NEO_F_OE)
+  double_NA_NEO_F_OE <- which(is.na(show_loci(NEO_F_OE)$allele_ref) & is.na(show_loci(NEO_F_OE)$allele_alt))
+  NEO_F_OE <- NEO_F_OE %>% select_loci(-all_of(double_NA_NEO_F_OE))
+  count_loci(NEO_F_OE)
+  table(NEO_F_OE$population) # "Botswana_Ghanzi"
+  dups <- NEO_F_OE %>% find_duplicated_loci()
+  NEO_F_OE <- NEO_F_OE %>% select_loci(-all_of(dups))
 
 
-if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_F__OE-0808_150625_no_I_D.bk")) {
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_F__OE-0808_150625_no_I_D.bk")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_F__OE-0808_150625_no_I_D.rds")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_F__OE-0808_150625_no_I_D.gt")
+  if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_F__OE-0808_150625_no_I_D.bk")) {
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_F__OE-0808_150625_no_I_D.bk")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_F__OE-0808_150625_no_I_D.rds")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_F__OE-0808_150625_no_I_D.gt")
+  }
+  NEO_F_OE <- gt_update_backingfile(NEO_F_OE,
+    backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_F__OE-0808_150625_no_I_D"
+  )
 }
-NEO_F_OE <- gt_update_backingfile(NEO_F_OE,
-  backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_F__OE-0808_150625_no_I_D"
-)
-gt_save(NEO_F_OE,
-  file_name = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_F__OE-0808_150625_no_I_D")
-}
-
 ```
 
 # EGAD50000000008
@@ -233,36 +227,33 @@ if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__TI-2658_2
 } else {
   NEO_A_TI <- gen_tibble("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__TI-2658_201112.bed", allow_duplicates = TRUE, quiet = TRUE, valid_alleles = c("T", "G", "A", "C", "I", "D"))
   nrow(NEO_A_TI) # 133
-count_loci(NEO_A_TI) # 2225121
-NEO_A_TI <- NEO_A_TI %>% select_loci(-all_of(c(which(show_loci(NEO_A_TI)$allele_ref %in% c("I", "D")))))
-count_loci(NEO_A_TI)
-double_NA_NEO_A_TI <- which(is.na(show_loci(NEO_A_TI)$allele_ref) & is.na(show_loci(NEO_A_TI)$allele_alt))
-NEO_A_TI <- NEO_A_TI %>% select_loci(-all_of(double_NA_NEO_A_TI))
-count_loci(NEO_A_TI)
-table(NEO_A_TI$population) # "CAR_Banda"                 "SouthAfrica_Coloured"      "SouthAfrica_Xhosa"
-# [4] "Namibia_Damara"            "Namibia_Himba"             "Angola_Vasekele"
-# [7] "Namibia_TsumkweKung"       "SouthAfrica_Khomani"       "SouthAfrica_SothoSouthern"
-# [10] "SouthAfrica_Zulu"          "Namibia_Herero"            "Mozambique_Chopi"
-# [13] "Namibia_Nama"              "Angola_Sekele"             "Namibia_Wambo"
-# [16] "Namibia_Kgalagadi"         "DRC_Luozi"                 "DRC_Nienge"
-# [19] "DRC_Bandundu"              "SouthAfrica_Tswana"        "Uganda_Nkore"
-# [22] "Tanzania_Mixed"
+  count_loci(NEO_A_TI) # 2225121
+  NEO_A_TI <- NEO_A_TI %>% select_loci(-all_of(c(which(show_loci(NEO_A_TI)$allele_ref %in% c("I", "D")))))
+  count_loci(NEO_A_TI)
+  double_NA_NEO_A_TI <- which(is.na(show_loci(NEO_A_TI)$allele_ref) & is.na(show_loci(NEO_A_TI)$allele_alt))
+  NEO_A_TI <- NEO_A_TI %>% select_loci(-all_of(double_NA_NEO_A_TI))
+  count_loci(NEO_A_TI)
+  table(NEO_A_TI$population) # "CAR_Banda"                 "SouthAfrica_Coloured"      "SouthAfrica_Xhosa"
+  # [4] "Namibia_Damara"            "Namibia_Himba"             "Angola_Vasekele"
+  # [7] "Namibia_TsumkweKung"       "SouthAfrica_Khomani"       "SouthAfrica_SothoSouthern"
+  # [10] "SouthAfrica_Zulu"          "Namibia_Herero"            "Mozambique_Chopi"
+  # [13] "Namibia_Nama"              "Angola_Sekele"             "Namibia_Wambo"
+  # [16] "Namibia_Kgalagadi"         "DRC_Luozi"                 "DRC_Nienge"
+  # [19] "DRC_Bandundu"              "SouthAfrica_Tswana"        "Uganda_Nkore"
+  # [22] "Tanzania_Mixed"
 
-dups <- NEO_A_TI %>% find_duplicated_loci()
-NEO_A_TI <- NEO_A_TI %>% select_loci(-all_of(dups))
+  dups <- NEO_A_TI %>% find_duplicated_loci()
+  NEO_A_TI <- NEO_A_TI %>% select_loci(-all_of(dups))
 
-if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__TI-2658_201112_no_I_D.bk")) {
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__TI-2658_201112_no_I_D.bk")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__TI-2658_201112_no_I_D.rds")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__TI-2658_201112_no_I_D.gt")
+  if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__TI-2658_201112_no_I_D.bk")) {
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__TI-2658_201112_no_I_D.bk")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__TI-2658_201112_no_I_D.rds")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__TI-2658_201112_no_I_D.gt")
+  }
+  NEO_A_TI <- gt_update_backingfile(NEO_A_TI,
+    backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__TI-2658_201112_no_I_D"
+  )
 }
-NEO_A_TI <- gt_update_backingfile(NEO_A_TI,
-  backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__TI-2658_201112_no_I_D"
-)
-gt_save(NEO_A_TI,
-  file_name = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__TI-2658_201112_no_I_D")
-}
-
 ```
 
 ```{r}
@@ -271,28 +262,25 @@ if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__SE-2209_1
 } else {
   NEO_A_SE <- gen_tibble("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__SE-2209_191110.bed", allow_duplicates = TRUE, quiet = TRUE, valid_alleles = c("T", "G", "A", "C", "I", "D"))
   nrow(NEO_A_SE) # 894
-count_loci(NEO_A_SE) # 2221421
-NEO_A_SE <- NEO_A_SE %>% select_loci(-all_of(c(which(show_loci(NEO_A_SE)$allele_ref %in% c("I", "D")))))
-count_loci(NEO_A_SE)
-double_NA_NEO_A_SE <- which(is.na(show_loci(NEO_A_SE)$allele_ref) & is.na(show_loci(NEO_A_SE)$allele_alt))
-NEO_A_SE <- NEO_A_SE %>% select_loci(-all_of(double_NA_NEO_A_SE))
-count_loci(NEO_A_SE)
-table(NEO_A_SE$population)
-dups <- NEO_A_SE %>% find_duplicated_loci()
-NEO_A_SE <- NEO_A_SE %>% select_loci(-all_of(dups))
+  count_loci(NEO_A_SE) # 2221421
+  NEO_A_SE <- NEO_A_SE %>% select_loci(-all_of(c(which(show_loci(NEO_A_SE)$allele_ref %in% c("I", "D")))))
+  count_loci(NEO_A_SE)
+  double_NA_NEO_A_SE <- which(is.na(show_loci(NEO_A_SE)$allele_ref) & is.na(show_loci(NEO_A_SE)$allele_alt))
+  NEO_A_SE <- NEO_A_SE %>% select_loci(-all_of(double_NA_NEO_A_SE))
+  count_loci(NEO_A_SE)
+  table(NEO_A_SE$population)
+  dups <- NEO_A_SE %>% find_duplicated_loci()
+  NEO_A_SE <- NEO_A_SE %>% select_loci(-all_of(dups))
 
-if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__SE-2209_191110_no_I_D.bk")) {
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__SE-2209_191110_no_I_D.bk")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__SE-2209_191110_no_I_D.rds")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__SE-2209_191110_no_I_D.gt")
+  if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__SE-2209_191110_no_I_D.bk")) {
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__SE-2209_191110_no_I_D.bk")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__SE-2209_191110_no_I_D.rds")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__SE-2209_191110_no_I_D.gt")
+  }
+  NEO_A_SE <- gt_update_backingfile(NEO_A_SE,
+    backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__SE-2209_191110_no_I_D"
+  )
 }
-NEO_A_SE <- gt_update_backingfile(NEO_A_SE,
-  backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__SE-2209_191110_no_I_D"
-)
-gt_save(NEO_A_SE,
-  file_name = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_A__SE-2209_191110_no_I_D")
-}
-
 ```
 
 # Merge NEO_A
@@ -325,29 +313,26 @@ if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_2
 } else {
   NEO_C_TE_2017 <- gen_tibble("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2017.bed", allow_duplicates = TRUE, quiet = TRUE, valid_alleles = c("T", "G", "A", "C", "I", "D"))
   nrow(NEO_C_TE_2017) # 3
-count_loci(NEO_C_TE_2017) # 2221421
-NEO_C_TE_2017 <- NEO_C_TE_2017 %>% select_loci(-all_of(c(which(show_loci(NEO_C_TE_2017)$allele_ref %in% c("I", "D")))))
-count_loci(NEO_C_TE_2017)
-double_NA_NEO_C_TE_2017 <- which(is.na(show_loci(NEO_C_TE_2017)$allele_ref) & is.na(show_loci(NEO_C_TE_2017)$allele_alt))
-NEO_C_TE_2017 <- NEO_C_TE_2017 %>% select_loci(-all_of(double_NA_NEO_C_TE_2017))
-count_loci(NEO_C_TE_2017)
-table(NEO_C_TE_2017$population) # DRC_Ding DRC_Lwer DRC_Wonk
+  count_loci(NEO_C_TE_2017) # 2221421
+  NEO_C_TE_2017 <- NEO_C_TE_2017 %>% select_loci(-all_of(c(which(show_loci(NEO_C_TE_2017)$allele_ref %in% c("I", "D")))))
+  count_loci(NEO_C_TE_2017)
+  double_NA_NEO_C_TE_2017 <- which(is.na(show_loci(NEO_C_TE_2017)$allele_ref) & is.na(show_loci(NEO_C_TE_2017)$allele_alt))
+  NEO_C_TE_2017 <- NEO_C_TE_2017 %>% select_loci(-all_of(double_NA_NEO_C_TE_2017))
+  count_loci(NEO_C_TE_2017)
+  table(NEO_C_TE_2017$population) # DRC_Ding DRC_Lwer DRC_Wonk
 
-dups <- NEO_C_TE_2017 %>% find_duplicated_loci()
-NEO_C_TE_2017 <- NEO_C_TE_2017 %>% select_loci(-all_of(dups))
+  dups <- NEO_C_TE_2017 %>% find_duplicated_loci()
+  NEO_C_TE_2017 <- NEO_C_TE_2017 %>% select_loci(-all_of(dups))
 
-if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2017_no_I_D.bk")) {
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2017_no_I_D.bk")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2017_no_I_D.rds")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2017_no_I_D.gt")
+  if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2017_no_I_D.bk")) {
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2017_no_I_D.bk")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2017_no_I_D.rds")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2017_no_I_D.gt")
+  }
+  NEO_C_TE_2017 <- gt_update_backingfile(NEO_C_TE_2017,
+    backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2017_no_I_D"
+  )
 }
-NEO_C_TE_2017 <- gt_update_backingfile(NEO_C_TE_2017,
-  backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2017_no_I_D"
-)
-gt_save(NEO_C_TE_2017,
-  file_name = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2017_no_I_D")
-}
-
 ```
 
 ```{r}
@@ -356,28 +341,25 @@ if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_2
 } else {
   NEO_C_TE_2019 <- gen_tibble("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2019.bed", allow_duplicates = TRUE, quiet = TRUE, valid_alleles = c("T", "G", "A", "C", "I", "D"))
   nrow(NEO_C_TE_2019) # 297
-count_loci(NEO_C_TE_2019) # 2225121
-NEO_C_TE_2019 <- NEO_C_TE_2019 %>% select_loci(-all_of(c(which(show_loci(NEO_C_TE_2019)$allele_ref %in% c("I", "D")))))
-count_loci(NEO_C_TE_2019)
-double_NA_NEO_C_TE_2019 <- which(is.na(show_loci(NEO_C_TE_2019)$allele_ref) & is.na(show_loci(NEO_C_TE_2019)$allele_alt))
-NEO_C_TE_2019 <- NEO_C_TE_2019 %>% select_loci(-all_of(double_NA_NEO_C_TE_2019))
-count_loci(NEO_C_TE_2019)
-table(NEO_C_TE_2019$population)
-dups <- NEO_C_TE_2019 %>% find_duplicated_loci()
-NEO_C_TE_2019 <- NEO_C_TE_2019 %>% select_loci(-all_of(dups))
+  count_loci(NEO_C_TE_2019) # 2225121
+  NEO_C_TE_2019 <- NEO_C_TE_2019 %>% select_loci(-all_of(c(which(show_loci(NEO_C_TE_2019)$allele_ref %in% c("I", "D")))))
+  count_loci(NEO_C_TE_2019)
+  double_NA_NEO_C_TE_2019 <- which(is.na(show_loci(NEO_C_TE_2019)$allele_ref) & is.na(show_loci(NEO_C_TE_2019)$allele_alt))
+  NEO_C_TE_2019 <- NEO_C_TE_2019 %>% select_loci(-all_of(double_NA_NEO_C_TE_2019))
+  count_loci(NEO_C_TE_2019)
+  table(NEO_C_TE_2019$population)
+  dups <- NEO_C_TE_2019 %>% find_duplicated_loci()
+  NEO_C_TE_2019 <- NEO_C_TE_2019 %>% select_loci(-all_of(dups))
 
-if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2019_no_I_D.bk")) {
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2019_no_I_D.bk")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2019_no_I_D.rds")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2019_no_I_D.gt")
+  if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2019_no_I_D.bk")) {
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2019_no_I_D.bk")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2019_no_I_D.rds")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2019_no_I_D.gt")
+  }
+  NEO_C_TE_2019 <- gt_update_backingfile(NEO_C_TE_2019,
+    backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2019_no_I_D"
+  )
 }
-NEO_C_TE_2019 <- gt_update_backingfile(NEO_C_TE_2019,
-  backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2019_no_I_D"
-)
-gt_save(NEO_C_TE_2019,
-  file_name = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_C__TE-2567_201023_2019_no_I_D")
-}
-
 ```
 
 # Merge NEO_C
@@ -414,28 +396,25 @@ if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__RK-2011_1
     valid_alleles = c("T", "G", "A", "C", "I", "D")
   )
   nrow(NEO_D_RK) # 46
-count_loci(NEO_D_RK) # 2221421
-NEO_D_RK <- NEO_D_RK %>% select_loci(-all_of(c(which(show_loci(NEO_D_RK)$allele_ref %in% c("I", "D")))))
-count_loci(NEO_D_RK)
-double_NA_NEO_D_RK <- which(is.na(show_loci(NEO_D_RK)$allele_ref) & is.na(show_loci(NEO_D_RK)$allele_alt))
-NEO_D_RK <- NEO_D_RK %>% select_loci(-all_of(double_NA_NEO_D_RK))
-count_loci(NEO_D_RK)
-table(NEO_D_RK$population) # DRC_BanguBangu       DRC_Luba       DRC_Rega        DRC_Shi
-dups <- NEO_D_RK %>% find_duplicated_loci()
-NEO_D_RK <- NEO_D_RK %>% select_loci(-all_of(dups))
+  count_loci(NEO_D_RK) # 2221421
+  NEO_D_RK <- NEO_D_RK %>% select_loci(-all_of(c(which(show_loci(NEO_D_RK)$allele_ref %in% c("I", "D")))))
+  count_loci(NEO_D_RK)
+  double_NA_NEO_D_RK <- which(is.na(show_loci(NEO_D_RK)$allele_ref) & is.na(show_loci(NEO_D_RK)$allele_alt))
+  NEO_D_RK <- NEO_D_RK %>% select_loci(-all_of(double_NA_NEO_D_RK))
+  count_loci(NEO_D_RK)
+  table(NEO_D_RK$population) # DRC_BanguBangu       DRC_Luba       DRC_Rega        DRC_Shi
+  dups <- NEO_D_RK %>% find_duplicated_loci()
+  NEO_D_RK <- NEO_D_RK %>% select_loci(-all_of(dups))
 
-if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__RK-2011_190308_no_I_D.bk")) {
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__RK-2011_190308_no_I_D.bk")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__RK-2011_190308_no_I_D.rds")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__RK-2011_190308_no_I_D.gt")
+  if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__RK-2011_190308_no_I_D.bk")) {
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__RK-2011_190308_no_I_D.bk")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__RK-2011_190308_no_I_D.rds")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__RK-2011_190308_no_I_D.gt")
+  }
+  NEO_D_RK <- gt_update_backingfile(NEO_D_RK,
+    backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__RK-2011_190308_no_I_D"
+  )
 }
-NEO_D_RK <- gt_update_backingfile(NEO_D_RK,
-  backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__RK-2011_190308_no_I_D"
-)
-gt_save(NEO_D_RK,
-  file_name = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__RK-2011_190308_no_I_D")
-}
-
 ```
 
 ```{r}
@@ -444,28 +423,25 @@ if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__SE-2209_1
 } else {
   NEO_D_SE <- gen_tibble("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__SE-2209_191110.bed", quiet = TRUE, allow_duplicates = TRUE, valid_alleles = c("T", "G", "A", "C", "I", "D"))
   nrow(NEO_D_SE) # 105
-count_loci(NEO_D_SE) # 2221421
-NEO_D_SE <- NEO_D_SE %>% select_loci(-all_of(c(which(show_loci(NEO_D_SE)$allele_ref %in% c("I", "D")))))
-count_loci(NEO_D_SE)
-double_NA_NEO_D_SE <- which(is.na(show_loci(NEO_D_SE)$allele_ref) & is.na(show_loci(NEO_D_SE)$allele_alt))
-NEO_D_SE <- NEO_D_SE %>% select_loci(-all_of(double_NA_NEO_D_SE))
-count_loci(NEO_D_SE)
-table(NEO_D_SE$population) # DRC_Shi
-dups <- NEO_D_SE %>% find_duplicated_loci()
-NEO_D_SE <- NEO_D_SE %>% select_loci(-all_of(dups))
+  count_loci(NEO_D_SE) # 2221421
+  NEO_D_SE <- NEO_D_SE %>% select_loci(-all_of(c(which(show_loci(NEO_D_SE)$allele_ref %in% c("I", "D")))))
+  count_loci(NEO_D_SE)
+  double_NA_NEO_D_SE <- which(is.na(show_loci(NEO_D_SE)$allele_ref) & is.na(show_loci(NEO_D_SE)$allele_alt))
+  NEO_D_SE <- NEO_D_SE %>% select_loci(-all_of(double_NA_NEO_D_SE))
+  count_loci(NEO_D_SE)
+  table(NEO_D_SE$population) # DRC_Shi
+  dups <- NEO_D_SE %>% find_duplicated_loci()
+  NEO_D_SE <- NEO_D_SE %>% select_loci(-all_of(dups))
 
-if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__SE-2209_191110_no_I_D.bk")) {
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__SE-2209_191110_no_I_D.bk")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__SE-2209_191110_no_I_D.rds")
-  file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__SE-2209_191110_no_I_D.gt")
+  if (file.exists("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__SE-2209_191110_no_I_D.bk")) {
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__SE-2209_191110_no_I_D.bk")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__SE-2209_191110_no_I_D.rds")
+    file.remove("../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__SE-2209_191110_no_I_D.gt")
+  }
+  NEO_D_SE <- gt_update_backingfile(NEO_D_SE,
+    backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__SE-2209_191110_no_I_D"
+  )
 }
-NEO_D_SE <- gt_update_backingfile(NEO_D_SE,
-  backingfile = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__SE-2209_191110_no_I_D"
-)
-gt_save(NEO_D_SE,
-  file_name = "../data/raw/data_input/ega-box-1667_Raw_AfricanNeo_D__SE-2209_191110_no_I_D")
-}
-
 ```
 
 # Merge NEO_D
@@ -524,6 +500,23 @@ rm(NEO_A, NEO_B, NEO_AB)
 gc()
 ```
 
+Remove intermediate merged files NEO_A and NEO_B
+
+```{r}
+if(file.exists("../data/intermediate/rbind_data/NEO_A_SE_TI.gt")) {
+  file.remove("../data/intermediate/rbind_data/NEO_A_SE_TI.gt")
+  file.remove("../data/intermediate/rbind_data/NEO_A_SE_TI.bk")
+  file.remove("../data/intermediate/rbind_data/NEO_A_SE_TI.rds")
+}
+
+if(file.exists("../data/intermediate/rbind_data/NEO_B_SE_TE.gt")) {
+  file.remove("../data/intermediate/rbind_data/NEO_B_SE_TE.gt")
+  file.remove("../data/intermediate/rbind_data/NEO_B_SE_TE.bk")
+  file.remove("../data/intermediate/rbind_data/NEO_B_SE_TE.rds")
+}
+```
+
+
 # Merge Neo_C and Neo_D
 
 ```{r}
@@ -549,6 +542,22 @@ rm(NEO_C, NEO_D)
 gc()
 ```
 
+Remove intermediate merged files NEO_C and NEO_D
+
+```{r}
+if(file.exists("../data/intermediate/rbind_data/NEO_C_TE_2017_2019.gt")) {
+  file.remove("../data/intermediate/rbind_data/NEO_C_TE_2017_2019.gt")
+  file.remove("../data/intermediate/rbind_data/NEO_C_TE_2017_2019.bk")
+  file.remove("../data/intermediate/rbind_data/NEO_C_TE_2017_2019.rds")
+}
+
+if(file.exists("../data/intermediate/rbind_data/NEO_D_RK_SE.gt")) {
+  file.remove("../data/intermediate/rbind_data/NEO_D_RK_SE.gt")
+  file.remove("../data/intermediate/rbind_data/NEO_D_RK_SE.bk")
+  file.remove("../data/intermediate/rbind_data/NEO_D_RK_SE.rds")
+}
+```
+
 # Merge Neo_AB and Neo_CD
 
 ```{r}
@@ -561,7 +570,6 @@ if (file.exists("../data/intermediate/rbind_data/NEO_ABCD.gt")) {
 
 ```{r}
 NEO_AB <- gt_load("../data/intermediate/rbind_data/NEO_AB.gt")
-#NEO_CD <- gt_load("../data/intermediate/rbind_data/NEO_CD.gt")
 
 NEO_ABCD <- rbind(NEO_AB, NEO_CD,
   as_is = FALSE, flip_strand = TRUE, use_position = FALSE,
@@ -572,6 +580,22 @@ NEO_ABCD <- rbind(NEO_AB, NEO_CD,
 ```{r}
 rm(NEO_AB, NEO_CD)
 gc()
+```
+
+Remove intermediate merged files NEO_AB and NEO_CD
+
+```{r}
+if(file.exists("../data/intermediate/rbind_data/NEO_AB.gt")) {
+  file.remove("../data/intermediate/rbind_data/NEO_AB.gt")
+  file.remove("../data/intermediate/rbind_data/NEO_AB.bk")
+  file.remove("../data/intermediate/rbind_data/NEO_AB.rds")
+}
+
+if(file.exists("../data/intermediate/rbind_data/NEO_CD.gt")) {
+  file.remove("../data/intermediate/rbind_data/NEO_CD.gt")
+  file.remove("../data/intermediate/rbind_data/NEO_CD.bk")
+  file.remove("../data/intermediate/rbind_data/NEO_CD.rds")
+}
 ```
 
 # Merge Neo_ABCD and NEO_E
@@ -599,6 +623,16 @@ rm(NEO_ABCD, NEO_E)
 gc()
 ```
 
+Remove intermediate file NEO_ABCD
+
+```{r}
+if(file.exists("../data/intermediate/rbind_data/NEO_ABCD.gt")) {
+  file.remove("../data/intermediate/rbind_data/NEO_ABCD.gt")
+  file.remove("../data/intermediate/rbind_data/NEO_ABCD.bk")
+  file.remove("../data/intermediate/rbind_data/NEO_ABCD.rds")
+}
+```
+
 # Merge Neo_ABCDE and NEO_F
 
 ```{r}
@@ -624,6 +658,15 @@ rm(NEO_ABCDE, NEO_F)
 gc()
 ```
 
+Remove intermediate merged file NEO_ABCDE
+
+```{r}
+if(file.exists("../data/intermediate/rbind_data/NEO_ABCDE.gt")) {
+  file.remove("../data/intermediate/rbind_data/NEO_ABCDE.gt")
+  file.remove("../data/intermediate/rbind_data/NEO_ABCDE.bk")
+  file.remove("../data/intermediate/rbind_data/NEO_ABCDE.rds")
+}
+```
 
 ```{r}
 count_loci(NEO_full)
@@ -638,12 +681,11 @@ Part of ensuring our workflow is reproducible is to keep track of the R environm
 We will automatically save our R environment into a file called `r_environment.json`.
 
 ```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
-filename_rmd <- "s03_pca.Rmd"
+filename_rmd <- "s00_merge_neo_dataset.Rmd"
 filename_renv <- paste0(
   res_dir, "/renv_",
   tools::file_path_sans_ext(basename(filename_rmd)),
   ".json"
 )
 renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
-
 ```

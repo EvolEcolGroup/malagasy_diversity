@@ -3332,20 +3332,6 @@
       "Maintainer": "Hadley Wickham <hadley@posit.co>",
       "Repository": "CRAN"
     },
-    "humangentools": {
-      "Package": "humangentools",
-      "Version": "0.0.0.9000",
-      "Source": "unknown",
-      "Title": "Provides tools for conducting `tidypopgen` analyses using common human SNP datasets.",
-      "Authors@R": "person(\"Jason\", \"Hodgson\", , \"jason.hodgson@aru.ac.uk\", role = c(\"aut\", \"cre\"))",
-      "Description": "This package provides a suite of tools to facilitate `tidypopgen` analyses with common human genomics data sets including HGDP and 1000 Genomes.",
-      "License": "`use_mit_license()`, `use_gpl3_license()` or friends to pick a license",
-      "Encoding": "UTF-8",
-      "Roxygen": "list(markdown = TRUE)",
-      "RoxygenNote": "7.3.2",
-      "Author": "Jason Hodgson [aut, cre]",
-      "Maintainer": "Jason Hodgson <jason.hodgson@aru.ac.uk>"
-    },
     "ids": {
       "Package": "ids",
       "Version": "1.0.1",
@@ -4146,6 +4132,36 @@
       "Config/Needs/website": "gifski",
       "NeedsCompilation": "no",
       "Author": "Thomas Lin Pedersen [cre, aut] (ORCID: <https://orcid.org/0000-0002-5147-4711>)",
+      "Repository": "CRAN"
+    },
+    "pheatmap": {
+      "Package": "pheatmap",
+      "Version": "1.0.13",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Pretty Heatmaps",
+      "Date": "2025-06-05",
+      "Authors@R": "person(given = \"Raivo\", family = \"Kolde\", role = c(\"aut\", \"cre\"), email = \"rkolde@gmail.com\")",
+      "Depends": [
+        "R (>= 2.0)"
+      ],
+      "Description": "Implementation of heatmaps that offers more control over dimensions and appearance.",
+      "Imports": [
+        "grid",
+        "RColorBrewer",
+        "scales",
+        "gtable",
+        "stats",
+        "grDevices",
+        "graphics"
+      ],
+      "License": "GPL-2",
+      "Encoding": "UTF-8",
+      "LazyLoad": "yes",
+      "RoxygenNote": "7.3.2",
+      "NeedsCompilation": "no",
+      "Author": "Raivo Kolde [aut, cre]",
+      "Maintainer": "Raivo Kolde <rkolde@gmail.com>",
       "Repository": "CRAN"
     },
     "pillar": {
@@ -6126,7 +6142,7 @@
     "tidygenclust": {
       "Package": "tidygenclust",
       "Version": "0.1.0",
-      "Source": "GitHub",
+      "Source": "unknown",
       "Title": "Clustering for Population Genetics in R",
       "Authors@R": "c( person(\"Eirlys\", \"Tysall\", role = c(\"aut\")), person(\"Anahit\", \"Hovhannisyan\", role = c(\"aut\")), person(\"Evie\", \"Carter\", role = c(\"aut\")), person(\"Andrea\", \"Pozzi\", role = c(\"aut\")), person(\"Cecilia\", \"Padilla-Iglesias\", role =  c(\"aut\")), person(\"Michela\", \"Leonardi\", role = c(\"aut\")), person(\"Aramish\", \"Fatima\", role = c(\"aut\")), person(\"Ondrej\", \"Pelanek\", role = c(\"aut\")), person(\"Nile\", \"Stephenson\", role = c(\"aut\")), person(\"Margherita\", \"Colucci\", role = c(\"aut\")), person(\"Andrea\", \"Manica\", , \"am315@cam.ac.uk\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0003-1895-450X\")) )",
       "Description": "A tidy interface to clustering in population genetics. This package provides a set of functions to perform clustering on genetic data, and to visualize the results, both for single runs and for multiple repeats of the same analysis. 'tidygenclust' ports the 'fastmixture'  and 'clumppling' python modules to R, and it is built on top of the 'tidypopgen' package. Currently it works only on Linux and OSX (you can use the WSL on Windows).",
@@ -6158,24 +6174,16 @@
       "LazyData": "true",
       "VignetteBuilder": "knitr",
       "Config/testthat/edition": "3",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "tidygenclust",
-      "RemoteUsername": "EvolEcolGroup",
-      "RemotePkgRef": "EvolEcolGroup/tidygenclust",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "503764bde3cc3b9e247a0575b852dbd8bdad4b3f",
-      "NeedsCompilation": "no",
       "Author": "Eirlys Tysall [aut], Anahit Hovhannisyan [aut], Evie Carter [aut], Andrea Pozzi [aut], Cecilia Padilla-Iglesias [aut], Michela Leonardi [aut], Aramish Fatima [aut], Ondrej Pelanek [aut], Nile Stephenson [aut], Margherita Colucci [aut], Andrea Manica [aut, cre] (ORCID: <https://orcid.org/0000-0003-1895-450X>)",
       "Maintainer": "Andrea Manica <am315@cam.ac.uk>"
     },
     "tidypopgen": {
       "Package": "tidypopgen",
-      "Version": "0.4.0.9000",
+      "Version": "0.4.1.9001",
       "Source": "unknown",
       "Title": "Tidy Population Genetics",
       "Authors@R": "c(person(\"Evie\", \"Carter\", role = c(\"aut\")), person(\"Eirlys\", \"Tysall\", role = c(\"aut\")), person(\"Andrea\", \"Manica\", email = \"am315@cam.ac.uk\",  role = c(\"aut\", \"cre\", \"cph\"), comment = c(ORCID = \"0000-0003-1895-450X\")), person(\"Chang\", \"Christopher\", role = c(\"ctb\"), comment = \"Author of Hardy-Weinberg Equilibrium algorithm in PLINK 1.90, used in loci_hwe()\"), person(\"Shaun\", \"Purcell\", role = c(\"ctb\"), comment = \"Author of Hardy-Weinberg Equilibrium algorithm in PLINK 1.90, used in loci_hwe()\"), person(\"Bengtsson\", \"Henrik\", role = c(\"ctb\"), comment = \"Author of countLines in R.utils, modified for .vcf in count_vcf_variants()\"))",
-      "Description": "We provide a tidy grammar of population genetics, facilitating  the manipulation and analysis of data on biallelic single nucleotide polymorphisms (SNPs). 'tidypopgen' scales to very large genetic datasets by storing genotypes on disk, and performing operations on them in  chunks, without ever loading all data in memory. The full functionalities of the package are described in Carter et al. (2025) <doi:10.1101/2025.06.06.658325>.",
+      "Description": "We provide a tidy grammar of population genetics, facilitating  the manipulation and analysis of data on biallelic single nucleotide polymorphisms (SNPs). 'tidypopgen' scales to very large genetic datasets by storing genotypes on disk, and performing operations on them in  chunks, without ever loading all data in memory. The full functionalities of the package are described in Carter et al. (2025) <doi:10.1111/2041-210x.70204>.",
       "License": "GPL (>= 3)",
       "Encoding": "UTF-8",
       "Language": "en-GB",
@@ -6687,6 +6695,52 @@
       "NeedsCompilation": "yes",
       "Author": "Hadley Wickham [aut], Lionel Henry [aut], Davis Vaughan [aut, cre], data.table team [cph] (Radix sort based on data.table's forder() and their contribution to R's order()), Posit Software, PBC [cph, fnd]",
       "Maintainer": "Davis Vaughan <davis@posit.co>",
+      "Repository": "CRAN"
+    },
+    "viridis": {
+      "Package": "viridis",
+      "Version": "0.6.5",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Colorblind-Friendly Color Maps for R",
+      "Date": "2024-01-28",
+      "Authors@R": "c( person(\"Simon\", \"Garnier\", email = \"garnier@njit.edu\", role = c(\"aut\", \"cre\")), person(\"Noam\", \"Ross\", email = \"noam.ross@gmail.com\", role = c(\"ctb\", \"cph\")), person(\"Bob\", \"Rudis\", email = \"bob@rud.is\", role = c(\"ctb\", \"cph\")), person(\"Marco\", \"Sciaini\", email = \"sciaini.marco@gmail.com\", role = c(\"ctb\", \"cph\")), person(\"Antônio Pedro\", \"Camargo\", role = c(\"ctb\", \"cph\")), person(\"Cédric\", \"Scherer\", email = \"scherer@izw-berlin.de\", role = c(\"ctb\", \"cph\")) )",
+      "Maintainer": "Simon Garnier <garnier@njit.edu>",
+      "Description": "Color maps designed to improve graph readability for readers with  common forms of color blindness and/or color vision deficiency. The color  maps are also perceptually-uniform, both in regular form and also when  converted to black-and-white for printing. This package also contains  'ggplot2' bindings for discrete and continuous color and fill scales. A lean version of the package called 'viridisLite' that does not include the  'ggplot2' bindings can be found at  <https://cran.r-project.org/package=viridisLite>.",
+      "License": "MIT + file LICENSE",
+      "Encoding": "UTF-8",
+      "Depends": [
+        "R (>= 2.10)",
+        "viridisLite (>= 0.4.0)"
+      ],
+      "Imports": [
+        "ggplot2 (>= 1.0.1)",
+        "gridExtra"
+      ],
+      "Suggests": [
+        "hexbin (>= 1.27.0)",
+        "scales",
+        "MASS",
+        "knitr",
+        "dichromat",
+        "colorspace",
+        "httr",
+        "mapproj",
+        "vdiffr",
+        "svglite (>= 1.2.0)",
+        "testthat",
+        "covr",
+        "rmarkdown",
+        "maps",
+        "terra"
+      ],
+      "LazyData": "true",
+      "VignetteBuilder": "knitr",
+      "URL": "https://sjmgarnier.github.io/viridis/, https://github.com/sjmgarnier/viridis/",
+      "BugReports": "https://github.com/sjmgarnier/viridis/issues",
+      "RoxygenNote": "7.3.1",
+      "NeedsCompilation": "no",
+      "Author": "Simon Garnier [aut, cre], Noam Ross [ctb, cph], Bob Rudis [ctb, cph], Marco Sciaini [ctb, cph], Antônio Pedro Camargo [ctb, cph], Cédric Scherer [ctb, cph]",
       "Repository": "CRAN"
     },
     "viridisLite": {

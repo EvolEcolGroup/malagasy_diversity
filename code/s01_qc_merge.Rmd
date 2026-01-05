@@ -229,14 +229,14 @@ betsimisaraka <- as.data.frame(hwe_dist_per_pop$Betsimisaraka)
 colnames(betsimisaraka) <- "Value"
 
 betsimisaraka_hwe <- ggplot(betsimisaraka, aes(x = Value)) +
-  geom_density() + 
+  geom_density() +
   labs(title = "Betsimisaraka HWE")
 
 diego <- as.data.frame(hwe_dist_per_pop$Diego)
 colnames(diego) <- "Value"
 
 diego_hwe <- ggplot(diego, aes(x = Value)) +
-  geom_density() + 
+  geom_density() +
   labs(title = "Diego HWE")
 
 gridExtra::grid.arrange(merina_hwe, betsimisaraka_hwe, diego_hwe, ncol = 2, nrow = 2)
@@ -253,7 +253,7 @@ min_vals <- hwe_res %>%
 ggplot(min_vals, aes(x = group, fill = group)) +
   geom_bar() +
   theme(axis.text.x = element_blank()) +
-  labs(x = "Ethnic group", fill = "Ethnic group", y = "Count") + 
+  labs(x = "Ethnic group", fill = "Ethnic group", y = "Count") +
   scale_fill_brewer(palette = "Dark2")
 ```
 
@@ -267,7 +267,7 @@ min_vals <- hwe_res %>%
 ggplot(min_vals, aes(x = group, fill = group)) +
   geom_bar() +
   theme(axis.text.x = element_blank()) +
-  labs(x = "Ethnic group", fill = "Ethnic group", y = "Count") + 
+  labs(x = "Ethnic group", fill = "Ethnic group", y = "Count") +
   scale_fill_brewer(palette = "Dark2")
 ```
 
@@ -312,9 +312,6 @@ if (file.exists("../data/intermediate/rbind_data/malagasy_merge_clean_no_maf_1st
 ```
 
 ```{r}
-gt_save(malagasy_merged,
-  file_name = "../data/intermediate/rbind_data/malagasy_merge_clean_no_maf_1st_degree"
-)
 gt_update_backingfile(malagasy_merged,
   backingfile = "../data/intermediate/rbind_data/malagasy_merge_clean_no_maf_1st_degree"
 )
@@ -353,9 +350,6 @@ if (file.exists("../data/intermediate/rbind_data/malagasy_merge_clean.gt")) {
 ```
 
 ```{r}
-gt_save(malagasy_merged,
-  file_name = "../data/intermediate/rbind_data/malagasy_merge_clean"
-)
 malagasy_merged <-
   gt_update_backingfile(malagasy_merged,
     backingfile = "../data/intermediate/rbind_data/malagasy_merge_clean"
@@ -396,9 +390,6 @@ if (file.exists("../data/intermediate/rbind_data/malagasy_merge_clean_ld.gt")) {
 # Save imputed LD filtered dataset
 
 ```{r}
-gt_save(malagasy_merged_ld,
-  file_name = "../data/intermediate/rbind_data/malagasy_merge_clean_ld"
-)
 malagasy_merged <-
   gt_update_backingfile(malagasy_merged_ld,
     backingfile = "../data/intermediate/rbind_data/malagasy_merge_clean_ld"
@@ -674,7 +665,7 @@ mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% ungroup()
 mad_bor_g1000_sum_neo <-
   mad_bor_g1000_sum_neo %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
 
-if(file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_rebind.bk")){
+if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_rebind.bk")) {
   file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_rebind.gt")
   file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_rebind.bk")
   file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_rebind.rds")
@@ -719,10 +710,6 @@ if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.gt"
   file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.bk")
   file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.rds")
 }
-gt_save(
-  mad_bor_g1000_sum_neo,
-  "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean"
-)
 mad_bor_g1000_sum_neo <-
   gt_update_backingfile(mad_bor_g1000_sum_neo,
     backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean"
@@ -766,10 +753,6 @@ count_loci(mad_bor_g1000_sum_neo_ld)
 # Save LD filtered dataset
 
 ```{r}
-gt_save(
-  mad_bor_g1000_sum_neo_ld,
-  "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld"
-)
 mad_bor_g1000_sum_neo_ld <-
   gt_update_backingfile(mad_bor_g1000_sum_neo_ld,
     backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld"
@@ -794,7 +777,6 @@ filename_renv <- paste0(
   ".json"
 )
 renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
-
 ```
 
 

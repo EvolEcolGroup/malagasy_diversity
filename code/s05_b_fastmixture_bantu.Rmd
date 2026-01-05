@@ -1,0 +1,568 @@
+---
+title: "Fastmixture on African Neo data"
+date: "2025-11-13"
+knit: resrepo::knit_to_results
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidypopgen)
+library(tidygenclust)
+library(resrepo)
+library(ggplot2)
+
+# Set cores
+n_cores <- 10
+data.table::setDTthreads(n_cores)
+bigparallelr::set_blas_ncores(n_cores)
+```
+
+
+```{r set-directories}
+res_dir <- "../results/s05_fastmixture/s05_b_fastmixture_africa/"
+```
+
+# Load data
+
+```{r}
+NEO_full <- gt_load("../data/intermediate/rbind_data/NEO_full.gt", 
+                    reattach_to = "../data/intermediate/rbind_data/NEO_full")
+```
+
+# QC
+
+## Filter Loci
+
+```{r}
+NEO_full <- NEO_full %>% group_by(population)
+loci_report_m <- qc_report_loci(NEO_full)
+NEO_full <- NEO_full %>% ungroup()
+
+# filter loci
+to_keep <- which(loci_report_m$hwe_p > 0.01)
+NEO_full <- NEO_full %>% select_loci(all_of(to_keep))
+count_loci(NEO_full)
+NEO_full <-
+  NEO_full %>% select_loci_if(loci_missingness(genotypes) < 0.05)
+count_loci(NEO_full)
+NEO_full <-
+  NEO_full %>% select_loci_if(loci_maf(genotypes) > 0.025)
+count_loci(NEO_full)
+```
+
+## Filter Individuals
+
+```{r eval = FALSE}
+NEO_full <-
+  NEO_full %>% filter(indiv_missingness(genotypes) < 0.1)
+
+# temporarily remove all populations with only one individual before relatedness QC
+pop_tbl <- table(NEO_full$population)
+to_remove <- which(pop_tbl == 1)
+to_remove_pops <- names(to_remove)
+removed_pops <- NEO_full %>%
+  filter(population %in% to_remove_pops)
+NEO_full <-
+  NEO_full %>% filter(!population %in% to_remove_pops)
+
+# remove relatives
+NEO_full <- NEO_full %>% group_by(population)
+individual_report_m <-
+  qc_report_indiv(NEO_full, kings_threshold = 0.0884)
+NEO_full <- NEO_full %>% ungroup()
+NEO_full <-
+  NEO_full %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
+
+# bind data together again
+NEO_full <- rbind(NEO_full, removed_pops, backingfile = "../data/intermediate/rbind_data/NEO_full_clean")
+```
+
+# Impute
+
+```{r}
+NEO_full <- gt_impute_simple(NEO_full, method = "mean")
+```
+
+# LD clumping
+
+```{r}
+to_keep_LD <- loci_ld_clump(NEO_full,
+  thr_r2 = 0.2, size = 100,
+  return_id = TRUE, use_positions = TRUE
+)
+NEO_full_ld <- NEO_full %>% select_loci(all_of(to_keep_LD))
+```
+
+# Loci and sample count
+
+```{r}
+nrow(NEO_full_ld)
+count_loci(NEO_full_ld)
+```
+
+# Group
+
+```{r}
+NEO_full_ld <- NEO_full_ld %>% group_by(population)
+```
+
+```{r}
+NEO_full_ld <- gt_update_backingfile(NEO_full_ld, 
+                                  "../data/intermediate/rbind_data/NEO_full_ld_clean")
+```
+
+# Fastmixture clustering
+
+@TODO rerun fastmixture analysis with CV to choose K
+
+```{r}
+k <- c(10:25)
+  qmats <- gt_fastmixture(NEO_full_ld,
+    k,
+    n_runs = 1,
+    threads = 10,
+    batches = 16,
+    seed = c(1),
+    no_freqs = TRUE
+  )
+saveRDS(qmats, "../data/intermediate/fastmixture/africa/fastmixture_test.RData")
+```
+
+```{r}
+qmats <- readRDS("../data/intermediate/fastmixture/africa/fastmixture_test.RData")
+head(qmats$group)
+```
+
+```{r}
+qmats <- gt_admix_reorder_q(qmats)
+```
+
+# Using K = 10
+
+```{r}
+qmat_10 <- get_q_matrix(qmats, k = 10, run = 1)
+
+tidy_q_10 <- tidy(qmat_10, data = NEO_full)
+
+mean_per_pop_10 <- tidy_q_10 %>% 
+  group_by(group, q) %>%
+  reframe(mean_percentage = mean(percentage))
+
+wide_data <- mean_per_pop_10 %>%
+  tidyr::pivot_wider(names_from = q, values_from = mean_percentage, values_fill = 0) %>%
+  # make all .Q columns numeric
+  mutate(across(starts_with("Q"), as.numeric))
+
+wide_data_no_group <- wide_data %>% select(-group)
+```
+
+# K means clustering
+
+```{r}
+# Decide how many clusters to look at
+n_clusters <- 20
+
+# Initialize total within sum of squares error: wss
+wss <- numeric(n_clusters)
+
+set.seed(123)
+
+full_out <- list()
+
+# Look over 1 to n possible clusters
+for (i in 1:n_clusters) {
+  # Fit the model: km.out
+  km.out <- kmeans(wide_data_no_group, centers = i, nstart = 20)
+  full_out[i] <- km.out
+  # Save the within cluster sum of squares
+  wss[i] <- km.out$tot.withinss
+}
+
+# Produce a scree plot
+wss_df <- tibble(clusters = 1:n_clusters, wss = wss)
+ 
+scree_plot <- ggplot(wss_df, aes(x = clusters, y = wss, group = 1)) +
+    geom_point(size = 4)+
+    geom_line() +
+    scale_x_continuous(breaks = c(2, 4, 6, 8, 10)) +
+    xlab('Number of clusters') +
+    ylab("Within Cluster Sum of Squares") +
+    geom_hline(
+        yintercept = wss, 
+        linetype = 'dashed')
+
+
+scree_plot
+```
+
+7?
+
+```{r}
+# Select number of clusters
+k <- 7
+set.seed(123)
+# Build model with k clusters: km.out
+km.out <- kmeans(wide_data_no_group, centers = k, nstart = 20)
+wide_data_no_group$cluster <- factor(km.out$cluster)
+```
+
+
+```{r}
+wide_data_no_group$population <- wide_data$group
+# see how many populations are in each cluster
+
+
+# Add cluster info back to NEO_full based on $Population
+NEO_full <- NEO_full %>%
+  ungroup() %>%
+  mutate(cluster = wide_data_no_group$cluster[match(NEO_full$population, wide_data_no_group$population)])
+```
+
+```{r}
+ggplot(NEO_full, aes(x = cluster))+
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ggplot2::guides(fill = "none") +
+  labs(x = element_blank())
+  
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+neo_pops <- NEO_full %>%
+  group_by(population) %>%
+  reframe(N = n())
+# dat2 contains all populations in EGAS50000000006, even those without coordinates
+dat2 <- as.data.frame(read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx", sheet = 2))
+colnames(dat2) <- dat2[1, ]
+dat2 <- dat2[-1, ]
+# rename the 'Only-Africa dataset' column
+colnames(dat2)[which(colnames(dat2) == "Only-Africa dataset")] <- "Africa"
+# include only entries in Africa
+dat2 <- dat2 %>%
+  filter(Africa == "Yes")
+neo_pops$language_group <- ifelse(neo_pops$population %in% dat2$`Population label`,
+                                   dat2$poss_group[match(neo_pops$population, dat2$`Population label`)],
+                                   NA)
+
+neo_pops$lat <- ifelse(neo_pops$population %in% dat2$`Population label`,
+                           as.numeric(dat2$Latitude[match(neo_pops$population, dat2$`Population label`)]),
+                           NA)
+neo_pops$lon <- ifelse(neo_pops$population %in% dat2$`Population label`,
+                           as.numeric(dat2$Longitude[match(neo_pops$population, dat2$`Population label`)]),
+                           NA)
+
+
+
+map_data <- read.csv("~/Dropbox/gitdata/malagasy_diversity/data/raw/data_input/african_ethnolinguistic_centroids.csv")
+# transform to sf object
+map_data <- st_as_sf(map_data, coords = c("Longitude", "Latitude"), crs = 4326)
+# create plot of Africa
+africa <- ne_countries(continent = c("Africa"), scale = 50, returnclass = "sf")
+# plot by sample size
+p2 <- ggplot() +
+  geom_sf(data = africa) +
+  geom_sf(data = map_data, aes(color = N), size = 2, alpha = 0.7) +
+  theme(panel.background = element_rect(fill = "white", color = NA)) +
+  scale_color_viridis_c()
+p2
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+qmat_10 <- get_q_matrix(qmats, k = 10, run = 1)
+
+tidy_q_10 <- tidy(qmat_10, data = NEO_full)
+
+max_per_pop_10 <- tidy_q_10 %>% 
+  group_by(group) %>%
+  slice_max(order_by = percentage, n = 1)
+
+table(max_per_pop_10$q)
+
+ggplot(max_per_pop_10, aes(x = group, fill = q)) + 
+   geom_bar()  +
+   ggplot2::guides(fill = "none") +
+   labs(x = element_blank()) +
+   theme(axis.text.x = element_blank())
+```
+
+
+```{r}
+autoplot(qmats, k = 10, run = 1, type = "barplot", annotate_group = FALSE)
+```
+
+```{r}
+autoplot(qmats, k = 15, run = 1, type = "barplot", annotate_group = FALSE)
+```
+
+```{r}
+autoplot(qmats, k = 20, run = 1, type = "barplot", annotate_group = FALSE)
+```
+
+```{r}
+qmat_15 <- get_q_matrix(qmats, k = 15, run = 1)
+
+tidy_q_15 <- tidy(qmat_15, data = NEO_full)
+
+max_per_pop_15 <- tidy_q_15 %>% 
+  group_by(group) %>%
+  slice_max(order_by = percentage, n = 1)
+
+table(max_per_pop_15$q)
+
+ggplot(max_per_pop_15, aes(x = group, fill = q)) + 
+   geom_bar()  +
+   ggplot2::guides(fill = "none") +
+   labs(x = element_blank()) +
+   theme(axis.text.x = element_blank())
+```
+
+
+```{r}
+qmat_20 <- get_q_matrix(qmats, k = 20, run = 1)
+tidy_q_20 <- tidy(qmat_20, data = NEO_full)
+
+max_per_pop_20 <- tidy_q_20 %>% 
+  group_by(group) %>%
+  slice_max(order_by = percentage, n = 1)
+
+ggplot(max_per_pop_20, aes(x = group, fill = q)) + 
+   geom_bar()  +
+   ggplot2::guides(fill = "none") +
+   labs(x = element_blank()) +
+   theme(axis.text.x = element_blank())
+
+
+table(max_per_pop_20$q)
+```
+
+If a population has 15 or fewer individuals, then find populations with the same maximum Q at k = 10 and k = 20 to suggest merging.
+
+@TODO is 15 the right threshold? 10? 20? How large should the populations be to get sensible z-scores?
+
+
+```{r}
+neo_pops <- NEO_full %>%
+  group_by(population) %>%
+  reframe(N = n())
+
+neo_pops$max_Q_k_10 <- max_per_pop_10$q
+neo_pops$max_Q_k_15 <- max_per_pop_15$q
+neo_pops$max_Q_k_20 <- max_per_pop_20$q
+
+
+small_pops <- function(x, neo_pops){
+  # get the name of the population
+  pop_name <- x["population"]
+  
+  if (as.integer(x["N"]) < 10) {
+    # check which populations share the same max_Q_k_10 
+    population_info <- neo_pops %>%
+      filter(max_Q_k_10 == x["max_Q_k_10"] & max_Q_k_20 == x["max_Q_k_20"] & max_Q_k_15 == x["max_Q_k_15"] & population != pop_name)
+    if(nrow(population_info) > 0){
+      return(population_info$population)
+    } else {
+      return("Nothing to merge")
+    }
+  } else {
+    return(NA)
+  }
+  
+}
+
+neo_pops$merge_names <- apply(neo_pops, 1, FUN = small_pops, neo_pops = neo_pops)
+neo_pops
+```
+
+```{r}
+length(which(neo_pops$merge_names == "Nothing to merge"))
+length(which(!is.na(neo_pops$merge_names)))
+```
+
+
+use CV to choose K
+K-means clustering to put into populations for f-stats
+test for HWE afterwards to check the populations are 'sensible'
+
+# Use metadata to consider merges...?
+
+The metadata contain 111 populations - the data in the 'Only African' dataset in Fortez-Lima et al 2023. I suspect we have some data data from the 'Full-genotyped' dataset as this contains '81 populations with sample sizes lower than 10 individuals' because the metadata mostly cover populations with > 10 individuals.
+
+```{r}
+# dat2 contains all populations in EGAS50000000006, even those without coordinates
+dat2 <- as.data.frame(read_excel("/home/EJC199/Git/malagasy_diversity/data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx", sheet = 2))
+colnames(dat2) <- dat2[1, ]
+dat2 <- dat2[-1, ]
+# rename the 'Only-Africa dataset' column
+colnames(dat2)[which(colnames(dat2) == "Only-Africa dataset")] <- "Africa"
+# include only entries in Africa
+dat2 <- dat2 %>%
+  filter(Africa == "Yes")
+```
+
+# Add linguistic groups where recorded
+
+```{r}
+dat2$`Bantu Group` <- ifelse(dat2$`Bantu Group` == "-", NA, dat2$`Bantu Group`)
+dat2$poss_group <- ifelse(!is.na(dat2$`Bantu Group`), dat2$`Bantu Group`, dat2$Group)
+table(dat2$poss_group)
+
+neo_pops$language_group <- ifelse(neo_pops$population %in% dat2$`Population label`,
+                                   dat2$poss_group[match(neo_pops$population, dat2$`Population label`)],
+                                   NA)
+
+neo_pops$lat <- ifelse(neo_pops$population %in% dat2$`Population label`,
+                           as.numeric(dat2$Latitude[match(neo_pops$population, dat2$`Population label`)]),
+                           NA)
+neo_pops$lon <- ifelse(neo_pops$population %in% dat2$`Population label`,
+                           as.numeric(dat2$Longitude[match(neo_pops$population, dat2$`Population label`)]),
+                           NA)
+
+
+```
+
+# Add country and a $new_group column to neo_pops
+
+```{r}
+neo_pops$country <- sapply(strsplit(neo_pops$population, "_"), `[`, 1)
+neo_pops$new_group <- NA
+neo_pops$new_group <- ifelse(is.na(neo_pops$merge_names), neo_pops$population, neo_pops$new_group)
+```
+
+# Start combining populations by hand
+
+## Angola
+
+All Angola populations have Khoe-San languages (KSP): Khwe, Xun, Sekele, and Vasekele grouped here
+
+```{r}
+neo_pops$new_group[neo_pops$country %in% c("Angola")] <- "Angola_K_V_S_X"
+```
+
+# Tanzania Mixed
+
+Tanzania_TanzaniaMixed and Tanzania_Mixed appear to be the same population, and share .Q10 and .Q15 profiles. Tanzania_Mixed is only one individual.
+
+```{r}
+tan_mixed <- subset(neo_pops, neo_pops$population == "Tanzania_TanzaniaMixed")
+neo_pops$new_group[neo_pops$population == "Tanzania_Mixed"] <- tan_mixed$new_group
+```
+
+# Mozambique
+
+```{r}
+mozambique <- subset(neo_pops, neo_pops$country == "Mozambique")
+mozambique$merge_names
+```
+
+Tswa-Ronga/Tsonga are the same language group - part of a southern Bantu branch
+Tswa and Ronga share .Q profiles k10, k15, k20
+Tsonga shares .Q profiles k10 and k20 with Ronga and Tswa
+
+```{r}
+neo_pops$new_group[neo_pops$population %in% c(
+                                         "Mozambique_Tswa",
+                                         "Mozambique_Ronga",
+                                         "Mozambique_Tsonga")] <-"Mozambique_Tsonga"
+```
+
+
+
+
+```{r}
+# remove rows with missing lat/lon
+dat2 <- dat2 %>%
+  filter(!is.na(Latitude) & !is.na(Longitude))
+# transform to sf object
+dat2 <- st_as_sf(dat2, coords = c("Longitude", "Latitude"), crs = 4326)
+# make sample size numeric
+dat2$N <- as.numeric(dat2$N)
+
+# add coordinates to neo_pops based on matching population labels
+neo_pops_na_omit <- neo_pops %>%
+  filter(population %in% dat2$`Population label`)
+
+dat2$`Bantu Group` <- ifelse(dat2$`Bantu Group` == "-", NA, dat2$`Bantu Group`)
+dat2$poss_group <- ifelse(!is.na(dat2$`Bantu Group`), dat2$`Bantu Group`, dat2$Group)
+table(dat2$poss_group)
+
+neo_pops_na_omit$group <- dat2$poss_group[match(neo_pops_na_omit$population, dat2$`Population label`)]
+
+dat_sep <- dat2 %>%
+  mutate(lat = st_coordinates(.)[,1],
+         long = st_coordinates(.)[,2]) %>%
+  st_drop_geometry()
+
+# rename `population label` to population in dat_sep
+colnames(dat_sep)[which(colnames(dat_sep) == "Population label")] <- "population"
+
+
+# add geometry to neo_pops_na_omit based on matching population labels
+neo_pops_na_omit <- neo_pops_na_omit %>%
+  left_join(dat_sep[, c("population", "lat", "long")],
+    by = c("population")
+  )
+
+neo_pops_na_omit <- st_as_sf(neo_pops_na_omit,
+  coords = c("lat", "long"), crs = st_crs(4326)
+)
+```
+
+
+
+
+
+
+```{r}
+clump <- gt_clumppling(input_path = qmats)
+```
+
+```{r}
+out <- clump %>% autoplot(type = "modes", group = qmats$group)
+out
+```
+
+
+***
+
+## Recording R environment
+
+Part of ensuring our workflow is reproducible is to keep track of the R environment.
+We will automatically save our R environment into a file called `r_environment.json`.
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s05_b_fastmixture_africa.Rmd"
+filename_renv <- paste0(
+  output_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+print(sessionInfo())
+```
+

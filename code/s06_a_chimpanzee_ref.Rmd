@@ -1,7 +1,8 @@
 ---
-title: "f4 Ratio"
-output: html_document
+title: "Chimpanzee reference for f4 ratio"
 date: "2025-12-02"
+knit: resrepo::knit_to_results
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -12,12 +13,20 @@ library(httr)
 library(parallel)
 ```
 
+```{r set-directories}
+res_dir <- "../results/s06_f_stats/"
+```
+
 ```{r}
 mad_bor_g1000_sum <-
   gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
 ```
 
-# Use liftOver to lift hg19 snps to PanTro6
+# Use liftOver to lift hg19 snps to PanTro3.0
+
+Aligned using overchain https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToPanTro5.over.chain.gz (2017-05-04) to Pan_tro_3.0 (GCA_000001515.5) from UCSC Genome Browser (Kent et al., 2002).
+
+NOTE: chainfile https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToPanTro3.over.chain.gz (2011-02-22) aligns to the 2011 assembly of PanTro3 (GCA_000001515.3) which is older than the 2016 assembly (GCA_000001515.5) used by Ensembl REST API below. This is noted at https://hgdownload.soe.ucsc.edu/goldenPath/panTro5/bigZips/ which states 'This directory contains the May 2016 (Pan_tro 3.0/panTro5) assembly of the chimp genome (panTro5, Chimpanzee Sequencing and Analysis Consortium), as well as repeat annotations and GenBank sequences.' Therefore we use the newer PanTro5 chainfile in the bigsnpr command.
 
 ```{r}
 bim <- show_loci(mad_bor_g1000_sum)[, c("chr_int", "name", "genetic_dist", "position", "allele_ref", "allele_alt")]
@@ -28,7 +37,7 @@ pan_bim <- snp_modifyBuild(
   info_snp = bim,
   liftOver = "/usr/local/bin/liftOver",
   from = "hg19",
-  to = "PanTro6",
+  to = "PanTro5",
   check_reverse = FALSE,
   local_chain = NULL,
   base_url = "https://hgdownload.soe.ucsc.edu/goldenPath/"
@@ -39,6 +48,9 @@ pan_bim <- na.omit(pan_bim)
 ```
 
 # Get chimp reference base for each SNP
+
+Ensembl REST endpoint found here: https://rest.ensembl.org/documentation/info/sequence_region 
+Ensembl uses Pan_tro_3.0 (GCA_000001515.5) 2016/05/03 here https://www.ensembl.org/Pan_troglodytes/Info/Annotation and here https://www.ensembl.org/Pan_troglodytes/Info/Index 
 
 ```{r}
 get_chimp_base <- function(chr, pos, sleep_time = 0.1) {
@@ -163,7 +175,21 @@ chimp <- gen_tibble(
 ```
 
 
-```{r}
 
+***
+
+## Recording R environment
+
+Part of ensuring our workflow is reproducible is to keep track of the R environment.
+We will automatically save our R environment into a file called `r_environment.json`.
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s06_f_stats.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
 ```
 

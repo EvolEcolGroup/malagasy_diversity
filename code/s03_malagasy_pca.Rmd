@@ -42,6 +42,7 @@ nrow(malagasy_merged) - pierron_data
 # Set imputed
 
 ```{r}
+malagasy_merged <- gt_impute_simple(malagasy_merged, method = "mean")
 gt_set_imputed(malagasy_merged, TRUE)
 ```
 

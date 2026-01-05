@@ -67,7 +67,7 @@ Computational options:
 
                         *** Processing data ***
 
-num indivs in full data set: 2742
+num indivs in full data set: 2835
 parsing refpops string (semicolon-delimited; no spaces): Sumba;Esan
   admixed pop: MerinaA (22 indivs)
   ref pop 0: Sumba (36 indivs)
@@ -79,7 +79,7 @@ number of chromosomes (with data) used: 22
 
 Form of ALDER to run: 2-reference weighted LD
 
-==> Time to process data: 0.620083
+==> Time to process data: 0.59516
 
 -------------------------------------------------------------------------------
 
@@ -94,7 +94,7 @@ decay curves will be fit starting at d = 0.005 Morgans, as specified
 
 analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
 
-==> Time to run alder: 0.059485
+==> Time to run alder: 0.0676091
 
      0.050	 0.00306052	      1359557
      0.100	 0.00236929	      1238504
@@ -191,7 +191,7 @@ d>0.70     amp_tot:  0.00150067 +/- 0.00006398
 d>0.70     amp_exp:  0.00149008 +/- 0.00006500   z = 22.92 *
 d>0.70     amp_aff:  0.00002119 +/- 0.00000550
 
-==> Time to run fits: 0.084362
+==> Time to run fits: 0.0957239
 
 -------------------------------------------------------------------------------
 
@@ -203,7 +203,7 @@ d>0.70     amp_aff:  0.00002119 +/- 0.00000550
 
 analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
 
-==> Time to run alder: 0.334561
+==> Time to run alder: 0.366509
 
 ---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
 d>0.30       decay:       32.23 +/- 2.72         z = 11.83 *
@@ -235,7 +235,7 @@ d>0.70     amp_tot:  0.00008874 +/- 0.00000888
 d>0.70     amp_exp:  0.00008865 +/- 0.00000890   z = 9.96 *
 d>0.70     amp_aff:  0.00000018 +/- 0.00000033
 
-==> Time to run fits: 0.0810339
+==> Time to run fits: 0.0797591
 
 -------------------------------------------------------------------------------
 
@@ -243,7 +243,7 @@ d>0.70     amp_aff:  0.00000018 +/- 0.00000033
 
 analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
 
-==> Time to run alder: 0.325806
+==> Time to run alder: 0.271319
 
 ---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
 d>0.30       decay:       21.52 +/- 0.85         z = 25.33 *
@@ -275,7 +275,7 @@ d>0.70     amp_tot:  0.00099105 +/- 0.00004156
 d>0.70     amp_exp:  0.00098072 +/- 0.00004225   z = 23.21 *
 d>0.70     amp_aff:  0.00002066 +/- 0.00000427
 
-==> Time to run fits: 0.0734761
+==> Time to run fits: 0.0641501
 
 -------------------------------------------------------------------------------
 

@@ -49,9 +49,13 @@ nrow(malagasy_data)
 # Impute
 
 ```{r}
+mad_bor_g1000_sum <- gt_impute_simple(mad_bor_g1000_sum, method = "mean")
 gt_set_imputed(mad_bor_g1000_sum, TRUE)
+gt_save(
+  mad_bor_g1000_sum,
+  "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_imputed.gt"
+)
 ```
-
 
 # Compute PCA
 

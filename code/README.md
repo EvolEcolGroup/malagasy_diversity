@@ -8,7 +8,9 @@ s02_qc_merge_genetic_dist: Quality control and merging of SNP datasets, checking
 s03_malagasy_pca: PCA of Malagasy samples
 s04_full_pca: PCA of Malagasy samples with African and Asian references
 s05_fastmixture: FastMixture analysis of global samples
-s06_f_stats: f3 and f4 ratio statistics
+s05_b_fastmixture_africa: FastMixture analysis of African samples
+s06_a_chimpanzee_ref: preparation for f4 ratio statistics
+s06_b_f_stats: f3 and f4 statistics
 s07_ALDER: ALDER analysis for admixture dating
 s07a_convertf.par: Parameter file for converting EIGENSTRAT to PLINK format
 s07a_convertf_merina_sep.par: Parameter file for converting EIGENSTRAT to PLINK format for Merina samples

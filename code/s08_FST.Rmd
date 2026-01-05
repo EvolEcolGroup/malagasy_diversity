@@ -26,7 +26,7 @@ res_dir <- "../results/s08_FST/"
 
 ```{r}
 mad_bor_g1000_sum <-
-  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_imputed.gt")
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
 ```
 
