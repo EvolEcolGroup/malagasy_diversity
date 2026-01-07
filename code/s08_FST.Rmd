@@ -159,6 +159,10 @@ mad_bor_g1000_sum$population <- ifelse(!is.na(matching_m),
 # Pairwise Fst
 
 ```{r}
+# rename mad_bor_g1000_sum$population "Sakalava_Tsimihety" to "Sakalava/Tsimihety"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Sakalava_Tsimihety"] <- "Sakalava/Tsimihety"
+# rename mad_bor_g1000_sum$population "Diego" to "Diego Mixed"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Diego"] <- "Diego Mixed"
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
   filter(population %in% c(
     "Betsimisaraka", "Merina A", "Merina B", "Diego Mixed",
@@ -181,7 +185,7 @@ fst_matrix <- mad_bor_g1000_sum %>%
 pheatmap(fst_matrix,
   color = viridis(256),
   angle_col = 45,
-  filename = paste0(res_dir, "fst_dendrogram_merina_split_.jpg"),
+  filename = paste0(res_dir, "fst_dendrogram_merina_split.jpg"),
   width = 7, height = 5, dpi = 300
 )
 ```

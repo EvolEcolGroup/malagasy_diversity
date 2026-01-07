@@ -116,6 +116,10 @@ labels_data <- kml_data %>%
     geometry = st_centroid(st_union(geometry)) # Optional: Keeps geometry if needed
   )
 
+# Replace kml_data$Name == "Sakalava_Tsimihety" with "Sakalava/Tsimihety"
+kml_data$Name[kml_data$Name == "Sakalava_Tsimihety"] <- "Sakalava/Tsimihety"
+# Replace kmldata$Name == "Diego" with "Diego Mixed"
+kml_data$Name[kml_data$Name == "Diego"] <- "Diego Mixed"
 
 ggplot() +
   geom_sf(data = Madagascar_dissolved) +
@@ -151,8 +155,8 @@ main_map <- ggplot() +
   scale_color_brewer(palette = "Dark2") +
   scale_fill_brewer(palette = "Dark2") +
   guides() +
-  theme(  #legend.position = c(0.85, 0.65),
-    legend.position = "right",
+  theme(  legend.position = c(0.85, 0.65),
+    #legend.position = "right",
     legend.background = element_rect(fill = "white")
   )
 
@@ -195,8 +199,8 @@ ggsave(paste0(res_dir, "madagascar_map_pca_symbols_inset.jpg"), width = 7, heigh
 ```{r}
 # filter kml data to only betsileo, merina, betsimisaraka, and sakalava
 kml_data_subset <- kml_data[kml_data$Name %in% c("Betsileo", "Merina", "Betsimisaraka", "Sakalava"), ]
-# rename "sakalava" to "sakalava_tsimihety
-kml_data_subset$Name[kml_data_subset$Name == "Sakalava"] <- "Sakalava_Tsimihety"
+# rename "sakalava" to "Sakalava/Tsimihety
+kml_data_subset$Name[kml_data_subset$Name == "Sakalava"] <- "Sakalava/Tsimihety"
 ggplot() +
   geom_sf(data = Madagascar_dissolved) +
   geom_sf(data = sf::st_as_sf(kml_data_subset), aes(shape = Name, color = Name, fill = Name), size = 2) +
@@ -207,9 +211,9 @@ ggplot() +
   # geom_text(data = labels_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3)+
   labs(x = NULL, y = NULL, color = "Population", shape = "Population", fill = "Population") +
   # scale_color_brewer(palette = "Dark2")+
-  scale_color_manual(values = c("Betsileo" = "#1B9E77", "Merina" = "#7570B3", "Betsimisaraka" = "#D95F02", "Sakalava_Tsimihety" = "#E7298A")) +
+  scale_color_manual(values = c("Betsileo" = "#1B9E77", "Merina" = "#7570B3", "Betsimisaraka" = "#D95F02", "Sakalava/Tsimihety" = "#E7298A")) +
   # scale_fill_brewer(palette = "Dark2")+
-  scale_fill_manual(values = c("Betsileo" = "#1B9E77", "Merina" = "#7570B3", "Betsimisaraka" = "#D95F02", "Sakalava_Tsimihety" = "#E7298A")) +
+  scale_fill_manual(values = c("Betsileo" = "#1B9E77", "Merina" = "#7570B3", "Betsimisaraka" = "#D95F02", "Sakalava/Tsimihety" = "#E7298A")) +
   guides()
 
 

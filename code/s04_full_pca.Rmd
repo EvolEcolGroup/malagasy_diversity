@@ -105,11 +105,15 @@ mad_bor_g1000_sum$population <- gsub("_", " ", mad_bor_g1000_sum$population)
 ```{r}
 # create a new factor column with Malagasy populations as 1 and others as 0
 mad_bor_g1000_sum$malagasy <- 0
+# rename mad_bor_g1000_sum$population "Sakalava Tsimihety" to "Sakalava/Tsimihety"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Sakalava Tsimihety"] <- "Sakalava/Tsimihety"
+# rename mad_bor_g1000_sum$population "Diego" to "Diego Mixed"
+mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Diego"] <- "Diego Mixed"
 all_malagasy <- subset(
   mad_bor_g1000_sum,
   population %in% c(
-    "Betsimisaraka", "Merina", "Diego",
-    "Sakalava Tsimihety", "Betsileo",
+    "Betsimisaraka", "Merina", "Diego Mixed",
+    "Sakalava/Tsimihety", "Betsileo",
     "Vezo", "Mikea", "Temoro"
   )
 )
@@ -168,8 +172,8 @@ keep <- mad_bor_g1000_sum %>%
   group_by(population) %>%
   group_map(~ {
     if (!(.y$population %in% c(
-      "Betsimisaraka", "Merina", "Diego",
-      "Sakalava Tsimihety", "Betsileo",
+      "Betsimisaraka", "Merina", "Diego Mixed",
+      "Sakalava/Tsimihety", "Betsileo",
       "Vezo", "Mikea", "Temoro"
     ))) {
       subsample(.x)
@@ -203,7 +207,7 @@ malagasy_data <- subset(
   mad_bor_g1000_sum,
   mad_bor_g1000_sum$population %in% c(
     "Mikea", "Vezo",
-    "Temoro", "Diego",
+    "Temoro", "Diego Mixed",
     "Merina",
     "Betsimisaraka",
     "Sakalava_Tsimihety",
@@ -230,8 +234,8 @@ mad_bor_g1000_sum$malagasy <- 0
 all_malagasy <- subset(
   mad_bor_g1000_sum,
   population %in% c(
-    "Betsimisaraka", "Merina", "Diego",
-    "Sakalava Tsimihety", "Betsileo",
+    "Betsimisaraka", "Merina", "Diego Mixed",
+    "Sakalava/Tsimihety", "Betsileo",
     "Vezo", "Mikea", "Temoro"
   )
 )
@@ -306,8 +310,8 @@ mad_bor_g1000_sum$Region <-
   factor(mad_bor_g1000_sum$Region,
     levels = c(
       "Africa", "Island southeast Asia", "South Asia",
-      "East Asia", "Betsileo", "Betsimisaraka", "Diego",
-      "Merina", "Mikea", "Sakalava Tsimihety", "Temoro", "Vezo"
+      "East Asia", "Betsileo", "Betsimisaraka", "Diego Mixed",
+      "Merina", "Mikea", "Sakalava/Tsimihety", "Temoro", "Vezo"
     )
   )
 
@@ -343,10 +347,10 @@ ggplot(pcs, aes(
       "Island southeast Asia" = "#00C08B",
       "Betsileo" = "#DE8C00",
       "Betsimisaraka" = "#B79F00",
-      "Diego" = "#7CAE00",
+      "Diego Mixed" = "#7CAE00",
       "Merina" = "#00BFC4",
       "Mikea" = "#00B4F0",
-      "Sakalava Tsimihety" = "#619CFF",
+      "Sakalava/Tsimihety" = "#619CFF",
       "Temoro" = "#F564E3",
       "Vezo" = "#FF64B0"
     )

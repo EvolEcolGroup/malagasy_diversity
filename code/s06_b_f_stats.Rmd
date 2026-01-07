@@ -45,6 +45,21 @@ mad_bor_g1000_sum <-
   mad_bor_g1000_sum %>% filter(!population %in% to_remove_pops)
 ```
 
+# Update labels
+
+```{r}
+# # rename mad_bor_g1000_sum$population "Sakalava Tsimihety" to "Sakalava/Tsimihety"
+# mad_bor_g1000_sum <- mad_bor_g1000_sum %>% mutate(population = case_when(
+#   population == "Sakalava_Tsimihety" ~ "Sakalava/Tsimihety",
+#   TRUE ~ population
+# ))
+# # rename mad_bor_g1000_sum$population "Diego" to "Diego Mixed"
+# mad_bor_g1000_sum <- mad_bor_g1000_sum %>% mutate(population = case_when(
+#   population == "Diego" ~ "Diego Mixed",
+#   TRUE ~ population
+# ))
+```
+
 # Create f2 blocks directory
 
 ```{r}
@@ -132,6 +147,19 @@ test %>%
 # F3 values grouped descending all combinations
 
 ```{r}
+# update labels
+# rename test$Malagasy "Sakalava Tsimihety" to "Sakalava/Tsimihety"
+test <- test %>% mutate(Malagasy = case_when(
+  Malagasy == "Sakalava Tsimihety" ~ "Sakalava/Tsimihety",
+  TRUE ~ Malagasy
+))
+# rename test$Malagasy "Diego" to "Diego Mixed"
+test <- test %>% mutate(Malagasy = case_when(
+  Malagasy == "Diego" ~ "Diego Mixed",
+  TRUE ~ Malagasy
+))
+
+
 test_grouped <- test %>%
   select(est, se, z, Malagasy, Asian, African) %>%
   reframe(est = est, se = se, z, Malagasy, Asian, African)
@@ -152,7 +180,7 @@ test_grouped %>%
   )) +
   geom_point() +
   labs(
-    title = "F3 (Malagasy; Borneo, Mozambique_Chopi)", x = "f3", y = NULL,
+    x = "f3 (Malagasy; Borneo, Mozambique_Chopi)", y = NULL,
     color = element_blank(), shape = element_blank(),
     alpha = element_blank()
   ) +
@@ -737,6 +765,18 @@ qp4_african_p
 
 
 ```{r}
+# update labels
+# rename qp4_african_p$pop3 "Sakalava Tsimihety" to "Sakalava/Tsimihety"
+qp4_african_p <- qp4_african_p %>% mutate(pop3 = case_when(
+  pop3 == "Sakalava_Tsimihety" ~ "Sakalava/Tsimihety",
+  TRUE ~ pop3
+))
+# rename qp4_african_p$pop3 "Diego" to "Diego Mixed"
+qp4_african_p <- qp4_african_p %>% mutate(pop3 = case_when(
+  pop3 == "Diego" ~ "Diego Mixed",
+  TRUE ~ pop3
+))
+
 # FIX LEGEND
 qp4_african_p <- qp4_african_p %>%
   arrange(desc(alpha)) %>%
@@ -744,7 +784,6 @@ qp4_african_p <- qp4_african_p %>%
 ggplot(qp4_african_p, aes(x = alpha, y = pop3, colour = pop3, fill = pop3)) +
   geom_point() +
   labs(
-    title = "Proportion of African admixture into Malagasy populaitons",
     x = paste("Admixture proportion \u03b1"), y = NULL,
     colour = "Malagasy population", fill = "Malagasy population"
   ) +
@@ -752,7 +791,7 @@ ggplot(qp4_african_p, aes(x = alpha, y = pop3, colour = pop3, fill = pop3)) +
   theme_minimal() +
   theme(
     # axis.text.x = element_blank(),
-    axis.text.y = element_text(size = 7),
+    #axis.text.y = element_text(size = 8),
     legend.position = "right",
     axis.line = element_blank(),
     panel.grid.major = element_blank(),

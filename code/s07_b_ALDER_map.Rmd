@@ -150,6 +150,19 @@ ggsave(paste0(res_dir, "alder_dates_st_err.jpg"),
 library(data.table)
 kml_data$yrs <- as.numeric(unlist(tstrsplit(kml_data$years, " ", keep = 1)))
 
+# Replace kml_data$Name == "Sakalava_Tsimihety" with "Sakalava/Tsimihety"
+kml_data$Name[kml_data$Name == "Sakalava_Tsimihety"] <- "Sakalava/Tsimihety"
+# Replace kmldata$Name == "Diego" with "Diego Mixed"
+kml_data$Name[kml_data$Name == "Diego"] <- "Diego Mixed"
+
+labels_data <- kml_data %>%
+  group_by(Name) %>%
+  summarise(
+    x = mean(x),
+    y = mean(y),
+    geometry = st_centroid(st_union(geometry)) # Optional: Keeps geometry if needed
+  )
+
 ggplot() +
   geom_sf(data = madagascar_dissolved) +
   geom_sf(
@@ -166,8 +179,10 @@ ggplot() +
   theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
   labs(
     colour = "Admixture Date (years BP)",
-    fill = "Admixture Date (years BP)"
+    fill = "Admixture Date (years BP)",
+    x = NULL, y = NULL
   ) +
+  geom_label_repel(data = labels_data, aes(x = x, y = y, label = Name), size = 3, segment.color = 'transparent') +
   guides()
 ggsave(paste0(res_dir, "alder_dates_gradient.jpg"),
   width = 7, height = 5, dpi = 300
