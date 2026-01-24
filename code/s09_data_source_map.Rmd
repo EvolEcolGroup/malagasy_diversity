@@ -18,35 +18,13 @@ library(ggrepel)
 res_dir <- "../results/s09_data_source_map/"
 ```
 
-
-# New plan for map with rnaturalearth
-
-```{r}
-# WGS84 is standard, but lets use Laborde
-Madagascar <- ne_countries(country = "Madagascar", type = "map_units", scale = "medium")
-
-ggplot() +
-  geom_sf(data = Madagascar) +
-  coord_sf(crs = st_crs(29702)) + # Laborde projection, commonly used for Madagascar
-  theme_light()
-```
+# Create a map showing data collection locations in Madagascar
 
 ```{r}
 target <- c("Madagascar", "Mozambique", "Comoros", "Mauritius", "Seychelles", "Mayotte", "United Republic of Tanzania", "Malawi", "Zimbabwe", "South Africa", "Eswatini", "Zambia", "Lesotho", "Somalia", "Kenya", "Ethiopia", "Uganda", "Rwanda", "Burundi", "Djibouti", "Eritrea", "South Sudan", "Botswana", "Namibia", "Angola", "Democratic Republic of the Congo", "Central African Republic", "Republic of the Congo", "Equatorial Guinea", "Cameroon")
 
-# "Reunion" "Equatorial Guinea"!!
-
-
+# @TODO "Reunion" "Equatorial Guinea"!!
 Madagascar_inset <- ne_countries(country = target, type = "map_units", scale = 50)
-
-ggplot() +
-  geom_sf(data = Madagascar_inset) +
-  coord_sf(crs = st_crs(29702)) + # Laborde projection, commonly used for Madagascar
-  theme_light()
-
-# getting the right area is HARD lims_method = "cross" by default but will try others
-
-# others don't make much difference, confusingly
 ```
 
 ```{r}
@@ -58,21 +36,15 @@ ggplot() +
 
 
 ```{r}
-# Dissolve boundaries into a single geometry
+# Dissolve map country boundaries into a single geometry
 Madagascar_dissolved <- Madagascar_inset %>%
   st_union() %>%
   st_as_sf() # Convert back to sf object
-
-# Plot the map without boundaries
-ggplot() +
-  geom_sf(data = Madagascar_dissolved) +
-  theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
-  coord_sf(crs = st_crs(29702)) # Laborde projection
 ```
 
 
 ```{r}
-# Get all African countries
+# Africa
 africa <- ne_countries(continent = "Africa", scale = 50, returnclass = "sf") %>%
   st_union() %>%
   st_as_sf()

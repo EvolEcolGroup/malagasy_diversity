@@ -15,15 +15,14 @@ library(knitr)
 ```
 
 ```{r set-directories}
-res_dir <- "../results/s06_f_stats/"
+res_dir <- "../results/s06_b_f_stats/"
 ```
 
-# Load and group gt
+# Load
 
 ```{r}
 mad_bor_g1000_sum <-
   gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
 ```
 
 # Loci and sample count
@@ -60,6 +59,14 @@ mad_bor_g1000_sum <-
 # ))
 ```
 
+
+# Group by population
+
+```{r}
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
+```
+
+
 # Create f2 blocks directory
 
 ```{r}
@@ -83,20 +90,42 @@ count_snps(f2_blocks)
 # Test for admixture: F3(Malagasy; Asian, African)
 
 ```{r}
+gc()
+```
+
+
+```{r}
 all_pops <- unique(mad_bor_g1000_sum$population)
 
 malagasy <- c(
-  "Betsimisaraka", "Merina", "Diego", "Sakalava_Tsimihety",
+  "Betsimisaraka", "Merina","Diego", "Sakalava_Tsimihety", #MerinaA, MerinaB
   "Betsileo", "Temoro", "Vezo", "Mikea"
 )
-asian <- c("Borneo", "Sumba", "Timor", "KHV", "CHS")
+asian <- c("Borneo", "Sumba", "Timor", "KHV", "CHS", "PJL", "BEB")
 # removing ,"BEB","PJL"
 # african <- c("YRI", "LWK", "GWD", "ESN", "MSL")
 # Yoruba, Luhya, Gambian, Esan, Mende
 
 african <- setdiff(all_pops, c(malagasy, asian))
 
-test <- qp3pop(f2_blocks, malagasy, asian, african) # A, B ; C
+# Running test directly crashes R session, instead we can run in a loop
+#test <- qp3pop(f2_blocks, malagasy, asian, african) # A, B ; C
+
+results <- vector("list", length(african))
+names(results) <- african
+
+for (c_pop in african) {
+  message("Running C = ", c_pop)
+  results[[c_pop]] <- qp3pop(
+    f2_blocks,
+    malagasy,
+    asian,
+    c_pop
+  )
+  gc()
+}
+
+test <- do.call(rbind, results)
 
 colnames(test) <- c("Malagasy", "Asian", "African", "est", "se", "z", "p")
 
@@ -139,9 +168,22 @@ write.table(
 ```{r}
 # Examine z-scores remembering that z-score is affected by population size,
 # so interpretation should be careful
-test %>%
+min_z <- test %>%
   group_by(Malagasy) %>%
   slice(which.min(z))
+min_z
+
+mad_bor_g1000_sum %>% filter(population == "DRC_Ngwi") %>% nrow()
+mad_bor_g1000_sum %>% filter(population == "DRC_Shi") %>% nrow()
+
+mad_bor_g1000_sum %>% filter(population == "Mozambique_Ronga") %>% nrow()
+mad_bor_g1000_sum %>% filter(population == "Mozambique_Chopi") %>% nrow()
+mad_bor_g1000_sum %>% filter(population == "Mozambique_Tswa") %>% nrow()
+
+write.table(
+  file = paste0(res_dir, "minimum_z-score_malagasy_pops"),
+  min_z, row.names = FALSE, quote = FALSE
+)
 ```
 
 # F3 values grouped descending all combinations
@@ -158,6 +200,16 @@ test <- test %>% mutate(Malagasy = case_when(
   Malagasy == "Diego" ~ "Diego Mixed",
   TRUE ~ Malagasy
 ))
+# # rename test$Malagasy "MerinaA" to "Merina A"
+# test <- test %>% mutate(Malagasy = case_when(
+#   Malagasy == "MerinaA" ~ "Merina A",
+#   TRUE ~ Malagasy
+# ))
+# # rename test$Malagasy "MerinaB" to "Merina B"
+# test <- test %>% mutate(Malagasy = case_when(
+#   Malagasy == "MerinaB" ~ "Merina B",
+#   TRUE ~ Malagasy
+# ))
 
 
 test_grouped <- test %>%
@@ -216,7 +268,7 @@ test_grouped %>%
   ) +
   theme_minimal() +
   theme(
-    axis.text.x = element_blank(),
+    #axis.text.x = element_blank(),
     legend.position = "none",
     axis.line = element_blank(),
     panel.grid.major = element_blank(),
@@ -572,93 +624,8 @@ plt <- Y %>%
 # )
 ```
 
-# Outgroup f3's
-
-[@brucato2016a] used an outgroup f3 statistic to investigate the closest Asian population to the Malagasy. An f3 to assess the closest outgroup from a list of alternatives for an admixed population is not accurate, because there is not an equal branch length to the common ancestor. However, here we we will use F3(Asian, Malagasy; African) as in [@brucato2016a] to replicate their result and check our data.
-
 ```{r}
-african <- c("YRI")
-
-test2 <- qp3pop(f2_blocks, african, asian, malagasy)
-colnames(test2) <- c("African", "Asian", "Malagasy", "est", "se", "z", "p")
-
-
-test2$Asian <- sub("BOR", "Borneo", test2$Asian)
-test2$Asian <- sub("CHS", "Han Chinese", test2$Asian)
-test2$Asian <- sub("KHV", "Kinh Vietnamese", test2$Asian)
-test2$Asian <- sub("PJL", "Punjabi", test2$Asian)
-test2$Asian <- sub("BEB", "Bengali", test2$Asian)
-test2$Malagasy <- sapply(
-  strsplit(test2$Malagasy, "_"),
-  function(x) paste(x, collapse = " ")
-)
-
-print(test2)
-```
-
-```{r}
-test2 %>%
-  group_by(Malagasy) %>%
-  slice(which.max(est))
-```
-
-```{r}
-Y <- test2 %>%
-  filter(African == "YRI") %>%
-  select(est, se, Malagasy, Asian) %>%
-  reframe(est = est, se = se, Malagasy, Asian)
-
-Y <- Y[order(Y$est), ]
-Y$F3 <- paste(Y$Malagasy, " - ", Y$Asian)
-Y$F3 <- factor(Y$F3, levels = Y$F3[order(Y$est, decreasing = TRUE)])
-
-ggplot(Y, aes(x = est, y = F3, colour = Asian)) +
-  geom_point() + # , xmax = est - (se/2), xmin = est + (se/2)
-  labs(
-    title = "F3 (Asian, Malagasy; African)", x = "f3", y = NULL,
-    colour = "Asian population"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_blank(),
-    axis.text.y = element_text(size = 8),
-    legend.position = "right",
-    axis.line = element_blank(),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.background = element_rect(fill = "white")
-  )
-```
-
-```{r}
-Y <- test2 %>%
-  filter(African == "YRI") %>%
-  select(est, se, Malagasy, Asian) %>%
-  reframe(est = est, se = se, Malagasy, Asian)
-
-Y$F3 <- paste(Y$Malagasy, " - ", Y$Asian)
-Y <- Y %>%
-  arrange(desc(est)) %>%
-  select(est, se, Malagasy, Asian, F3) %>%
-  group_by(Malagasy) %>%
-  mutate(F3 = forcats::fct_inorder(F3))
-
-ggplot(Y, aes(x = est, y = F3, colour = Asian)) +
-  geom_point() +
-  labs(
-    title = "F3 (Asian, Malagasy; African)", x = "f3", y = NULL,
-    colour = "Asian population"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_blank(),
-    axis.text.y = element_text(size = 8),
-    legend.position = "right",
-    axis.line = element_blank(),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.background = element_rect(fill = "white")
-  )
+gc()
 ```
 
 # F4 ratio
@@ -669,9 +636,112 @@ f4(GBR,Gorilla;Malagasy,Borneo)/f4(GBR,Chimpanzee;Esan,Borneo)
 
 f4(GBR,Gorilla;Malagasy,Esan)/f4(GBR,Chimpanzee;Borneo,Esan)
 
+# Load
+
+```{r}
+mad_bor_g1000_sum <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
+```
+
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum)
+count_loci(mad_bor_g1000_sum)
+```
+
+
+# Split Merina
+
+```{r}
+# # Load fastmixture results
+# qmats <-
+#   readRDS("~/Dropbox/gitdata/malagasy_diversity/data/intermediate/fastmixture/fastmixture_m.RData")
+# # tidy with the gt
+# mad_bor_g1000_sum <- augment(get_q_matrix(qmats, k = 2, run = 1),
+#   data = mad_bor_g1000_sum
+# )
+# # filter to merina
+# merina <- mad_bor_g1000_sum %>% filter(population == "Merina")
+# # split groups
+# # .Q3 representing Asian ancestry and .Q2 representing African ancestry
+# merina$population <- ifelse(merina$.Q1 > 0.5, "MerinaA", "MerinaB")
+# merina <- merina[, c("id", "population")]
+# #merina$id <- sub("RR.*", "", merina$id)
+# 
+# # match V2 and merina$id and replace the population column in merina_fam with
+# # the population column in merina
+# matching_m <- match(mad_bor_g1000_sum$id, merina$id)
+# mad_bor_g1000_sum$population <- ifelse(!is.na(matching_m),
+#   merina$population[matching_m], mad_bor_g1000_sum$population
+# )
+# 
+# # count number of MerinaA
+# cat("Merina group > 0.5", length(which(mad_bor_g1000_sum$population == "MerinaA")))
+# cat("Merina group < 0.5", length(which(mad_bor_g1000_sum$population == "MerinaB")))
+# 
+# rm(qmats)
+```
+
+```{r}
+qmats <- read_q_files("../data/intermediate/admixture")
+
+fam <- read.table(
+  "../data/intermediate/admixture/admixture_supervised_subset.fam",
+  header = FALSE
+)
+
+qmats$id <- fam$V2
+
+# subset mad_bor_g1000_sum to only individuals in qmats$id
+mad_bor_g1000_sum_sub <- mad_bor_g1000_sum %>%
+  filter(id %in% qmats$id)
+
+# tidy with the gt
+mad_bor_g1000_sum_sub <- augment(get_q_matrix(qmats, k = 2, run = 1),
+  data = mad_bor_g1000_sum_sub
+)
+# filter to merina
+merina <- mad_bor_g1000_sum_sub %>% filter(population == "Merina")
+# split groups
+# .Q3 representing Asian ancestry and .Q2 representing African ancestry
+merina$population <- ifelse(merina$.Q1 > 0.5, "MerinaA", "MerinaB")
+merina <- merina[, c("id", "population")]
+
+# match V2 and merina$id and replace the population column in merina_fam with
+# the population column in merina
+matching_m <- match(mad_bor_g1000_sum$id, merina$id)
+mad_bor_g1000_sum$population <- ifelse(!is.na(matching_m),
+  merina$population[matching_m], mad_bor_g1000_sum$population
+)
+
+# count number of MerinaA
+cat("Merina group > 0.5", length(which(mad_bor_g1000_sum$population == "MerinaA")))
+cat("Merina group < 0.5", length(which(mad_bor_g1000_sum$population == "MerinaB")))
+
+```
+
+# Remove all populations with only one individual
+
+```{r}
+pop_tbl <- table(mad_bor_g1000_sum$population)
+to_remove <- which(pop_tbl == 1)
+to_remove_pops <- names(to_remove)
+mad_bor_g1000_sum <-
+  mad_bor_g1000_sum %>% filter(!population %in% to_remove_pops)
+```
+
+# Group by population
+
+```{r}
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
+```
+
+# Add Chimpanzee outgroup for f4
+
 ```{r}
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% ungroup()
-chimp <- gt_load("../data/intermediate/pan_tro_liftover/chimp_ref.gt")
+chimp <- gt_load("../data/intermediate/pan_tro_liftover/chimp_ref_v2.gt")
 f4_merged_data <- rbind(mad_bor_g1000_sum, chimp,
   as_is = FALSE, flip_strand = TRUE,
   quiet = FALSE, use_position = FALSE,
@@ -734,6 +804,10 @@ dim(f2_blocks)
 count_snps(f2_blocks)
 ```
 
+```{r}
+gc()
+```
+
 
 # F4 ratio: estimating the proportion of African admixture
 
@@ -741,7 +815,7 @@ Sister taxon and outgroup on the left, target in the centre, and sister populati
 
 ```{r}
 malagasy <- c(
-  "Betsimisaraka", "Merina", "Diego", "Sakalava_Tsimihety",
+  "Betsimisaraka", "MerinaA","MerinaB","Diego", "Sakalava_Tsimihety",
   "Betsileo", "Temoro", "Vezo", "Mikea"
 )
 
@@ -752,7 +826,7 @@ qp4_african_p <- qpf4ratio(f2_blocks, pop_matrix)
 
 qp4_african_p$pop3 <- factor(qp4_african_p$pop3,
   levels = c(
-    "Betsimisaraka", "Merina", "Diego",
+    "Betsimisaraka", "MerinaA","MerinaB", "Diego",
     "Sakalava_Tsimihety", "Betsileo",
     "Temoro", "Vezo", "Mikea"
   )
@@ -774,6 +848,16 @@ qp4_african_p <- qp4_african_p %>% mutate(pop3 = case_when(
 # rename qp4_african_p$pop3 "Diego" to "Diego Mixed"
 qp4_african_p <- qp4_african_p %>% mutate(pop3 = case_when(
   pop3 == "Diego" ~ "Diego Mixed",
+  TRUE ~ pop3
+))
+# rename qp4_african_p$pop3 "MerinaA" to "Merina A"
+qp4_african_p <- qp4_african_p %>% mutate(pop3 = case_when(
+  pop3 == "MerinaA" ~ "Merina A",
+  TRUE ~ pop3
+))
+# rename qp4_african_p$pop3 "MerinaB" to "Merina B"
+qp4_african_p <- qp4_african_p %>% mutate(pop3 = case_when(
+  pop3 == "MerinaB" ~ "Merina B",
   TRUE ~ pop3
 ))
 
@@ -865,7 +949,7 @@ Part of ensuring our workflow is reproducible is to keep track of the R environm
 We will automatically save our R environment into a file called `r_environment.json`.
 
 ```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
-filename_rmd <- "s06_f_stats.Rmd"
+filename_rmd <- "s06_b_f_stats.Rmd"
 filename_renv <- paste0(
   res_dir, "/renv_",
   tools::file_path_sans_ext(basename(filename_rmd)),

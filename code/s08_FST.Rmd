@@ -119,7 +119,7 @@ fst_merina_together <- ggheatmap(fst_matrix_sub) +
 fst_merina_together
 
 ggsave(paste0(res_dir, "fst_merina_together.jpg"),
-  width = 7, height = 5, dpi = 300
+ width = 7, height = 5, dpi = 300
 )
 ```
 
@@ -130,31 +130,72 @@ print(fst_matrix_sub)
 # Population level FST for Merina subsets
 
 ```{r}
-# Load fastmixture Q matrix
-qmats <- readRDS("../data/intermediate/fastmixture/fastmixture_m.RData")
-mad_bor_g1000_sum <-
-  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
+# # Load fastmixture Q matrix
+# qmats <- readRDS("../data/intermediate/fastmixture/fastmixture_m.RData")
+# mad_bor_g1000_sum <-
+#   gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
 ```
 
 ```{r}
+# # tidy with the gt
+# mad_bor_g1000_sum <- augment(get_q_matrix(qmats, k = 2, run = 1),
+#   data = mad_bor_g1000_sum
+# )
+# # filter to merina
+# merina <- mad_bor_g1000_sum %>% filter(population == "Merina")
+# # split groups
+# merina$population <- ifelse(merina$.Q1 > 0.5, "Merina A", "Merina B")
+# merina <- merina[, c("id", "population")]
+#
+# # match V2 and merina$id and replace the population column in
+# # merina_fam with the population column in merina
+# matching_m <- match(mad_bor_g1000_sum$id, merina$id)
+# mad_bor_g1000_sum$population <- ifelse(!is.na(matching_m),
+#   merina$population[matching_m],
+#   mad_bor_g1000_sum$population
+# )
+```
+
+```{r}
+qmats <- read_q_files("../data/intermediate/admixture")
+
+fam <- read.table(
+  "../data/intermediate/admixture/admixture_supervised_subset.fam",
+  header = FALSE
+)
+
+mad_bor_g1000_sum <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
+
+qmats$id <- fam$V2
+
+# subset mad_bor_g1000_sum to only individuals in qmats$id
+mad_bor_g1000_sum_sub <- mad_bor_g1000_sum %>%
+  filter(id %in% qmats$id)
+
 # tidy with the gt
-mad_bor_g1000_sum <- augment(get_q_matrix(qmats, k = 3, run = 1),
-  data = mad_bor_g1000_sum
+mad_bor_g1000_sum_sub <- augment(get_q_matrix(qmats, k = 2, run = 1),
+  data = mad_bor_g1000_sum_sub
 )
 # filter to merina
-merina <- mad_bor_g1000_sum %>% filter(population == "Merina")
+merina <- mad_bor_g1000_sum_sub %>% filter(population == "Merina")
 # split groups
-merina$population <- ifelse(merina$.Q3 > 0.5, "Merina A", "Merina B")
+# .Q3 representing Asian ancestry and .Q2 representing African ancestry
+merina$population <- ifelse(merina$.Q1 > 0.5, "Merina A", "Merina B")
 merina <- merina[, c("id", "population")]
 
-# match V2 and merina$id and replace the population column in
-# merina_fam with the population column in merina
+# match V2 and merina$id and replace the population column in merina_fam with
+# the population column in merina
 matching_m <- match(mad_bor_g1000_sum$id, merina$id)
 mad_bor_g1000_sum$population <- ifelse(!is.na(matching_m),
-  merina$population[matching_m],
-  mad_bor_g1000_sum$population
+  merina$population[matching_m], mad_bor_g1000_sum$population
 )
+
+# count number of MerinaA
+cat("Merina group > 0.5", length(which(mad_bor_g1000_sum$population == "Merina A")))
+cat("Merina group < 0.5", length(which(mad_bor_g1000_sum$population == "Merina B")))
 ```
+
 
 # Pairwise Fst
 
@@ -201,8 +242,8 @@ ggheatmap(fst_matrix) +
   theme(axis.text.x = element_text(angle = -60, hjust = 0))
 
 
-#https://stackoverflow.com/questions/38727324/adding-a-dendrogram-to-a-ggplot2-heatmap 
-#https://yunuuuu.github.io/ggalign-book/complexheatmap-single-heatmap.html
+# https://stackoverflow.com/questions/38727324/adding-a-dendrogram-to-a-ggplot2-heatmap
+# https://yunuuuu.github.io/ggalign-book/complexheatmap-single-heatmap.html
 
 ggheatmap(fst_matrix) +
   scale_fill_viridis_c(name = expression("F"[st])) +
@@ -231,7 +272,7 @@ fst_merina_split
 
 
 ggsave(paste0(res_dir, "fst_merina_split.jpg"),
-  width = 7, height = 5, dpi = 300
+ width = 7, height = 5, dpi = 300
 )
 ```
 
@@ -251,5 +292,4 @@ filename_renv <- paste0(
   ".json"
 )
 renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
-
 ```

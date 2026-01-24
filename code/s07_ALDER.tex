@@ -126,6 +126,28 @@
 \end{Highlighting}
 \end{Shaded}
 
+\section{Loci and sample count}\label{loci-and-sample-count}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{nrow}\NormalTok{(mad\_bor\_g1000\_sum\_neo)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 2744
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{count\_loci}\NormalTok{(mad\_bor\_g1000\_sum\_neo)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 425904
+\end{verbatim}
+
 \section{Load 1000 Genomes}\label{load-1000-genomes}
 
 \begin{Shaded}
@@ -176,12 +198,12 @@
 ## flip_strand =  TRUE  ; remove_ambiguous =  TRUE 
 ## -----------------------------
 ## dataset: reference 
-## number of SNPs: 235715 reduced to 235715 
+## number of SNPs: 425904 reduced to 425904 
 ## ( 0 are ambiguous, of which 0  were removed)
 ## -----------------------------
 ## dataset: target 
-## number of SNPs: 670552 reduced to 235715 
-## ( 40761 were flipped to match the reference set)
+## number of SNPs: 670552 reduced to 425904 
+## ( 75405 were flipped to match the reference set)
 ## ( 3 are ambiguous, of which 3 were removed)
 \end{verbatim}
 
@@ -210,7 +232,7 @@
 ## gt_load('/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_no_ld_cdx.gt')
 \end{verbatim}
 
-\section{Loci and sample count}\label{loci-and-sample-count}
+\section{Loci and sample count}\label{loci-and-sample-count-1}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -219,7 +241,7 @@
 \end{Shaded}
 
 \begin{verbatim}
-## [1] 2835
+## [1] 2837
 \end{verbatim}
 
 \begin{Shaded}
@@ -229,7 +251,7 @@
 \end{Shaded}
 
 \begin{verbatim}
-## [1] 235715
+## [1] 425904
 \end{verbatim}
 
 \section{Make \$population a copy of
@@ -395,14 +417,14 @@ separately}\label{adjust-for-a-second-dataset-with-merina-labelled-separately}
 \NormalTok{qmats }\OtherTok{\textless{}{-}}
   \FunctionTok{readRDS}\NormalTok{(}\StringTok{"\textasciitilde{}/Dropbox/gitdata/malagasy\_diversity/data/intermediate/fastmixture/fastmixture\_m.RData"}\NormalTok{)}
 \CommentTok{\# tidy with the gt}
-\NormalTok{mad\_bor\_g1000\_sum\_neo }\OtherTok{\textless{}{-}} \FunctionTok{augment}\NormalTok{(}\FunctionTok{get\_q\_matrix}\NormalTok{(qmats, }\AttributeTok{k =} \DecValTok{3}\NormalTok{, }\AttributeTok{run =} \DecValTok{1}\NormalTok{),}
+\NormalTok{mad\_bor\_g1000\_sum\_neo }\OtherTok{\textless{}{-}} \FunctionTok{augment}\NormalTok{(}\FunctionTok{get\_q\_matrix}\NormalTok{(qmats, }\AttributeTok{k =} \DecValTok{2}\NormalTok{, }\AttributeTok{run =} \DecValTok{1}\NormalTok{),}
   \AttributeTok{data =}\NormalTok{ mad\_bor\_g1000\_sum\_neo}
 \NormalTok{)}
 \CommentTok{\# filter to merina}
 \NormalTok{merina }\OtherTok{\textless{}{-}}\NormalTok{ mad\_bor\_g1000\_sum\_neo }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(population }\SpecialCharTok{==} \StringTok{"Merina"}\NormalTok{)}
 \CommentTok{\# split groups}
 \CommentTok{\# .Q3 representing Asian ancestry and .Q2 representing African ancestry}
-\NormalTok{merina}\SpecialCharTok{$}\NormalTok{population }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(merina}\SpecialCharTok{$}\NormalTok{.Q3 }\SpecialCharTok{\textgreater{}} \FloatTok{0.5}\NormalTok{, }\StringTok{"MerinaA"}\NormalTok{, }\StringTok{"MerinaB"}\NormalTok{)}
+\NormalTok{merina}\SpecialCharTok{$}\NormalTok{population }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(merina}\SpecialCharTok{$}\NormalTok{.Q1 }\SpecialCharTok{\textgreater{}} \FloatTok{0.5}\NormalTok{, }\StringTok{"MerinaA"}\NormalTok{, }\StringTok{"MerinaB"}\NormalTok{)}
 \NormalTok{merina }\OtherTok{\textless{}{-}}\NormalTok{ merina[, }\FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"population"}\NormalTok{)]}
 \NormalTok{merina}\SpecialCharTok{$}\NormalTok{id }\OtherTok{\textless{}{-}} \FunctionTok{sub}\NormalTok{(}\StringTok{"RR.*"}\NormalTok{, }\StringTok{""}\NormalTok{, merina}\SpecialCharTok{$}\NormalTok{id)}
 
@@ -419,7 +441,7 @@ separately}\label{adjust-for-a-second-dataset-with-merina-labelled-separately}
 \end{Shaded}
 
 \begin{verbatim}
-## Merina group > 0.5 22
+## Merina group > 0.5 23
 \end{verbatim}
 
 \begin{Shaded}
@@ -429,7 +451,7 @@ separately}\label{adjust-for-a-second-dataset-with-merina-labelled-separately}
 \end{Shaded}
 
 \begin{verbatim}
-## Merina group < 0.5 12
+## Merina group < 0.5 11
 \end{verbatim}
 
 \begin{Shaded}
@@ -778,6 +800,16 @@ any inference of the form ``x +/- y'', x is computed using data from all
 chromosomes and y is the standard error obtained from the jackknife.'
 README file for ALDER
 
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# subset result to only MerinaA and merinaB, not merina together}
+\NormalTok{result }\OtherTok{\textless{}{-}} \FunctionTok{subset}\NormalTok{(}
+\NormalTok{  result,}
+\NormalTok{  result}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{test pop}\StringTok{\textasciigrave{}} \SpecialCharTok{!=} \StringTok{"Merina"}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
 \section{Different African populations, using
 Borneo}\label{different-african-populations-using-borneo}
 
@@ -806,8 +838,12 @@ Borneo}\label{different-african-populations-using-borneo}
   \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+}
   \FunctionTok{theme}\NormalTok{(}
     \AttributeTok{axis.text.x =} \FunctionTok{element\_blank}\NormalTok{(),}
-    \AttributeTok{legend.position =} \StringTok{"inside"}\NormalTok{,}
-    \AttributeTok{legend.position.inside =} \FunctionTok{c}\NormalTok{(}\FloatTok{0.8}\NormalTok{, }\FloatTok{0.15}\NormalTok{),}
+    \AttributeTok{legend.position =} \StringTok{"right"}\NormalTok{,}
+    \CommentTok{\#legend.position = "inside",}
+    \CommentTok{\#legend.position.inside = c(0.8, 0.15),}
+    \AttributeTok{axis.title =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{size =} \DecValTok{14}\NormalTok{),}
+    \AttributeTok{legend.title =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{size =} \DecValTok{14}\NormalTok{),}
+    \AttributeTok{legend.text =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{size =} \DecValTok{12}\NormalTok{),}
     \AttributeTok{axis.line =} \FunctionTok{element\_blank}\NormalTok{(),}
     \AttributeTok{panel.grid.major =} \FunctionTok{element\_blank}\NormalTok{(),}
     \AttributeTok{panel.grid.minor =} \FunctionTok{element\_blank}\NormalTok{(),}
@@ -855,8 +891,12 @@ Mozambique\_Chopi}\label{different-asian-populations-using-mozambique_chopi}
   \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+}
   \FunctionTok{theme}\NormalTok{(}
     \AttributeTok{axis.text.x =} \FunctionTok{element\_blank}\NormalTok{(),}
-    \AttributeTok{legend.position =} \StringTok{"inside"}\NormalTok{,}
-    \AttributeTok{legend.position.inside =} \FunctionTok{c}\NormalTok{(}\FloatTok{0.8}\NormalTok{, }\FloatTok{0.15}\NormalTok{),}
+    \AttributeTok{legend.position =} \StringTok{"right"}\NormalTok{,}
+    \CommentTok{\#legend.position = "inside",}
+    \CommentTok{\#legend.position.inside = c(0.8, 0.15),}
+    \AttributeTok{axis.title =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{size =} \DecValTok{14}\NormalTok{),}
+    \AttributeTok{legend.title =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{size =} \DecValTok{14}\NormalTok{),}
+    \AttributeTok{legend.text =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{size =} \DecValTok{12}\NormalTok{),}
     \AttributeTok{axis.line =} \FunctionTok{element\_blank}\NormalTok{(),}
     \AttributeTok{panel.grid.major =} \FunctionTok{element\_blank}\NormalTok{(),}
     \AttributeTok{panel.grid.minor =} \FunctionTok{element\_blank}\NormalTok{(),}
@@ -947,7 +987,7 @@ set}\label{compare-results-with-and-without-mindis-parameter-set}
 \end{Highlighting}
 \end{Shaded}
 
-\pandocbounded{\includegraphics[keepaspectratio]{s07_ALDER_files/figure-latex/unnamed-chunk-2-1.pdf}}
+\pandocbounded{\includegraphics[keepaspectratio]{s07_ALDER_files/figure-latex/unnamed-chunk-4-1.pdf}}
 
 \section{Example LD curve plots}\label{example-ld-curve-plots}
 

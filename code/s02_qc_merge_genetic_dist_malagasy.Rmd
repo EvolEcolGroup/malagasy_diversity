@@ -207,7 +207,7 @@ to_keep <- which(loci_report_m$hwe_p > 0.01)
 malagasy_merged <- malagasy_merged %>% select_loci(all_of(to_keep))
 count_loci(malagasy_merged)
 malagasy_merged <-
-  malagasy_merged %>% select_loci_if(loci_missingness(genotypes) < 0.01)
+  malagasy_merged %>% select_loci_if(loci_missingness(genotypes) < 0.05)
 count_loci(malagasy_merged)
 malagasy_merged <-
   malagasy_merged %>% select_loci_if(loci_maf(genotypes) > 0.025)
@@ -259,34 +259,34 @@ malagasy_merged <- gt_impute_simple(malagasy_merged, method = "mean")
 # LD clumping
 
 ```{r}
-to_keep_LD <- loci_ld_clump(malagasy_merged,
-  thr_r2 = 0.2, size = 100,
-  return_id = TRUE, use_positions = TRUE
-)
-
-malagasy_merged_ld <- malagasy_merged %>% select_loci(all_of(to_keep_LD))
+# to_keep_LD <- loci_ld_clump(malagasy_merged,
+#   thr_r2 = 0.2, size = 100,
+#   return_id = TRUE, use_positions = TRUE
+# )
+# 
+# malagasy_merged_ld <- malagasy_merged %>% select_loci(all_of(to_keep_LD))
 ```
 
 # Loci and sample count
 
 ```{r}
-nrow(malagasy_merged_ld)
-count_loci(malagasy_merged_ld)
+# nrow(malagasy_merged_ld)
+# count_loci(malagasy_merged_ld)
 ```
 
 ```{r}
-if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld.gt")) {
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld.gt")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld.bk")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld.rds")
-}
+# if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld.gt")) {
+#   file.remove("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld.gt")
+#   file.remove("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld.bk")
+#   file.remove("../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld.rds")
+# }
 ```
 
 ```{r}
-malagasy_merged_ld <-
-  gt_update_backingfile(malagasy_merged_ld,
-    backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld"
-  )
+# malagasy_merged_ld <-
+#   gt_update_backingfile(malagasy_merged_ld,
+#     backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/malagasy_merge_clean_ld"
+#   )
 ```
 
 # Load Borneo data
@@ -525,7 +525,7 @@ mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% ungroup()
 to_keep <- which(loci_report_m$hwe_p > 0.01)
 mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% select_loci(all_of(to_keep))
 count_loci(mad_bor_g1000_sum_neo)
-mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% select_loci_if(loci_missingness(genotypes) < 0.01)
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% select_loci_if(loci_missingness(genotypes) < 0.05)
 count_loci(mad_bor_g1000_sum_neo)
 mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% select_loci_if(loci_maf(genotypes) > 0.025)
 count_loci(mad_bor_g1000_sum_neo)
@@ -614,32 +614,32 @@ mad_bor_g1000_sum_neo <- gt_impute_simple(mad_bor_g1000_sum_neo,
 # LD clumping
 
 ```{r}
-to_keep_LD <- loci_ld_clump(mad_bor_g1000_sum_neo,
-  thr_r2 = 0.2, size = 100,
-  return_id = TRUE, use_positions = TRUE
-)
-
-mad_bor_g1000_sum_neo_ld <- mad_bor_g1000_sum_neo %>% select_loci(all_of(to_keep_LD))
+# to_keep_LD <- loci_ld_clump(mad_bor_g1000_sum_neo,
+#   thr_r2 = 0.2, size = 100,
+#   return_id = TRUE, use_positions = TRUE
+# )
+# 
+# mad_bor_g1000_sum_neo_ld <- mad_bor_g1000_sum_neo %>% select_loci(all_of(to_keep_LD))
 ```
 
 # Loci and sample count
 
 ```{r}
-nrow(mad_bor_g1000_sum_neo)
-count_loci(mad_bor_g1000_sum_neo)
+# nrow(mad_bor_g1000_sum_neo)
+# count_loci(mad_bor_g1000_sum_neo)
 ```
 
 
 ```{r}
-if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld.gt")) {
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld.gt")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld.bk")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld.rds")
-}
-mad_bor_g1000_sum_neo <-
-  gt_update_backingfile(mad_bor_g1000_sum_neo,
-    backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld"
-  )
+# if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld.gt")) {
+#   file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld.gt")
+#   file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld.bk")
+#   file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld.rds")
+# }
+# mad_bor_g1000_sum_neo <-
+#   gt_update_backingfile(mad_bor_g1000_sum_neo,
+#     backingfile = "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_clean_ld"
+#   )
 ```
 
 # Check that we have genetic distances

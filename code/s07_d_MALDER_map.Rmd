@@ -1,0 +1,233 @@
+---
+title: "Map of MALDER results"
+date: "2025-03-19"
+knit: resrepo::knit_to_results
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(rnaturalearth)
+library(sf)
+library(dplyr)
+library(ggrepel)
+```
+
+```{r set-directories}
+res_dir <- "../results/s07_d_MALDER_map/"
+```
+
+# Load data
+
+```{r}
+# Load MALDER results
+dates_full <- readRDS("../results/s07_c_MALDER/malder_results_all.RData")
+
+# Subset to `ref A`$Borneo and `ref B`$Mozambique Chopi
+dates <- dates_full %>%
+  filter(
+    `ref A` == "Borneo" &
+      `ref B` == "Mozambique_Chopi"
+  )
+
+# Load KML
+#kml_data <- sf::st_read(dsn = "../data/raw/data_input/Data_with_pierron.kml")
+#kml_data <- sf::st_transform(kml_data, crs = 29702)
+# Add names
+#kml_data$Name <- c("Merina", "Sakalava_Tsimihety", "Betsimisaraka",
+#                   "Betsileo", "Diego", "Temoro", "Vezo", "Mikea",
+#                   "Mikea", "Mikea", "Mikea", "Mikea", "Mikea", "Mikea")
+
+
+kml_data_full <- readRDS("../data/raw/data_input/sampling_locations_with_pierron.rds")
+
+```
+
+To create a map showing estimated admixture timing for both Merina A and Merina B, we create a point for Merina B by adjusting the x coordinate to be slightly south of Merina A. See below.
+
+```{r}
+group <- c("MerinaA", "MerinaB")
+x <- c(519090.2, 519090.2)
+y <- c(834836.2, 810000.0)
+sample <- c(0,0)
+
+merina_coords <- data.frame(Name = group, x = x, y = y, sample = sample)
+
+merina_coords <- merina_coords %>%
+  st_as_sf(coords = c("x", "y"), crs = 29702) %>%
+  mutate(
+    x = st_coordinates(.)[, 1],
+    y = st_coordinates(.)[, 2]
+  )
+
+kml_data <- kml_data_full %>%
+  mutate(
+    x = st_coordinates(.)[, 1],
+    y = st_coordinates(.)[, 2]
+  )
+
+# rbind the two datasets
+kml_data_all <- rbind(kml_data, merina_coords)
+# remove Merina
+kml_data <- kml_data_all %>%
+  filter(Name != "Merina")
+```
+
+
+```{r}
+# match kml_data$Name and dates rownames
+matching <- match(kml_data$Name, as.character(dates$test_pop))
+
+# add admixture date and std_err to kml_data
+kml_data$date <- dates[matching, "admixture_date"]
+kml_data$std_err <- dates[matching, "CI"]
+
+kml_data$sample <- ifelse(kml_data$Name %in% c("Merina","MerinaA", "MerinaB", "Sakalava_Tsimihety", "Betsimisaraka", "Betsileo", "Diego"), 0, 1)
+
+kml_data <- kml_data[order(kml_data$Name), ]
+
+# Add plot shape
+kml_data$shape <- c(1, 3, 7, 15, 8, 17, 17, 17, 17, 17, 17, 17, 19, 21, 23)
+
+# add admixture date in years (gen time 30 years)
+kml_data$years <- paste(
+  round(kml_data$date * 30, 0),
+  "\u00b1",
+  round(kml_data$std_err * 30, 0), "BP"
+)
+
+
+labels_data <- kml_data %>%
+  group_by(Name) %>%
+  reframe(
+    x = mean(x),
+    y = mean(y),
+    date = years,
+    geometry = st_centroid(st_union(geometry))
+  )
+
+# Mikea has multiple locations, remove duplicates and leave one row to label
+labels_data <- labels_data[!duplicated(labels_data$Name), ]
+```
+
+# Create map
+
+```{r}
+# List possibly relevant countries
+target <- c("Madagascar", "Mozambique", "Comoros", "Mauritius", "Seychelles", "Mayotte", "United Republic of Tanzania", "Malawi", "Zimbabwe", "South Africa", "Eswatini", "Zambia", "Lesotho", "Somalia", "Kenya", "Ethiopia", "Uganda", "Rwanda", "Burundi", "Djibouti", "Eritrea", "South Sudan", "Botswana", "Namibia", "Angola", "Democratic Republic of the Congo", "Central African Republic", "Republic of the Congo", "Equatorial Guinea", "Cameroon")
+
+#Create an inset of Madagascar
+madagascar_inset <- ne_countries(
+  country = target,
+  type = "map_units",
+  scale = 50
+)
+
+madagascar_dissolved <- madagascar_inset %>%
+  st_union() %>%
+  st_as_sf()
+```
+
+```{r}
+# ggplot() +
+#   geom_sf(data = madagascar_dissolved) +
+#   geom_sf(
+#     data = sf::st_as_sf(kml_data),
+#     aes(shape = Name, color = Name, fill = Name),
+#     size = 2
+#   ) +
+#   coord_sf(
+#     crs = st_crs(29702),
+#     xlim = c(-1000000, 1800000),
+#     ylim = c(1, 2000000), expand = FALSE
+#   ) + # Laborde projection
+#   theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
+#   scale_shape_manual(values = c(1, 3, 7, 15, 8, 17, 19, 21, 23)) +
+#   labs(shape = NULL) +
+#   labs(
+#     x = NULL, y = NULL,
+#     color = "Population",
+#     shape = "Population",
+#     fill = "Population"
+#   ) +
+#   geom_label_repel(
+#     data = labels_data, force = 4, force_pull = 1,
+#     aes(x = x, y = y, label = date), size = 3,
+#     nudge_y = 2, segment.color = "transparent"
+#   ) +
+#   scale_color_brewer(palette = "Dark2") +
+#   scale_fill_brewer(palette = "Dark2") +
+#   guides()
+# ggsave(paste0(res_dir, "malder_dates_st_err.jpg"),
+#   width = 7, height = 5, dpi = 300
+# )
+```
+
+```{r}
+library(data.table)
+kml_data$yrs <- as.numeric(unlist(tstrsplit(kml_data$years, " ", keep = 1)))
+
+# Replace kml_data$Name == "Sakalava_Tsimihety" with "Sakalava/Tsimihety"
+kml_data$Name[kml_data$Name == "Sakalava_Tsimihety"] <- "Sakalava/Tsimihety"
+# Replace kmldata$Name == "Diego" with "Diego Mixed"
+kml_data$Name[kml_data$Name == "Diego"] <- "Diego Mixed"
+# Replace kml_data$Name == "MerinaA" with "Merina A"
+kml_data$Name[kml_data$Name == "MerinaA"] <- "Merina A"
+# Replace kml_data$Name == "MerinaB" with "Merina B"
+kml_data$Name[kml_data$Name == "MerinaB"] <- "Merina B"
+
+labels_data <- kml_data %>%
+  group_by(Name) %>%
+  summarise(
+    x = mean(x),
+    y = mean(y),
+    geometry = st_centroid(st_union(geometry)) # Optional: Keeps geometry if needed
+  )
+
+ggplot() +
+  geom_sf(data = madagascar_dissolved) +
+  geom_sf(
+    data = sf::st_as_sf(kml_data),
+    aes(color = yrs, fill = yrs),
+    size = 2
+  ) +
+  coord_sf(
+    crs = st_crs(29702),
+    xlim = c(-1000000, 1800000),
+    ylim = c(1, 2000000),
+    expand = FALSE
+  ) + # Laborde projection
+  theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)#,
+        #legend.position = c(0.85, 0.56),
+    #legend.background = element_rect(fill = "white")
+  ) +
+  labs(
+    colour = "Admixture Date (BP)",
+    fill = "Admixture Date (BP)",
+    x = NULL, y = NULL
+  ) +
+  geom_label_repel(data = labels_data, aes(x = x, y = y, label = Name), size = 3, segment.color = 'transparent') +
+  guides()
+ggsave(paste0(res_dir, "malder_dates_gradient.jpg"),
+  width = 7, height = 4, dpi = 300
+)
+```
+
+
+***
+
+## Recording R environment
+
+Part of ensuring our workflow is reproducible is to keep track of the R environment.
+We will automatically save our R environment into a file called `r_environment.json`.
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s07_d_MALDER_map.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+```

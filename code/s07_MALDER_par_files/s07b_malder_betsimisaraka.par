@@ -1,0 +1,10 @@
+genotypename: ../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno
+snpname: ../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.snp
+indivname: ../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.ind
+checkmap: YES
+jackknife: YES
+mindis: 0.005
+admixpop: Betsimisaraka
+refpops: Borneo;Sumba;Dai;Esan;Yoruba;Mozambique_Chopi
+raw_outname: /home/EJC199/Git/malagasy_diversity/code/s07_MALDER_par_files/malder_betsimisaraka.txt
+

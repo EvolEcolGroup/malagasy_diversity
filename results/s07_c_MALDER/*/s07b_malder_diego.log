@@ -1,0 +1,2176 @@
+
+        |                          
+        |      [M]ALDER,   v1.0
+     \..|./                        
+    \ \  /       Admixture         
+     \ |/ /      Linkage           
+      \| /       Disequilibrium for
+       |/        Evolutionary      
+       |         Relationships     
+       |                           
+
+  +--------------------------------------------------------------------------+
+  |  ALDER computes weighted LD decay curves, performs curve-fitting to      |
+  |  infer admixture dates, and uses the results to test for admixture.      |
+  |  For full details about options and parameters, please see the README    |
+  |  file included with this software.                                       |
+  +--------------------------------------------------------------------------+
+
+---------- contents of parameter file: s07b_malder_diego.par ----------
+genotypename: ../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno
+snpname: ../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.snp
+indivname: ../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.ind
+checkmap: YES
+jackknife: YES
+mindis: 0.005
+admixpop: Diego
+refpops: Borneo;Sumba;Dai;Esan;Yoruba;Mozambique_Chopi
+raw_outname: /home/EJC199/Git/malagasy_diversity/code/s07_MALDER_par_files/malder_diego.txt
+---------- parameter settings used (with defaults for unspecified) ----------
+
+Input data files:
+        genotypename: ../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno
+             snpname: ../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.snp
+           indivname: ../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.ind
+
+Admixed population:
+            admixpop: Diego
+
+Reference populations/weights:
+             refpops: Borneo;Sumba;Dai;Esan;Yoruba;Mozambique_Chopi
+
+Raw weighted LD curve output:
+         raw_outname: /home/EJC199/Git/malagasy_diversity/code/s07_MALDER_par_files/malder_diego.txt
+           jackknife: YES
+
+Data filtering:
+            mincount: 4
+
+Curve fitting:
+             binsize: 0.000500
+              mindis: 0.005000
+              maxdis: 0.500000
+           bootstrap: NO
+
+Input checks:
+       fast_snp_read: NO
+            checkmap: YES
+
+Computational options:
+         num_threads: 1
+      approx_ld_corr: YES
+      use_naive_algo: NO
+
+-------------------------------------------------------------------------------
+
+                        *** Processing data ***
+
+num indivs in full data set: 2837
+parsing refpops string (semicolon-delimited; no spaces): Borneo;Sumba;Dai;Esan;Yoruba;Mozambique_Chopi
+  admixed pop: Diego (31 indivs)
+  ref pop 0: Borneo (39 indivs)
+  ref pop 1: Sumba (36 indivs)
+  ref pop 2: Dai (93 indivs)
+  ref pop 3: Esan (98 indivs)
+  ref pop 4: Yoruba (104 indivs)
+  ref pop 5: Mozambique_Chopi (4 indivs)
+using 425904 of 425904 snps in data set
+reading genotype data.......................... done
+WARNING: raw output is not written when testing with >= 3 ref pops
+number of reference populations: 6
+number of chromosomes (with data) used: 22
+
+Form of ALDER to run: 3+ references (multiple admixture tests)
+
+==> Time to process data: 1.19248
+
+-------------------------------------------------------------------------------
+
+     *** Determining extent of correlated LD between test and ref pops ***
+
+WARNING: skipping LD correlation computation: 'mindis' param is set
+decay curves will be fit starting at d = 0.005 Morgans, as specified
+
+-------------------------------------------------------------------------------
+
+                     *** Running 1-ref pre-tests ***
+
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+
+Calculating number of effective populations using data from 425903 snps...
+Singular values of mean-centered allele frequency matrix:
+	1:	423.034
+	2:	160.396
+	3:	103.691
+	4:	73.1277
+	5:	40.1853
+	6:	1.1211e-13
+Effective number of ref pops (accounting for >90% of variance): 3
+Number of "independent" tests for multiple hypothesis correction: 3
+
+-------------------------------------------------------------------------------
+
+DATA:	test status	p-value	test pop	ref A	ref B	2-ref z-score	1-ref z-score A	1-ref z-score B	max decay diff %	2-ref decay	2-ref amp_exp	1-ref decay A	1-ref amp_exp A	1-ref decay B	1-ref amp_exp B
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Borneo Sumba ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.304738
+
++1.7e-05
+|    x                                                                         
+|                                                                              
+|                                                                              
+|     x                                                                        
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|      x                                                                       
+|                                                                              
+|       x                                                                      
+|                                                                              
+|                                                                              
+|         xx                                                                   
+|        x                                                                     
+|           xx                                                                 
+|                                                                              
+|              x xxx  x                                                        
+|               x                                                              
+|                    x                                                         
+|             x     x  x  xx                   x                               
+|                       x       xx  x                                          
+|                        x           x                 x                     x 
+|                           x         x     x   x  x          x   x        x   
+|                            x    x    x  x  xx     x        x                x
+|                              x           x          x                x  x    
+|                                  x    xx       x   x         x        xx  x  
+|                             x                          x x    x   x x        
+|                                                 x              x             
++---------+---------+---------+---------+---------+-----x-x-+------x-x+--------
+|         1         2         3         4         5         6         7      cM
+|                                                           x                  
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:       66.74 +/- 9.30         z = 7.18 *
+d>0.30     amp_tot:  0.00002273 +/- 0.00000291
+d>0.30     amp_exp:  0.00002263 +/- 0.00000290   z = 7.80 *
+d>0.30     amp_aff:  0.00000021 +/- 0.00000005
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:       48.81 +/- 8.44         z = 5.79 *
+d>0.40     amp_tot:  0.00001706 +/- 0.00000257
+d>0.40     amp_exp:  0.00001696 +/- 0.00000256   z = 6.61 *
+d>0.40     amp_aff:  0.00000021 +/- 0.00000005
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:       39.49 +/- 8.50         z = 4.64 *
+d>0.50     amp_tot:  0.00001402 +/- 0.00000250
+d>0.50     amp_exp:  0.00001391 +/- 0.00000250   z = 5.57 *
+d>0.50     amp_aff:  0.00000021 +/- 0.00000005
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:       34.30 +/- 8.23         z = 4.17 *
+d>0.60     amp_tot:  0.00001228 +/- 0.00000237
+d>0.60     amp_exp:  0.00001217 +/- 0.00000236   z = 5.16 *
+d>0.60     amp_aff:  0.00000021 +/- 0.00000005
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:       30.18 +/- 7.76         z = 3.89 *
+d>0.70     amp_tot:  0.00001086 +/- 0.00000218
+d>0.70     amp_exp:  0.00001075 +/- 0.00000218   z = 4.93 *
+d>0.70     amp_aff:  0.00000021 +/- 0.00000005
+
+==> Time to run fits: 0.100827
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Does Diego have a 2-ref weighted LD curve with Borneo and Sumba?
+   2-ref decay z-score:    4.64
+   2-ref amp_exp z-score:  5.57
+                                  YES: curve is significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+Test SUCCEEDS (z=4.64, p=3.4e-06) for Diego with {Borneo, Sumba} weights
+
+DATA:	success	3.4e-06	Diego	Borneo	Sumba	4.64	39.49 +/- 8.50	0.00001391 +/- 0.00000250
+
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Borneo Dai ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.127585
+
++5.0e-06
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|    x                                                                         
+|     x                                                                        
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|      xx                                                                      
+|                                                                              
+|            x                                                                 
+|          x                                                                   
+|                                                                              
+|           x          x                                                   x   
+|        x                                                                     
+|             x                                    x   x          x            
+|              x                                         x                    x
+|         x          x   x    x          x                                     
+|                 xx       x                            x                   xx 
+|               x           xx      xxx                   x  x                 
+|                     x         x                 x                            
+|                       x x                          x                    x    
++---------+------x--+---------+---------+---xx----+---------+-x-------+--------
+|         1         2         3x        4        x5 x x     6  x    x 7      cM
+|                                         x                 x   xx             
+|                                x     x   x   x                   x     x     
+|                                  x          x                      x         
+|                                               x          x                   
+|                                 x                                    xx      
+|                                                                              
+|                                                                              
+|                                                                     x        
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:      297.46 +/- 84.73        z = 3.51 *
+d>0.30     amp_tot:  0.00002494 +/- 0.00000881
+d>0.30     amp_exp:  0.00002495 +/- 0.00000881   z = 2.83 *
+d>0.30     amp_aff: -0.00000001 +/- 0.00000001
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:      186.50 +/- 74.88        z = 2.49 *
+d>0.40     amp_tot:  0.00001201 +/- 0.00000547
+d>0.40     amp_exp:  0.00001201 +/- 0.00000547   z = 2.20 *
+d>0.40     amp_aff: -0.00000001 +/- 0.00000001
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:      148.31 +/- 62.92        z = 2.36 *
+d>0.50     amp_tot:  0.00000848 +/- 0.00000423
+d>0.50     amp_exp:  0.00000848 +/- 0.00000423   z = 2.01 *
+d>0.50     amp_aff: -0.00000001 +/- 0.00000001
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:      132.47 +/- 58.46        z = 2.27 *
+d>0.60     amp_tot:  0.00000708 +/- 0.00000371
+d>0.60     amp_exp:  0.00000709 +/- 0.00000371   z = 1.91
+d>0.60     amp_aff: -0.00000001 +/- 0.00000001
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:      103.38 +/- 42.34        z = 2.44 *
+d>0.70     amp_tot:  0.00000470 +/- 0.00000219
+d>0.70     amp_exp:  0.00000471 +/- 0.00000219   z = 2.15 *
+d>0.70     amp_aff: -0.00000001 +/- 0.00000001
+
+==> Time to run fits: 0.114989
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Does Diego have a 2-ref weighted LD curve with Borneo and Dai?
+   2-ref decay z-score:    2.36
+   2-ref amp_exp z-score:  2.01
+                                  YES: curve is significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+Test SUCCEEDS (z=2.01, p=0.045) for Diego with {Borneo, Dai} weights
+
+DATA:	success	0.045	Diego	Borneo	Dai	2.01	148.31 +/- 62.92	0.00000848 +/- 0.00000423
+
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Borneo Esan ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.102637
+
++1.6e-03
+|    x                                                                         
+|     x                                                                        
+|      x                                                                       
+|       x                                                                      
+|        x                                                                     
+|         x                                                                    
+|          x                                                                   
+|           xxx                                                                
+|              xx                                                              
+|                xx                                                            
+|                  xx                                                          
+|                    xxxx                                                      
+|                        xx                                                    
+|                          xx                                                  
+|                            xxxx                                              
+|                                xxx                                           
+|                                   xxxx                                       
+|                                       xxx                                    
+|                                          xxxxxx                              
+|                                                xxxxx                         
+|                                                     xxxxxx                   
+|                                                           xxxxx              
+|                                                                xxxxxxxxxxxxxx
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
++---------+---------+---------+---------+---------+---------+---------+--------
+|         1         2         3         4         5         6         7      cM
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:       20.87 +/- 0.64         z = 32.85 *
+d>0.30     amp_tot:  0.00153638 +/- 0.00005812
+d>0.30     amp_exp:  0.00151175 +/- 0.00005723   z = 26.42 *
+d>0.30     amp_aff:  0.00004927 +/- 0.00000723
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:       20.54 +/- 0.65         z = 31.84 *
+d>0.40     amp_tot:  0.00151286 +/- 0.00005809
+d>0.40     amp_exp:  0.00148823 +/- 0.00005717   z = 26.03 *
+d>0.40     amp_aff:  0.00004927 +/- 0.00000723
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:       20.26 +/- 0.65         z = 31.02 *
+d>0.50     amp_tot:  0.00149277 +/- 0.00005830
+d>0.50     amp_exp:  0.00146813 +/- 0.00005735   z = 25.60 *
+d>0.50     amp_aff:  0.00004927 +/- 0.00000723
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:       19.99 +/- 0.66         z = 30.25 *
+d>0.60     amp_tot:  0.00147250 +/- 0.00005843
+d>0.60     amp_exp:  0.00144786 +/- 0.00005742   z = 25.21 *
+d>0.60     amp_aff:  0.00004927 +/- 0.00000723
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:       19.75 +/- 0.67         z = 29.50 *
+d>0.70     amp_tot:  0.00145469 +/- 0.00005831
+d>0.70     amp_exp:  0.00143006 +/- 0.00005725   z = 24.98 *
+d>0.70     amp_aff:  0.00004927 +/- 0.00000723
+
+==> Time to run fits: 0.07479
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Does Diego have a 2-ref weighted LD curve with Borneo and Esan?
+   2-ref decay z-score:   31.02
+   2-ref amp_exp z-score: 25.60
+                                  YES: curve is significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+Test SUCCEEDS (z=25.60, p=1.5e-144) for Diego with {Borneo, Esan} weights
+
+DATA:	success	1.5e-144	Diego	Borneo	Esan	25.60	20.26 +/- 0.65	0.00146813 +/- 0.00005735
+
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Borneo Yoruba ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.102821
+
++1.6e-03
+|    x                                                                         
+|     x                                                                        
+|                                                                              
+|      xx                                                                      
+|        x                                                                     
+|         x                                                                    
+|          x                                                                   
+|           xxx                                                                
+|              xx                                                              
+|                xx                                                            
+|                  x                                                           
+|                   xxxx                                                       
+|                       xxx                                                    
+|                          xx                                                  
+|                            xxxx                                              
+|                                xxx                                           
+|                                   xxx                                        
+|                                      xxxx                                    
+|                                          xxxxxx                              
+|                                                xxxx                          
+|                                                    xxxxxxx                   
+|                                                           xxxxx              
+|                                                                xxxxxxxxxxxxxx
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
++---------+---------+---------+---------+---------+---------+---------+--------
+|         1         2         3         4         5         6         7      cM
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:       20.77 +/- 0.62         z = 33.70 *
+d>0.30     amp_tot:  0.00152701 +/- 0.00005705
+d>0.30     amp_exp:  0.00150232 +/- 0.00005612   z = 26.77 *
+d>0.30     amp_aff:  0.00004937 +/- 0.00000736
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:       20.44 +/- 0.63         z = 32.61 *
+d>0.40     amp_tot:  0.00150348 +/- 0.00005704
+d>0.40     amp_exp:  0.00147880 +/- 0.00005608   z = 26.37 *
+d>0.40     amp_aff:  0.00004937 +/- 0.00000736
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:       20.17 +/- 0.64         z = 31.67 *
+d>0.50     amp_tot:  0.00148350 +/- 0.00005727
+d>0.50     amp_exp:  0.00145881 +/- 0.00005628   z = 25.92 *
+d>0.50     amp_aff:  0.00004937 +/- 0.00000736
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:       19.90 +/- 0.64         z = 30.94 *
+d>0.60     amp_tot:  0.00146364 +/- 0.00005729
+d>0.60     amp_exp:  0.00143895 +/- 0.00005625   z = 25.58 *
+d>0.60     amp_aff:  0.00004937 +/- 0.00000736
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:       19.66 +/- 0.65         z = 30.21 *
+d>0.70     amp_tot:  0.00144603 +/- 0.00005720
+d>0.70     amp_exp:  0.00142135 +/- 0.00005610   z = 25.33 *
+d>0.70     amp_aff:  0.00004937 +/- 0.00000736
+
+==> Time to run fits: 0.073911
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Does Diego have a 2-ref weighted LD curve with Borneo and Yoruba?
+   2-ref decay z-score:   31.67
+   2-ref amp_exp z-score: 25.92
+                                  YES: curve is significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+Test SUCCEEDS (z=25.92, p=4.1e-148) for Diego with {Borneo, Yoruba} weights
+
+DATA:	success	4.1e-148	Diego	Borneo	Yoruba	25.92	20.17 +/- 0.64	0.00145881 +/- 0.00005628
+
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Borneo Mozambique_Chopi ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.0962451
+
++1.7e-03
+|    x                                                                         
+|     x                                                                        
+|                                                                              
+|      xx                                                                      
+|        x                                                                     
+|         x                                                                    
+|          x                                                                   
+|           xx                                                                 
+|             xxx                                                              
+|                x                                                             
+|                 xx                                                           
+|                   xxxx                                                       
+|                       xx                                                     
+|                         xx                                                   
+|                           xxxx                                               
+|                               xxxx                                           
+|                                   xx                                         
+|                                     xxxxx                                    
+|                                          xxx  x                              
+|                                             xx xxx                           
+|                                                   xxxxxxxx                   
+|                                                           xxx                
+|                                                              xxxxxxxxxxxxxxx 
+|                                                                             x
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
++---------+---------+---------+---------+---------+---------+---------+--------
+|         1         2         3         4         5         6         7      cM
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:       20.95 +/- 0.63         z = 33.33 *
+d>0.30     amp_tot:  0.00161232 +/- 0.00005805
+d>0.30     amp_exp:  0.00158664 +/- 0.00005711   z = 27.78 *
+d>0.30     amp_aff:  0.00005136 +/- 0.00000784
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:       20.58 +/- 0.64         z = 32.18 *
+d>0.40     amp_tot:  0.00158511 +/- 0.00005811
+d>0.40     amp_exp:  0.00155943 +/- 0.00005719   z = 27.27 *
+d>0.40     amp_aff:  0.00005136 +/- 0.00000784
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:       20.26 +/- 0.64         z = 31.53 *
+d>0.50     amp_tot:  0.00156102 +/- 0.00005806
+d>0.50     amp_exp:  0.00153534 +/- 0.00005713   z = 26.87 *
+d>0.50     amp_aff:  0.00005136 +/- 0.00000784
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:       19.95 +/- 0.64         z = 31.08 *
+d>0.60     amp_tot:  0.00153735 +/- 0.00005795
+d>0.60     amp_exp:  0.00151168 +/- 0.00005700   z = 26.52 *
+d>0.60     amp_aff:  0.00005136 +/- 0.00000784
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:       19.69 +/- 0.64         z = 30.80 *
+d>0.70     amp_tot:  0.00151650 +/- 0.00005777
+d>0.70     amp_exp:  0.00149083 +/- 0.00005676   z = 26.26 *
+d>0.70     amp_aff:  0.00005136 +/- 0.00000784
+
+==> Time to run fits: 0.0753009
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Does Diego have a 2-ref weighted LD curve with Borneo and Mozambique_Chopi?
+   2-ref decay z-score:   31.53
+   2-ref amp_exp z-score: 26.87
+                                  YES: curve is significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+Test SUCCEEDS (z=26.87, p=4.4e-159) for Diego with {Borneo, Mozambique_Chopi} weights
+
+DATA:	success	4.4e-159	Diego	Borneo	Mozambique_Chopi	26.87	20.26 +/- 0.64	0.00153534 +/- 0.00005713
+
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Sumba Dai ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.0980179
+
++3.0e-05
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|    x                                                                         
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|     x                                                                        
+|                                                                              
+|                                                                              
+|      xx                                                                      
+|                                                                              
+|        x                                                                     
+|         x                                                                    
+|          x x                                                                 
+|           x x                                                                
+|              x                                                               
+|                 xx    x x                                                    
+|               x   x xx x x  x      x                                         
+|                x   x           x  x         xx x x                          x
+|                           xx  x     xxx   xx  x   xx x               x  xx x 
+|                              x   x      x                  x          xx     
+|                                        x x      x   x   xxx xxx xxxx         
++---------+---------+---------+---x-----+---------+------x--+---------+-----x--
+|         1         2         3         4         5         6    x    7      cM
+|                                                       x                      
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:       96.38 +/- 22.76        z = 4.23 *
+d>0.30     amp_tot:  0.00003324 +/- 0.00000642
+d>0.30     amp_exp:  0.00003312 +/- 0.00000642   z = 5.16 *
+d>0.30     amp_aff:  0.00000024 +/- 0.00000005
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:       70.72 +/- 20.43        z = 3.46 *
+d>0.40     amp_tot:  0.00002438 +/- 0.00000529
+d>0.40     amp_exp:  0.00002427 +/- 0.00000529   z = 4.59 *
+d>0.40     amp_aff:  0.00000024 +/- 0.00000005
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:       54.62 +/- 16.99        z = 3.21 *
+d>0.50     amp_tot:  0.00001883 +/- 0.00000415
+d>0.50     amp_exp:  0.00001871 +/- 0.00000415   z = 4.51 *
+d>0.50     amp_aff:  0.00000024 +/- 0.00000005
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:       43.17 +/- 13.32        z = 3.24 *
+d>0.60     amp_tot:  0.00001489 +/- 0.00000314
+d>0.60     amp_exp:  0.00001478 +/- 0.00000314   z = 4.70 *
+d>0.60     amp_aff:  0.00000024 +/- 0.00000005
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:       37.87 +/- 12.00        z = 3.16 *
+d>0.70     amp_tot:  0.00001305 +/- 0.00000283
+d>0.70     amp_exp:  0.00001294 +/- 0.00000283   z = 4.57 *
+d>0.70     amp_aff:  0.00000024 +/- 0.00000005
+
+==> Time to run fits: 0.0807021
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Does Diego have a 2-ref weighted LD curve with Sumba and Dai?
+   2-ref decay z-score:    3.21
+   2-ref amp_exp z-score:  4.51
+                                  YES: curve is significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+Test SUCCEEDS (z=3.21, p=0.0013) for Diego with {Sumba, Dai} weights
+
+DATA:	success	0.0013	Diego	Sumba	Dai	3.21	54.62 +/- 16.99	0.00001871 +/- 0.00000415
+
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Sumba Esan ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.099854
+
++1.5e-03
+|                                                                              
+|    x                                                                         
+|     x                                                                        
+|                                                                              
+|      xx                                                                      
+|        x                                                                     
+|         x                                                                    
+|          x                                                                   
+|           xxx                                                                
+|              xx                                                              
+|                xx                                                            
+|                  xx                                                          
+|                    xxxx                                                      
+|                        xx                                                    
+|                          xx                                                  
+|                            xxxx                                              
+|                                xxxx                                          
+|                                    xxxxx                                     
+|                                         xxx                                  
+|                                            xxxx xx                           
+|                                                x  xxx x                      
+|                                                      x xxxxx                 
+|                                                             xxxxxxxx  x      
+|                                                                     xx xxxxxx
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
++---------+---------+---------+---------+---------+---------+---------+--------
+|         1         2         3         4         5         6         7      cM
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:       21.22 +/- 0.71         z = 29.97 *
+d>0.30     amp_tot:  0.00137979 +/- 0.00005853
+d>0.30     amp_exp:  0.00135817 +/- 0.00005777   z = 23.51 *
+d>0.30     amp_aff:  0.00004324 +/- 0.00000650
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:       20.86 +/- 0.72         z = 29.02 *
+d>0.40     amp_tot:  0.00135723 +/- 0.00005838
+d>0.40     amp_exp:  0.00133561 +/- 0.00005759   z = 23.19 *
+d>0.40     amp_aff:  0.00004324 +/- 0.00000650
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:       20.57 +/- 0.73         z = 28.25 *
+d>0.50     amp_tot:  0.00133819 +/- 0.00005821
+d>0.50     amp_exp:  0.00131657 +/- 0.00005741   z = 22.93 *
+d>0.50     amp_aff:  0.00004324 +/- 0.00000650
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:       20.28 +/- 0.74         z = 27.52 *
+d>0.60     amp_tot:  0.00131942 +/- 0.00005848
+d>0.60     amp_exp:  0.00129780 +/- 0.00005766   z = 22.51 *
+d>0.60     amp_aff:  0.00004324 +/- 0.00000650
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:       20.03 +/- 0.74         z = 27.00 *
+d>0.70     amp_tot:  0.00130247 +/- 0.00005810
+d>0.70     amp_exp:  0.00128085 +/- 0.00005723   z = 22.38 *
+d>0.70     amp_aff:  0.00004324 +/- 0.00000650
+
+==> Time to run fits: 0.0748451
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Does Diego have a 2-ref weighted LD curve with Sumba and Esan?
+   2-ref decay z-score:   28.25
+   2-ref amp_exp z-score: 22.93
+                                  YES: curve is significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+Test SUCCEEDS (z=22.93, p=2.2e-116) for Diego with {Sumba, Esan} weights
+
+DATA:	success	2.2e-116	Diego	Sumba	Esan	22.93	20.57 +/- 0.73	0.00131657 +/- 0.00005741
+
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Sumba Yoruba ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.0988479
+
++1.5e-03
+|                                                                              
+|    x                                                                         
+|                                                                              
+|     x                                                                        
+|      xx                                                                      
+|        x                                                                     
+|         x                                                                    
+|          x                                                                   
+|           xx                                                                 
+|             xxx                                                              
+|                xx                                                            
+|                  xx                                                          
+|                    xxxx                                                      
+|                        xx                                                    
+|                          xx                                                  
+|                            xxxx                                              
+|                                xxxx                                          
+|                                    xxxxx                                     
+|                                         xxx                                  
+|                                            xxxx xx                           
+|                                                x  xxx x                      
+|                                                      x xxxxx                 
+|                                                             xxxxxxxx  x      
+|                                                                     xx xxxxxx
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
++---------+---------+---------+---------+---------+---------+---------+--------
+|         1         2         3         4         5         6         7      cM
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:       21.11 +/- 0.69         z = 30.74 *
+d>0.30     amp_tot:  0.00137038 +/- 0.00005734
+d>0.30     amp_exp:  0.00134872 +/- 0.00005654   z = 23.86 *
+d>0.30     amp_aff:  0.00004333 +/- 0.00000663
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:       20.75 +/- 0.70         z = 29.79 *
+d>0.40     amp_tot:  0.00134794 +/- 0.00005711
+d>0.40     amp_exp:  0.00132628 +/- 0.00005628   z = 23.56 *
+d>0.40     amp_aff:  0.00004333 +/- 0.00000663
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:       20.46 +/- 0.71         z = 28.98 *
+d>0.50     amp_tot:  0.00132907 +/- 0.00005703
+d>0.50     amp_exp:  0.00130741 +/- 0.00005619   z = 23.27 *
+d>0.50     amp_aff:  0.00004333 +/- 0.00000663
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:       20.18 +/- 0.71         z = 28.23 *
+d>0.60     amp_tot:  0.00131069 +/- 0.00005712
+d>0.60     amp_exp:  0.00128903 +/- 0.00005625   z = 22.91 *
+d>0.60     amp_aff:  0.00004333 +/- 0.00000663
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:       19.93 +/- 0.72         z = 27.68 *
+d>0.70     amp_tot:  0.00129400 +/- 0.00005685
+d>0.70     amp_exp:  0.00127234 +/- 0.00005595   z = 22.74 *
+d>0.70     amp_aff:  0.00004333 +/- 0.00000663
+
+==> Time to run fits: 0.076401
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Does Diego have a 2-ref weighted LD curve with Sumba and Yoruba?
+   2-ref decay z-score:   28.98
+   2-ref amp_exp z-score: 23.27
+                                  YES: curve is significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+Test SUCCEEDS (z=23.27, p=9.8e-120) for Diego with {Sumba, Yoruba} weights
+
+DATA:	success	9.8e-120	Diego	Sumba	Yoruba	23.27	20.46 +/- 0.71	0.00130741 +/- 0.00005619
+
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Sumba Mozambique_Chopi ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.100822
+
++1.6e-03
+|                                                                              
+|    x                                                                         
+|                                                                              
+|     x                                                                        
+|      x                                                                       
+|       xx                                                                     
+|         x                                                                    
+|          x                                                                   
+|           xx                                                                 
+|             x x                                                              
+|              x x                                                             
+|                 xx                                                           
+|                   xxxx                                                       
+|                       xxx                                                    
+|                          x                                                   
+|                           xxxxx                                              
+|                                xxx                                           
+|                                   xxxxxx                                     
+|                                         xx                                   
+|                                           xxxxxxxx                           
+|                                                   xxx                        
+|                                                      xxxxxxx                 
+|                                                             xxxxxxxxx x      
+|                                                                      x xxxxxx
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
++---------+---------+---------+---------+---------+---------+---------+--------
+|         1         2         3         4         5         6         7      cM
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:       21.27 +/- 0.70         z = 30.40 *
+d>0.30     amp_tot:  0.00145085 +/- 0.00005939
+d>0.30     amp_exp:  0.00142826 +/- 0.00005859   z = 24.38 *
+d>0.30     amp_aff:  0.00004518 +/- 0.00000711
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:       20.87 +/- 0.71         z = 29.30 *
+d>0.40     amp_tot:  0.00142462 +/- 0.00005932
+d>0.40     amp_exp:  0.00140203 +/- 0.00005854   z = 23.95 *
+d>0.40     amp_aff:  0.00004518 +/- 0.00000711
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:       20.53 +/- 0.72         z = 28.68 *
+d>0.50     amp_tot:  0.00140178 +/- 0.00005903
+d>0.50     amp_exp:  0.00137919 +/- 0.00005826   z = 23.67 *
+d>0.50     amp_aff:  0.00004518 +/- 0.00000711
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:       20.22 +/- 0.72         z = 28.14 *
+d>0.60     amp_tot:  0.00138023 +/- 0.00005906
+d>0.60     amp_exp:  0.00135764 +/- 0.00005828   z = 23.30 *
+d>0.60     amp_aff:  0.00004518 +/- 0.00000711
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:       19.94 +/- 0.72         z = 27.74 *
+d>0.70     amp_tot:  0.00136067 +/- 0.00005891
+d>0.70     amp_exp:  0.00133808 +/- 0.00005810   z = 23.03 *
+d>0.70     amp_aff:  0.00004518 +/- 0.00000711
+
+==> Time to run fits: 0.0770669
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Does Diego have a 2-ref weighted LD curve with Sumba and Mozambique_Chopi?
+   2-ref decay z-score:   28.68
+   2-ref amp_exp z-score: 23.67
+                                  YES: curve is significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+Test SUCCEEDS (z=23.67, p=6.7e-124) for Diego with {Sumba, Mozambique_Chopi} weights
+
+DATA:	success	6.7e-124	Diego	Sumba	Mozambique_Chopi	23.67	20.53 +/- 0.72	0.00137919 +/- 0.00005826
+
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Dai Esan ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.101378
+
++1.7e-03
+|                                                                              
+|    x                                                                         
+|                                                                              
+|     x                                                                        
+|      x                                                                       
+|       x                                                                      
+|        xx                                                                    
+|          x                                                                   
+|           xx                                                                 
+|             xxx                                                              
+|                x                                                             
+|                 xxx                                                          
+|                    xxxx                                                      
+|                        xx                                                    
+|                          xx                                                  
+|                            xxxxx                                             
+|                                 xxx                                          
+|                                    xxxxx                                     
+|                                         xxx                                  
+|                                            xxxx xx                           
+|                                                x  xxx                        
+|                                                      xxxxxxx                 
+|                                                             xxxxxxxxx x      
+|                                                                      x xxxxxx
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
++---------+---------+---------+---------+---------+---------+---------+--------
+|         1         2         3         4         5         6         7      cM
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:       20.88 +/- 0.63         z = 33.25 *
+d>0.30     amp_tot:  0.00154002 +/- 0.00006087
+d>0.30     amp_exp:  0.00151523 +/- 0.00006019   z = 25.17 *
+d>0.30     amp_aff:  0.00004958 +/- 0.00000740
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:       20.53 +/- 0.64         z = 31.90 *
+d>0.40     amp_tot:  0.00151514 +/- 0.00006104
+d>0.40     amp_exp:  0.00149035 +/- 0.00006033   z = 24.70 *
+d>0.40     amp_aff:  0.00004958 +/- 0.00000740
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:       20.24 +/- 0.66         z = 30.80 *
+d>0.50     amp_tot:  0.00149412 +/- 0.00006128
+d>0.50     amp_exp:  0.00146933 +/- 0.00006055   z = 24.26 *
+d>0.50     amp_aff:  0.00004958 +/- 0.00000740
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:       19.95 +/- 0.67         z = 29.89 *
+d>0.60     amp_tot:  0.00147250 +/- 0.00006152
+d>0.60     amp_exp:  0.00144771 +/- 0.00006075   z = 23.83 *
+d>0.60     amp_aff:  0.00004958 +/- 0.00000740
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:       19.69 +/- 0.68         z = 29.06 *
+d>0.70     amp_tot:  0.00145305 +/- 0.00006145
+d>0.70     amp_exp:  0.00142826 +/- 0.00006061   z = 23.56 *
+d>0.70     amp_aff:  0.00004958 +/- 0.00000740
+
+==> Time to run fits: 0.0779581
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Does Diego have a 2-ref weighted LD curve with Dai and Esan?
+   2-ref decay z-score:   30.80
+   2-ref amp_exp z-score: 24.26
+                                  YES: curve is significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+Test SUCCEEDS (z=24.26, p=4.7e-130) for Diego with {Dai, Esan} weights
+
+DATA:	success	4.7e-130	Diego	Dai	Esan	24.26	20.24 +/- 0.66	0.00146933 +/- 0.00006055
+
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Dai Yoruba ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.105912
+
++1.7e-03
+|                                                                              
+|                                                                              
+|    x                                                                         
+|     x                                                                        
+|      x                                                                       
+|       x                                                                      
+|        xx                                                                    
+|          x                                                                   
+|           xx                                                                 
+|             xxx                                                              
+|                x                                                             
+|                 xx                                                           
+|                   xxxx                                                       
+|                       xxx                                                    
+|                          xx                                                  
+|                            xxxxx                                             
+|                                 xxx                                          
+|                                    xxxxx                                     
+|                                         xxx                                  
+|                                            xxxx xx                           
+|                                                x  xxx                        
+|                                                      xxxxxxx                 
+|                                                             xxxxxxxxx x      
+|                                                                      x xxxxxx
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
++---------+---------+---------+---------+---------+---------+---------+--------
+|         1         2         3         4         5         6         7      cM
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:       20.78 +/- 0.61         z = 34.03 *
+d>0.30     amp_tot:  0.00153042 +/- 0.00005970
+d>0.30     amp_exp:  0.00150558 +/- 0.00005899   z = 25.52 *
+d>0.30     amp_aff:  0.00004969 +/- 0.00000753
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:       20.43 +/- 0.62         z = 32.70 *
+d>0.40     amp_tot:  0.00150577 +/- 0.00005978
+d>0.40     amp_exp:  0.00148092 +/- 0.00005905   z = 25.08 *
+d>0.40     amp_aff:  0.00004969 +/- 0.00000753
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:       20.14 +/- 0.64         z = 31.52 *
+d>0.50     amp_tot:  0.00148483 +/- 0.00006009
+d>0.50     amp_exp:  0.00145999 +/- 0.00005934   z = 24.60 *
+d>0.50     amp_aff:  0.00004969 +/- 0.00000753
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:       19.85 +/- 0.65         z = 30.58 *
+d>0.60     amp_tot:  0.00146347 +/- 0.00006019
+d>0.60     amp_exp:  0.00143863 +/- 0.00005940   z = 24.22 *
+d>0.60     amp_aff:  0.00004969 +/- 0.00000753
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:       19.59 +/- 0.66         z = 29.76 *
+d>0.70     amp_tot:  0.00144433 +/- 0.00006007
+d>0.70     amp_exp:  0.00141949 +/- 0.00005921   z = 23.97 *
+d>0.70     amp_aff:  0.00004969 +/- 0.00000753
+
+==> Time to run fits: 0.082577
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Does Diego have a 2-ref weighted LD curve with Dai and Yoruba?
+   2-ref decay z-score:   31.52
+   2-ref amp_exp z-score: 24.60
+                                  YES: curve is significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+Test SUCCEEDS (z=24.60, p=1.1e-133) for Diego with {Dai, Yoruba} weights
+
+DATA:	success	1.1e-133	Diego	Dai	Yoruba	24.60	20.14 +/- 0.64	0.00145999 +/- 0.00005934
+
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Dai Mozambique_Chopi ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.106313
+
++1.8e-03
+|                                                                              
+|                                                                              
+|    x                                                                         
+|     x                                                                        
+|      x                                                                       
+|       x                                                                      
+|        xx                                                                    
+|          x                                                                   
+|           xx                                                                 
+|             x x                                                              
+|              x x                                                             
+|                 xx                                                           
+|                   xxxx                                                       
+|                       xxx                                                    
+|                          x                                                   
+|                           xxxxx                                              
+|                                xxx                                           
+|                                   xxx xx                                     
+|                                      x  xx                                   
+|                                           xxxxxxx                            
+|                                                  xxxx                        
+|                                                      xxxxxxx                 
+|                                                             xxxxxxxxx x      
+|                                                                      x xxxxxx
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
++---------+---------+---------+---------+---------+---------+---------+--------
+|         1         2         3         4         5         6         7      cM
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:       20.94 +/- 0.62         z = 33.78 *
+d>0.30     amp_tot:  0.00161651 +/- 0.00006199
+d>0.30     amp_exp:  0.00159067 +/- 0.00006126   z = 25.97 *
+d>0.30     amp_aff:  0.00005169 +/- 0.00000801
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:       20.56 +/- 0.64         z = 32.36 *
+d>0.40     amp_tot:  0.00158825 +/- 0.00006225
+d>0.40     amp_exp:  0.00156240 +/- 0.00006155   z = 25.38 *
+d>0.40     amp_aff:  0.00005169 +/- 0.00000801
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:       20.23 +/- 0.64         z = 31.60 *
+d>0.50     amp_tot:  0.00156335 +/- 0.00006209
+d>0.50     amp_exp:  0.00153750 +/- 0.00006140   z = 25.04 *
+d>0.50     amp_aff:  0.00005169 +/- 0.00000801
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:       19.91 +/- 0.64         z = 30.99 *
+d>0.60     amp_tot:  0.00153858 +/- 0.00006199
+d>0.60     amp_exp:  0.00151274 +/- 0.00006128   z = 24.68 *
+d>0.60     amp_aff:  0.00005169 +/- 0.00000801
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:       19.62 +/- 0.65         z = 30.41 *
+d>0.70     amp_tot:  0.00151623 +/- 0.00006181
+d>0.70     amp_exp:  0.00149039 +/- 0.00006105   z = 24.41 *
+d>0.70     amp_aff:  0.00005169 +/- 0.00000801
+
+==> Time to run fits: 0.100571
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Does Diego have a 2-ref weighted LD curve with Dai and Mozambique_Chopi?
+   2-ref decay z-score:   31.60
+   2-ref amp_exp z-score: 25.04
+                                  YES: curve is significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+Test SUCCEEDS (z=25.04, p=2.3e-138) for Diego with {Dai, Mozambique_Chopi} weights
+
+DATA:	success	2.3e-138	Diego	Dai	Mozambique_Chopi	25.04	20.23 +/- 0.64	0.00153750 +/- 0.00006140
+
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Esan Yoruba ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.119599
+
++1.2e-06
+|                                                                              
+|                                                                              
+|    x                                                                         
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|     x                                                                        
+|                                                                              
+|                                                                              
+|      x x                                                                     
+|                                                                              
+|       x                                                                      
+|                                                                              
+|                                                                              
+|                  x                                                           
+|                   x                                                          
+|                                                                              
+|                                                                              
+|              x                                                               
+|                                                                              
+|                    x                       x                                 
+|         x                        x      x                                    
+|                          x    x   x                       x                 x
+|          x  x                                x                     x         
+|           x               x  x  x               x                     x   x  
+|                 x     x                  x       x x                x        
+|                x     x               x                                     x 
++---------+---------+---------+------xx-+-----x---+-x-----x-+x-x------+--x-----
+|         1  x  x   2 x  xx   3         4         5    x    6         7      cM
+|                                                       x     x  x             
+|                                x                                 x           
+|                                           x   x                      x   x   
+|                                                x              x x       x    
+|                            x                        x                        
+|                                        x               x                     
+|                                                                              
+|                                                                   x          
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                          x                   
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:      303.73 +/- 48.19        z = 6.30 *
+d>0.30     amp_tot:  0.00000644 +/- 0.00000149
+d>0.30     amp_exp:  0.00000644 +/- 0.00000149   z = 4.32 *
+d>0.30     amp_aff: -0.00000000 +/- 0.00000000
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:      232.11 +/- 68.09        z = 3.41 *
+d>0.40     amp_tot:  0.00000402 +/- 0.00000165
+d>0.40     amp_exp:  0.00000402 +/- 0.00000165   z = 2.43 *
+d>0.40     amp_aff: -0.00000000 +/- 0.00000000
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:      187.29 +/- 74.66        z = 2.51 *
+d>0.50     amp_tot:  0.00000278 +/- 0.00000155
+d>0.50     amp_exp:  0.00000278 +/- 0.00000155   z = 1.80
+d>0.50     amp_aff: -0.00000000 +/- 0.00000000
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:      176.14 +/- 87.67        z = 2.01 *
+d>0.60     amp_tot:  0.00000249 +/- 0.00000185
+d>0.60     amp_exp:  0.00000249 +/- 0.00000185   z = 1.34
+d>0.60     amp_aff: -0.00000000 +/- 0.00000000
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:      159.19 +/- 161.69       z = 0.98
+d>0.70     amp_tot:  0.00000208 +/- 0.00000425
+d>0.70     amp_exp:  0.00000208 +/- 0.00000425   z = 0.49
+d>0.70     amp_aff: -0.00000000 +/- 0.00000000
+
+==> Time to run fits: 0.120375
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Does Diego have a 2-ref weighted LD curve with Esan and Yoruba?
+   2-ref decay z-score:    2.51
+   2-ref amp_exp z-score:  1.80
+                                  NO: curve is not significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+Test FAILS (z=1.80, p=0.073) for Diego with {Esan, Yoruba} weights
+
+DATA:	failure	0.073	Diego	Esan	Yoruba	1.80	187.29 +/- 74.66	0.00000278 +/- 0.00000155
+
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Esan Mozambique_Chopi ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.136049
+
++4.0e-05
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|    x                                                                         
+|                                                                              
+|                                                                              
+|     x                                                                        
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|      xx                                                                      
+|                                                                              
+|        x                                                                     
+|                                                                              
+|         x                                                                    
+|                                                                              
+|                                                                              
+|            x                                                                 
+|             x                                                                
+|           x   x x                                                            
+|          x     x                                                      xx     
+|                  x x                                                         
+|                   x xx      xx  x x                              x           
+|              x        x    x   x                                         x   
+|                        x x    x  x         xx            x  xx          x    
++---------+---------+-------x-+------xx-+-------xx+x---xxx--+-----x-x-+-----x-x
+|         1         2     x   3        x4x        5  x      6    x   x7      cM
+|                                         xxx  x    x x     xx  x      x     x 
+|                                                         x                    
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:      166.53 +/- 17.92        z = 9.29 *
+d>0.30     amp_tot:  0.00007832 +/- 0.00000800
+d>0.30     amp_exp:  0.00007833 +/- 0.00000800   z = 9.79 *
+d>0.30     amp_aff: -0.00000001 +/- 0.00000005
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:      147.92 +/- 17.52        z = 8.45 *
+d>0.40     amp_tot:  0.00006619 +/- 0.00000744
+d>0.40     amp_exp:  0.00006620 +/- 0.00000745   z = 8.89 *
+d>0.40     amp_aff: -0.00000001 +/- 0.00000005
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:      138.53 +/- 20.05        z = 6.91 *
+d>0.50     amp_tot:  0.00005991 +/- 0.00000950
+d>0.50     amp_exp:  0.00005992 +/- 0.00000950   z = 6.31 *
+d>0.50     amp_aff: -0.00000001 +/- 0.00000005
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:      131.85 +/- 21.58        z = 6.11 *
+d>0.60     amp_tot:  0.00005525 +/- 0.00001081
+d>0.60     amp_exp:  0.00005526 +/- 0.00001081   z = 5.11 *
+d>0.60     amp_aff: -0.00000001 +/- 0.00000005
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:      123.35 +/- 22.57        z = 5.47 *
+d>0.70     amp_tot:  0.00004919 +/- 0.00001154
+d>0.70     amp_exp:  0.00004920 +/- 0.00001154   z = 4.26 *
+d>0.70     amp_aff: -0.00000001 +/- 0.00000005
+
+==> Time to run fits: 0.118184
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Does Diego have a 2-ref weighted LD curve with Esan and Mozambique_Chopi?
+   2-ref decay z-score:    6.91
+   2-ref amp_exp z-score:  6.31
+                                  YES: curve is significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+Test SUCCEEDS (z=6.31, p=2.8e-10) for Diego with {Esan, Mozambique_Chopi} weights
+
+DATA:	success	2.8e-10	Diego	Esan	Mozambique_Chopi	6.31	138.53 +/- 20.05	0.00005992 +/- 0.00000950
+
+-------------------------------------------------------------------------------
+
+   *** Computing 2-ref weighted LD with weights Yoruba Mozambique_Chopi ***
+
+analyzing chrom 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+
+==> Time to run alder: 0.117378
+
++4.0e-05
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|    x                                                                         
+|                                                                              
+|                                                                              
+|     x                                                                        
+|                                                                              
+|                                                                              
+|                                                                              
+|                                                                              
+|      xx                                                                      
+|        x                                                                     
+|                                                                              
+|                                                                              
+|                                                                              
+|         x                                                                    
+|            x                                                                 
+|                                                                              
+|             x                                                                
+|           x   x                                                       x      
+|          x     xx                                                      x     
+|                  x x              x                                          
+|              x      xx      xx                                               
+|                   x   x    x   xx                                x      x    
+|                        x x    x     x       x x          x               x  x
++---------+---------+-------x-+----x-x--+x---x---x+----xxx--+-xx----x-+x----x--
+|         1         2     x   3        x4 xx      5x x      6     x  x7      cM
+|                                           x  x             x  xx           x 
+|                                                   x x   x                    
+
+---- fit on data from 0.30 to 50.00 cM (using inter-chrom affine term) ----
+d>0.30       decay:      169.18 +/- 17.58        z = 9.62 *
+d>0.30     amp_tot:  0.00007956 +/- 0.00000903
+d>0.30     amp_exp:  0.00007957 +/- 0.00000903   z = 8.81 *
+d>0.30     amp_aff: -0.00000002 +/- 0.00000004
+
+---- fit on data from 0.40 to 50.00 cM (using inter-chrom affine term) ----
+d>0.40       decay:      151.84 +/- 17.67        z = 8.59 *
+d>0.40     amp_tot:  0.00006818 +/- 0.00000831
+d>0.40     amp_exp:  0.00006819 +/- 0.00000831   z = 8.21 *
+d>0.40     amp_aff: -0.00000002 +/- 0.00000004
+
+---- fit on data from 0.50 to 50.00 cM (using inter-chrom affine term) ----
+d>0.50       decay:      141.26 +/- 20.77        z = 6.80 *
+d>0.50     amp_tot:  0.00006104 +/- 0.00001050
+d>0.50     amp_exp:  0.00006105 +/- 0.00001049   z = 5.82 *
+d>0.50     amp_aff: -0.00000002 +/- 0.00000004
+
+---- fit on data from 0.60 to 50.00 cM (using inter-chrom affine term) ----
+d>0.60       decay:      134.70 +/- 23.13        z = 5.82 *
+d>0.60     amp_tot:  0.00005641 +/- 0.00001224
+d>0.60     amp_exp:  0.00005642 +/- 0.00001224   z = 4.61 *
+d>0.60     amp_aff: -0.00000002 +/- 0.00000004
+
+---- fit on data from 0.70 to 50.00 cM (using inter-chrom affine term) ----
+d>0.70       decay:      127.04 +/- 24.03        z = 5.29 *
+d>0.70     amp_tot:  0.00005088 +/- 0.00001295
+d>0.70     amp_exp:  0.00005089 +/- 0.00001295   z = 3.93 *
+d>0.70     amp_aff: -0.00000002 +/- 0.00000004
+
+==> Time to run fits: 0.102253
+
+-------------------------------------------------------------------------------
+
+                    *** Admixture test summary ***
+
+Weighted LD curves are fit starting at 0.5 cM
+
+Does Diego have a 2-ref weighted LD curve with Yoruba and Mozambique_Chopi?
+   2-ref decay z-score:    6.80
+   2-ref amp_exp z-score:  5.82
+                                  YES: curve is significant
+
+Do 2-ref and 1-ref curves have consistent decay rates?
+Test SUCCEEDS (z=5.82, p=6e-09) for Diego with {Yoruba, Mozambique_Chopi} weights
+
+DATA:	success	6e-09	Diego	Yoruba	Mozambique_Chopi	5.82	141.26 +/- 20.77	0.00006105 +/- 0.00001049
+
+0 RESULT_1	refpops	amp0	time0
+0 RESULT_1	Borneo;Dai	1.16299e-06	20.3628
+0 RESULT_1	Borneo;Esan	0.0014724	20.3628
+0 RESULT_1	Borneo;Mozambique_Chopi	0.00153992	20.3628
+0 RESULT_1	Borneo;Sumba	8.86997e-06	20.3628
+0 RESULT_1	Borneo;Yoruba	0.00146727	20.3628
+0 RESULT_1	Dai;Esan	0.00147464	20.3628
+0 RESULT_1	Dai;Mozambique_Chopi	0.00154365	20.3628
+0 RESULT_1	Dai;Yoruba	0.00146962	20.3628
+0 RESULT_1	Esan;Mozambique_Chopi	9.04996e-06	20.3628
+0 RESULT_1	Sumba;Dai	9.15243e-06	20.3628
+0 RESULT_1	Sumba;Esan	0.00130868	20.3628
+0 RESULT_1	Sumba;Mozambique_Chopi	0.00137233	20.3628
+0 RESULT_1	Sumba;Yoruba	0.00130373	20.3628
+0 RESULT_1	Yoruba;Mozambique_Chopi	8.87437e-06	20.3628
+1 RESULT_1	refpops	amp0	time0
+1 RESULT_1	Borneo;Dai	1.15183e-06	20.1698
+1 RESULT_1	Borneo;Esan	0.00146406	20.1698
+1 RESULT_1	Borneo;Mozambique_Chopi	0.00153121	20.1698
+1 RESULT_1	Borneo;Sumba	8.81248e-06	20.1698
+1 RESULT_1	Borneo;Yoruba	0.00145898	20.1698
+1 RESULT_1	Dai;Esan	0.0014663	20.1698
+1 RESULT_1	Dai;Mozambique_Chopi	0.00153492	20.1698
+1 RESULT_1	Dai;Yoruba	0.00146132	20.1698
+1 RESULT_1	Esan;Mozambique_Chopi	8.97127e-06	20.1698
+1 RESULT_1	Sumba;Dai	9.0901e-06	20.1698
+1 RESULT_1	Sumba;Esan	0.00130124	20.1698
+1 RESULT_1	Sumba;Mozambique_Chopi	0.00136452	20.1698
+1 RESULT_1	Sumba;Yoruba	0.00129633	20.1698
+1 RESULT_1	Yoruba;Mozambique_Chopi	8.79503e-06	20.1698
+2 RESULT_1	refpops	amp0	time0
+2 RESULT_1	Borneo;Dai	1.15268e-06	20.1846
+2 RESULT_1	Borneo;Esan	0.0014647	20.1846
+2 RESULT_1	Borneo;Mozambique_Chopi	0.00153188	20.1846
+2 RESULT_1	Borneo;Sumba	8.81689e-06	20.1846
+2 RESULT_1	Borneo;Yoruba	0.00145962	20.1846
+2 RESULT_1	Dai;Esan	0.00146694	20.1846
+2 RESULT_1	Dai;Mozambique_Chopi	0.00153559	20.1846
+2 RESULT_1	Dai;Yoruba	0.00146196	20.1846
+2 RESULT_1	Esan;Mozambique_Chopi	8.97729e-06	20.1846
+2 RESULT_1	Sumba;Dai	9.09488e-06	20.1846
+2 RESULT_1	Sumba;Esan	0.00130181	20.1846
+2 RESULT_1	Sumba;Mozambique_Chopi	0.00136512	20.1846
+2 RESULT_1	Sumba;Yoruba	0.0012969	20.1846
+2 RESULT_1	Yoruba;Mozambique_Chopi	8.80111e-06	20.1846
+3 RESULT_1	refpops	amp0	time0
+3 RESULT_1	Borneo;Dai	1.1534e-06	20.1969
+3 RESULT_1	Borneo;Esan	0.00146524	20.1969
+3 RESULT_1	Borneo;Mozambique_Chopi	0.00153243	20.1969
+3 RESULT_1	Borneo;Sumba	8.82056e-06	20.1969
+3 RESULT_1	Borneo;Yoruba	0.00146015	20.1969
+3 RESULT_1	Dai;Esan	0.00146747	20.1969
+3 RESULT_1	Dai;Mozambique_Chopi	0.00153615	20.1969
+3 RESULT_1	Dai;Yoruba	0.00146249	20.1969
+3 RESULT_1	Esan;Mozambique_Chopi	8.98232e-06	20.1969
+3 RESULT_1	Sumba;Dai	9.09887e-06	20.1969
+3 RESULT_1	Sumba;Esan	0.00130229	20.1969
+3 RESULT_1	Sumba;Mozambique_Chopi	0.00136562	20.1969
+3 RESULT_1	Sumba;Yoruba	0.00129737	20.1969
+3 RESULT_1	Yoruba;Mozambique_Chopi	8.80617e-06	20.1969
+4 RESULT_1	refpops	amp0	time0
+4 RESULT_1	Borneo;Dai	1.16673e-06	20.4275
+4 RESULT_1	Borneo;Esan	0.00147518	20.4275
+4 RESULT_1	Borneo;Mozambique_Chopi	0.00154284	20.4275
+4 RESULT_1	Borneo;Sumba	8.88922e-06	20.4275
+4 RESULT_1	Borneo;Yoruba	0.00147005	20.4275
+4 RESULT_1	Dai;Esan	0.00147743	20.4275
+4 RESULT_1	Dai;Mozambique_Chopi	0.00154657	20.4275
+4 RESULT_1	Dai;Yoruba	0.0014724	20.4275
+4 RESULT_1	Esan;Mozambique_Chopi	9.07635e-06	20.4275
+4 RESULT_1	Sumba;Dai	9.17329e-06	20.4275
+4 RESULT_1	Sumba;Esan	0.00131117	20.4275
+4 RESULT_1	Sumba;Mozambique_Chopi	0.00137494	20.4275
+4 RESULT_1	Sumba;Yoruba	0.00130621	20.4275
+4 RESULT_1	Yoruba;Mozambique_Chopi	8.90098e-06	20.4275
+5 RESULT_1	refpops	amp0	time0
+5 RESULT_1	Borneo;Dai	1.17569e-06	20.5827
+5 RESULT_1	Borneo;Esan	0.00148184	20.5827
+5 RESULT_1	Borneo;Mozambique_Chopi	0.0015498	20.5827
+5 RESULT_1	Borneo;Sumba	8.93525e-06	20.5827
+5 RESULT_1	Borneo;Yoruba	0.00147667	20.5827
+5 RESULT_1	Dai;Esan	0.0014841	20.5827
+5 RESULT_1	Dai;Mozambique_Chopi	0.00155355	20.5827
+5 RESULT_1	Dai;Yoruba	0.00147903	20.5827
+5 RESULT_1	Esan;Mozambique_Chopi	9.13963e-06	20.5827
+5 RESULT_1	Sumba;Dai	9.22323e-06	20.5827
+5 RESULT_1	Sumba;Esan	0.00131712	20.5827
+5 RESULT_1	Sumba;Mozambique_Chopi	0.00138117	20.5827
+5 RESULT_1	Sumba;Yoruba	0.00131212	20.5827
+5 RESULT_1	Yoruba;Mozambique_Chopi	8.96477e-06	20.5827
+6 RESULT_1	refpops	amp0	time0
+6 RESULT_1	Borneo;Dai	1.16371e-06	20.3752
+6 RESULT_1	Borneo;Esan	0.00147293	20.3752
+6 RESULT_1	Borneo;Mozambique_Chopi	0.00154048	20.3752
+6 RESULT_1	Borneo;Sumba	8.87367e-06	20.3752
+6 RESULT_1	Borneo;Yoruba	0.00146781	20.3752
+6 RESULT_1	Dai;Esan	0.00147518	20.3752
+6 RESULT_1	Dai;Mozambique_Chopi	0.00154421	20.3752
+6 RESULT_1	Dai;Yoruba	0.00147015	20.3752
+6 RESULT_1	Esan;Mozambique_Chopi	9.05503e-06	20.3752
+6 RESULT_1	Sumba;Dai	9.15644e-06	20.3752
+6 RESULT_1	Sumba;Esan	0.00130916	20.3752
+6 RESULT_1	Sumba;Mozambique_Chopi	0.00137283	20.3752
+6 RESULT_1	Sumba;Yoruba	0.00130421	20.3752
+6 RESULT_1	Yoruba;Mozambique_Chopi	8.87948e-06	20.3752
+7 RESULT_1	refpops	amp0	time0
+7 RESULT_1	Borneo;Dai	1.14983e-06	20.1354
+7 RESULT_1	Borneo;Esan	0.00146257	20.1354
+7 RESULT_1	Borneo;Mozambique_Chopi	0.00152965	20.1354
+7 RESULT_1	Borneo;Sumba	8.80219e-06	20.1354
+7 RESULT_1	Borneo;Yoruba	0.0014575	20.1354
+7 RESULT_1	Dai;Esan	0.0014648	20.1354
+7 RESULT_1	Dai;Mozambique_Chopi	0.00153336	20.1354
+7 RESULT_1	Dai;Yoruba	0.00145983	20.1354
+7 RESULT_1	Esan;Mozambique_Chopi	8.95722e-06	20.1354
+7 RESULT_1	Sumba;Dai	9.07896e-06	20.1354
+7 RESULT_1	Sumba;Esan	0.0012999	20.1354
+7 RESULT_1	Sumba;Mozambique_Chopi	0.00136313	20.1354
+7 RESULT_1	Sumba;Yoruba	0.001295	20.1354
+7 RESULT_1	Yoruba;Mozambique_Chopi	8.78087e-06	20.1354
+8 RESULT_1	refpops	amp0	time0
+8 RESULT_1	Borneo;Dai	1.17482e-06	20.5676
+8 RESULT_1	Borneo;Esan	0.0014812	20.5676
+8 RESULT_1	Borneo;Mozambique_Chopi	0.00154913	20.5676
+8 RESULT_1	Borneo;Sumba	8.93079e-06	20.5676
+8 RESULT_1	Borneo;Yoruba	0.00147603	20.5676
+8 RESULT_1	Dai;Esan	0.00148345	20.5676
+8 RESULT_1	Dai;Mozambique_Chopi	0.00155287	20.5676
+8 RESULT_1	Dai;Yoruba	0.00147838	20.5676
+8 RESULT_1	Esan;Mozambique_Chopi	9.13349e-06	20.5676
+8 RESULT_1	Sumba;Dai	9.21838e-06	20.5676
+8 RESULT_1	Sumba;Esan	0.00131654	20.5676
+8 RESULT_1	Sumba;Mozambique_Chopi	0.00138057	20.5676
+8 RESULT_1	Sumba;Yoruba	0.00131155	20.5676
+8 RESULT_1	Yoruba;Mozambique_Chopi	8.95858e-06	20.5676
+9 RESULT_1	refpops	amp0	time0
+9 RESULT_1	Borneo;Dai	1.1617e-06	20.3404
+9 RESULT_1	Borneo;Esan	0.00147143	20.3404
+9 RESULT_1	Borneo;Mozambique_Chopi	0.00153892	20.3404
+9 RESULT_1	Borneo;Sumba	8.86332e-06	20.3404
+9 RESULT_1	Borneo;Yoruba	0.00146632	20.3404
+9 RESULT_1	Dai;Esan	0.00147368	20.3404
+9 RESULT_1	Dai;Mozambique_Chopi	0.00154264	20.3404
+9 RESULT_1	Dai;Yoruba	0.00146866	20.3404
+9 RESULT_1	Esan;Mozambique_Chopi	9.04084e-06	20.3404
+9 RESULT_1	Sumba;Dai	9.14522e-06	20.3404
+9 RESULT_1	Sumba;Esan	0.00130782	20.3404
+9 RESULT_1	Sumba;Mozambique_Chopi	0.00137143	20.3404
+9 RESULT_1	Sumba;Yoruba	0.00130288	20.3404
+9 RESULT_1	Yoruba;Mozambique_Chopi	8.86518e-06	20.3404
+10 RESULT_1	refpops	amp0	time0
+10 RESULT_1	Borneo;Dai	1.15297e-06	20.1895
+10 RESULT_1	Borneo;Esan	0.00146492	20.1895
+10 RESULT_1	Borneo;Mozambique_Chopi	0.0015321	20.1895
+10 RESULT_1	Borneo;Sumba	8.81836e-06	20.1895
+10 RESULT_1	Borneo;Yoruba	0.00145983	20.1895
+10 RESULT_1	Dai;Esan	0.00146715	20.1895
+10 RESULT_1	Dai;Mozambique_Chopi	0.00153581	20.1895
+10 RESULT_1	Dai;Yoruba	0.00146217	20.1895
+10 RESULT_1	Esan;Mozambique_Chopi	8.9793e-06	20.1895
+10 RESULT_1	Sumba;Dai	9.09648e-06	20.1895
+10 RESULT_1	Sumba;Esan	0.001302	20.1895
+10 RESULT_1	Sumba;Mozambique_Chopi	0.00136532	20.1895
+10 RESULT_1	Sumba;Yoruba	0.00129709	20.1895
+10 RESULT_1	Yoruba;Mozambique_Chopi	8.80313e-06	20.1895
+11 RESULT_1	refpops	amp0	time0
+11 RESULT_1	Borneo;Dai	1.14004e-06	19.9665
+11 RESULT_1	Borneo;Esan	0.00145523	19.9665
+11 RESULT_1	Borneo;Mozambique_Chopi	0.00152197	19.9665
+11 RESULT_1	Borneo;Sumba	8.75166e-06	19.9665
+11 RESULT_1	Borneo;Yoruba	0.00145019	19.9665
+11 RESULT_1	Dai;Esan	0.00145746	19.9665
+11 RESULT_1	Dai;Mozambique_Chopi	0.00152566	19.9665
+11 RESULT_1	Dai;Yoruba	0.00145252	19.9665
+11 RESULT_1	Esan;Mozambique_Chopi	8.88834e-06	19.9665
+11 RESULT_1	Sumba;Dai	9.02422e-06	19.9665
+11 RESULT_1	Sumba;Esan	0.00129334	19.9665
+11 RESULT_1	Sumba;Mozambique_Chopi	0.00135625	19.9665
+11 RESULT_1	Sumba;Yoruba	0.00128848	19.9665
+11 RESULT_1	Yoruba;Mozambique_Chopi	8.71141e-06	19.9665
+12 RESULT_1	refpops	amp0	time0
+12 RESULT_1	Borneo;Dai	1.16127e-06	20.333
+12 RESULT_1	Borneo;Esan	0.00147111	20.333
+12 RESULT_1	Borneo;Mozambique_Chopi	0.00153858	20.333
+12 RESULT_1	Borneo;Sumba	8.86111e-06	20.333
+12 RESULT_1	Borneo;Yoruba	0.001466	20.333
+12 RESULT_1	Dai;Esan	0.00147336	20.333
+12 RESULT_1	Dai;Mozambique_Chopi	0.00154231	20.333
+12 RESULT_1	Dai;Yoruba	0.00146834	20.333
+12 RESULT_1	Esan;Mozambique_Chopi	9.0378e-06	20.333
+12 RESULT_1	Sumba;Dai	9.14281e-06	20.333
+12 RESULT_1	Sumba;Esan	0.00130754	20.333
+12 RESULT_1	Sumba;Mozambique_Chopi	0.00137113	20.333
+12 RESULT_1	Sumba;Yoruba	0.00130259	20.333
+12 RESULT_1	Yoruba;Mozambique_Chopi	8.86211e-06	20.333
+13 RESULT_1	refpops	amp0	time0
+13 RESULT_1	Borneo;Dai	1.1728e-06	20.5325
+13 RESULT_1	Borneo;Esan	0.00147969	20.5325
+13 RESULT_1	Borneo;Mozambique_Chopi	0.00154755	20.5325
+13 RESULT_1	Borneo;Sumba	8.92038e-06	20.5325
+13 RESULT_1	Borneo;Yoruba	0.00147453	20.5325
+13 RESULT_1	Dai;Esan	0.00148195	20.5325
+13 RESULT_1	Dai;Mozambique_Chopi	0.0015513	20.5325
+13 RESULT_1	Dai;Yoruba	0.00147689	20.5325
+13 RESULT_1	Esan;Mozambique_Chopi	9.11917e-06	20.5325
+13 RESULT_1	Sumba;Dai	9.20709e-06	20.5325
+13 RESULT_1	Sumba;Esan	0.0013152	20.5325
+13 RESULT_1	Sumba;Mozambique_Chopi	0.00137916	20.5325
+13 RESULT_1	Sumba;Yoruba	0.00131021	20.5325
+13 RESULT_1	Yoruba;Mozambique_Chopi	8.94414e-06	20.5325
+14 RESULT_1	refpops	amp0	time0
+14 RESULT_1	Borneo;Dai	1.15697e-06	20.2586
+14 RESULT_1	Borneo;Esan	0.0014679	20.2586
+14 RESULT_1	Borneo;Mozambique_Chopi	0.00153523	20.2586
+14 RESULT_1	Borneo;Sumba	8.83897e-06	20.2586
+14 RESULT_1	Borneo;Yoruba	0.00146281	20.2586
+14 RESULT_1	Dai;Esan	0.00147015	20.2586
+14 RESULT_1	Dai;Mozambique_Chopi	0.00153895	20.2586
+14 RESULT_1	Dai;Yoruba	0.00146515	20.2586
+14 RESULT_1	Esan;Mozambique_Chopi	9.00749e-06	20.2586
+14 RESULT_1	Sumba;Dai	9.11882e-06	20.2586
+14 RESULT_1	Sumba;Esan	0.00130467	20.2586
+14 RESULT_1	Sumba;Mozambique_Chopi	0.00136812	20.2586
+14 RESULT_1	Sumba;Yoruba	0.00129974	20.2586
+14 RESULT_1	Yoruba;Mozambique_Chopi	8.83156e-06	20.2586
+15 RESULT_1	refpops	amp0	time0
+15 RESULT_1	Borneo;Dai	1.15812e-06	20.2784
+15 RESULT_1	Borneo;Esan	0.00146876	20.2784
+15 RESULT_1	Borneo;Mozambique_Chopi	0.00153612	20.2784
+15 RESULT_1	Borneo;Sumba	8.84487e-06	20.2784
+15 RESULT_1	Borneo;Yoruba	0.00146366	20.2784
+15 RESULT_1	Dai;Esan	0.001471	20.2784
+15 RESULT_1	Dai;Mozambique_Chopi	0.00153984	20.2784
+15 RESULT_1	Dai;Yoruba	0.001466	20.2784
+15 RESULT_1	Esan;Mozambique_Chopi	9.01557e-06	20.2784
+15 RESULT_1	Sumba;Dai	9.12521e-06	20.2784
+15 RESULT_1	Sumba;Esan	0.00130543	20.2784
+15 RESULT_1	Sumba;Mozambique_Chopi	0.00136892	20.2784
+15 RESULT_1	Sumba;Yoruba	0.0013005	20.2784
+15 RESULT_1	Yoruba;Mozambique_Chopi	8.83969e-06	20.2784
+16 RESULT_1	refpops	amp0	time0
+16 RESULT_1	Borneo;Dai	1.15383e-06	20.2043
+16 RESULT_1	Borneo;Esan	0.00146556	20.2043
+16 RESULT_1	Borneo;Mozambique_Chopi	0.00153277	20.2043
+16 RESULT_1	Borneo;Sumba	8.82277e-06	20.2043
+16 RESULT_1	Borneo;Yoruba	0.00146047	20.2043
+16 RESULT_1	Dai;Esan	0.00146779	20.2043
+16 RESULT_1	Dai;Mozambique_Chopi	0.00153649	20.2043
+16 RESULT_1	Dai;Yoruba	0.00146281	20.2043
+16 RESULT_1	Esan;Mozambique_Chopi	8.98534e-06	20.2043
+16 RESULT_1	Sumba;Dai	9.10126e-06	20.2043
+16 RESULT_1	Sumba;Esan	0.00130257	20.2043
+16 RESULT_1	Sumba;Mozambique_Chopi	0.00136592	20.2043
+16 RESULT_1	Sumba;Yoruba	0.00129766	20.2043
+16 RESULT_1	Yoruba;Mozambique_Chopi	8.80921e-06	20.2043
+17 RESULT_1	refpops	amp0	time0
+17 RESULT_1	Borneo;Dai	1.16055e-06	20.3205
+17 RESULT_1	Borneo;Esan	0.00147058	20.3205
+17 RESULT_1	Borneo;Mozambique_Chopi	0.00153802	20.3205
+17 RESULT_1	Borneo;Sumba	8.85741e-06	20.3205
+17 RESULT_1	Borneo;Yoruba	0.00146546	20.3205
+17 RESULT_1	Dai;Esan	0.00147282	20.3205
+17 RESULT_1	Dai;Mozambique_Chopi	0.00154175	20.3205
+17 RESULT_1	Dai;Yoruba	0.00146781	20.3205
+17 RESULT_1	Esan;Mozambique_Chopi	9.03274e-06	20.3205
+17 RESULT_1	Sumba;Dai	9.13881e-06	20.3205
+17 RESULT_1	Sumba;Esan	0.00130706	20.3205
+17 RESULT_1	Sumba;Mozambique_Chopi	0.00137062	20.3205
+17 RESULT_1	Sumba;Yoruba	0.00130212	20.3205
+17 RESULT_1	Yoruba;Mozambique_Chopi	8.85701e-06	20.3205
+18 RESULT_1	refpops	amp0	time0
+18 RESULT_1	Borneo;Dai	1.15683e-06	20.2562
+18 RESULT_1	Borneo;Esan	0.0014678	20.2562
+18 RESULT_1	Borneo;Mozambique_Chopi	0.00153511	20.2562
+18 RESULT_1	Borneo;Sumba	8.83823e-06	20.2562
+18 RESULT_1	Borneo;Yoruba	0.0014627	20.2562
+18 RESULT_1	Dai;Esan	0.00147004	20.2562
+18 RESULT_1	Dai;Mozambique_Chopi	0.00153883	20.2562
+18 RESULT_1	Dai;Yoruba	0.00146504	20.2562
+18 RESULT_1	Esan;Mozambique_Chopi	9.00649e-06	20.2562
+18 RESULT_1	Sumba;Dai	9.11802e-06	20.2562
+18 RESULT_1	Sumba;Esan	0.00130457	20.2562
+18 RESULT_1	Sumba;Mozambique_Chopi	0.00136802	20.2562
+18 RESULT_1	Sumba;Yoruba	0.00129965	20.2562
+18 RESULT_1	Yoruba;Mozambique_Chopi	8.83054e-06	20.2562
+19 RESULT_1	refpops	amp0	time0
+19 RESULT_1	Borneo;Dai	1.15726e-06	20.2636
+19 RESULT_1	Borneo;Esan	0.00146812	20.2636
+19 RESULT_1	Borneo;Mozambique_Chopi	0.00153545	20.2636
+19 RESULT_1	Borneo;Sumba	8.84045e-06	20.2636
+19 RESULT_1	Borneo;Yoruba	0.00146302	20.2636
+19 RESULT_1	Dai;Esan	0.00147036	20.2636
+19 RESULT_1	Dai;Mozambique_Chopi	0.00153917	20.2636
+19 RESULT_1	Dai;Yoruba	0.00146536	20.2636
+19 RESULT_1	Esan;Mozambique_Chopi	9.00951e-06	20.2636
+19 RESULT_1	Sumba;Dai	9.12042e-06	20.2636
+19 RESULT_1	Sumba;Esan	0.00130486	20.2636
+19 RESULT_1	Sumba;Mozambique_Chopi	0.00136832	20.2636
+19 RESULT_1	Sumba;Yoruba	0.00129993	20.2636
+19 RESULT_1	Yoruba;Mozambique_Chopi	8.83359e-06	20.2636
+20 RESULT_1	refpops	amp0	time0
+20 RESULT_1	Borneo;Dai	1.1617e-06	20.3404
+20 RESULT_1	Borneo;Esan	0.00147143	20.3404
+20 RESULT_1	Borneo;Mozambique_Chopi	0.00153892	20.3404
+20 RESULT_1	Borneo;Sumba	8.86332e-06	20.3404
+20 RESULT_1	Borneo;Yoruba	0.00146632	20.3404
+20 RESULT_1	Dai;Esan	0.00147368	20.3404
+20 RESULT_1	Dai;Mozambique_Chopi	0.00154264	20.3404
+20 RESULT_1	Dai;Yoruba	0.00146866	20.3404
+20 RESULT_1	Esan;Mozambique_Chopi	9.04084e-06	20.3404
+20 RESULT_1	Sumba;Dai	9.14522e-06	20.3404
+20 RESULT_1	Sumba;Esan	0.00130782	20.3404
+20 RESULT_1	Sumba;Mozambique_Chopi	0.00137143	20.3404
+20 RESULT_1	Sumba;Yoruba	0.00130288	20.3404
+20 RESULT_1	Yoruba;Mozambique_Chopi	8.86518e-06	20.3404
+21 RESULT_1	refpops	amp0	time0
+21 RESULT_1	Borneo;Dai	1.16371e-06	20.3752
+21 RESULT_1	Borneo;Esan	0.00147293	20.3752
+21 RESULT_1	Borneo;Mozambique_Chopi	0.00154048	20.3752
+21 RESULT_1	Borneo;Sumba	8.87367e-06	20.3752
+21 RESULT_1	Borneo;Yoruba	0.00146781	20.3752
+21 RESULT_1	Dai;Esan	0.00147518	20.3752
+21 RESULT_1	Dai;Mozambique_Chopi	0.00154421	20.3752
+21 RESULT_1	Dai;Yoruba	0.00147015	20.3752
+21 RESULT_1	Esan;Mozambique_Chopi	9.05503e-06	20.3752
+21 RESULT_1	Sumba;Dai	9.15644e-06	20.3752
+21 RESULT_1	Sumba;Esan	0.00130916	20.3752
+21 RESULT_1	Sumba;Mozambique_Chopi	0.00137283	20.3752
+21 RESULT_1	Sumba;Yoruba	0.00130421	20.3752
+21 RESULT_1	Yoruba;Mozambique_Chopi	8.87948e-06	20.3752
+RESULT_1	refpops	amp0	time0
+RESULT_1	Borneo;Dai	1.15955e-06 +/- 3.78103e-08 (Z=30.6675)	20.3032 +/- 0.65374 (Z=31.057)
+RESULT_1	Borneo;Esan	0.00146983 +/- 2.82057e-05 (Z=52.1111)	20.3032 +/- 0.65374 (Z=31.057)
+RESULT_1	Borneo;Mozambique_Chopi	0.00153724 +/- 2.9498e-05 (Z=52.1133)	20.3032 +/- 0.65374 (Z=31.057)
+RESULT_1	Borneo;Sumba	8.85225e-06 +/- 1.94648e-07 (Z=45.4781)	20.3032 +/- 0.65374 (Z=31.057)
+RESULT_1	Borneo;Yoruba	0.00146472 +/- 2.80606e-05 (Z=52.1984)	20.3032 +/- 0.65374 (Z=31.057)
+RESULT_1	Dai;Esan	0.00147207 +/- 2.82372e-05 (Z=52.1324)	20.3032 +/- 0.65374 (Z=31.057)
+RESULT_1	Dai;Mozambique_Chopi	0.00154096 +/- 2.95529e-05 (Z=52.1425)	20.3032 +/- 0.65374 (Z=31.057)
+RESULT_1	Dai;Yoruba	0.00146706 +/- 2.80925e-05 (Z=52.2227)	20.3032 +/- 0.65374 (Z=31.057)
+RESULT_1	Esan;Mozambique_Chopi	9.02567e-06 +/- 2.66587e-07 (Z=33.8564)	20.3032 +/- 0.65374 (Z=31.057)
+RESULT_1	Sumba;Dai	9.13321e-06 +/- 2.1101e-07 (Z=43.2833)	20.3032 +/- 0.65374 (Z=31.057)
+RESULT_1	Sumba;Esan	0.00130639 +/- 2.52001e-05 (Z=51.8407)	20.3032 +/- 0.65374 (Z=31.057)
+RESULT_1	Sumba;Mozambique_Chopi	0.00136992 +/- 2.64095e-05 (Z=51.8724)	20.3032 +/- 0.65374 (Z=31.057)
+RESULT_1	Sumba;Yoruba	0.00130145 +/- 2.50587e-05 (Z=51.9362)	20.3032 +/- 0.65374 (Z=31.057)
+RESULT_1	Yoruba;Mozambique_Chopi	8.84988e-06 +/- 2.68782e-07 (Z=32.9259)	20.3032 +/- 0.65374 (Z=31.057)
+0 RESULT_2	refpops	amp0	time0	amp1	time1
+0 RESULT_2	Borneo;Dai	2.19306e-06	39.2646	0	11.643
+0 RESULT_2	Borneo;Esan	0.00107968	39.2646	0.000601762	11.643
+0 RESULT_2	Borneo;Mozambique_Chopi	0.00113094	39.2646	0.000628946	11.643
+0 RESULT_2	Borneo;Sumba	1.12289e-05	39.2646	1.49378e-06	11.643
+0 RESULT_2	Borneo;Yoruba	0.00106806	39.2646	0.000603436	11.643
+0 RESULT_2	Dai;Esan	0.00108014	39.2646	0.000603593	11.643
+0 RESULT_2	Dai;Mozambique_Chopi	0.00113133	39.2646	0.000631838	11.643
+0 RESULT_2	Dai;Yoruba	0.00106823	39.2646	0.00060546	11.643
+0 RESULT_2	Esan;Mozambique_Chopi	1.67196e-05	39.2646	0	11.643
+0 RESULT_2	Sumba;Dai	1.33552e-05	39.2646	7.37192e-07	11.643
+0 RESULT_2	Sumba;Esan	0.000982267	39.2646	0.000524132	11.643
+0 RESULT_2	Sumba;Mozambique_Chopi	0.00102878	39.2646	0.00055054	11.643
+0 RESULT_2	Sumba;Yoruba	0.00097074	39.2646	0.000525872	11.643
+0 RESULT_2	Yoruba;Mozambique_Chopi	1.6561e-05	39.2646	0	11.643
+1 RESULT_2	refpops	amp0	time0	amp1	time1
+1 RESULT_2	Borneo;Dai	2.25064e-06	40.3598	0	12.3226
+1 RESULT_2	Borneo;Esan	0.00102256	40.3598	0.000655953	12.3226
+1 RESULT_2	Borneo;Mozambique_Chopi	0.00107197	40.3598	0.000685249	12.3226
+1 RESULT_2	Borneo;Sumba	1.12436e-05	40.3598	1.64386e-06	12.3226
+1 RESULT_2	Borneo;Yoruba	0.0010109	40.3598	0.000657553	12.3226
+1 RESULT_2	Dai;Esan	0.00102346	40.3598	0.000657602	12.3226
+1 RESULT_2	Dai;Mozambique_Chopi	0.00107254	40.3598	0.000688112	12.3226
+1 RESULT_2	Dai;Yoruba	0.00101147	40.3598	0.00065942	12.3226
+1 RESULT_2	Esan;Mozambique_Chopi	1.7162e-05	40.3598	0	12.3226
+1 RESULT_2	Sumba;Dai	1.34999e-05	40.3598	8.27253e-07	12.3226
+1 RESULT_2	Sumba;Esan	0.000932384	40.3598	0.000571863	12.3226
+1 RESULT_2	Sumba;Mozambique_Chopi	0.000976972	40.3598	0.000600347	12.3226
+1 RESULT_2	Sumba;Yoruba	0.000920779	40.3598	0.000573553	12.3226
+1 RESULT_2	Yoruba;Mozambique_Chopi	1.70026e-05	40.3598	0	12.3226
+2 RESULT_2	refpops	amp0	time0	amp1	time1
+2 RESULT_2	Borneo;Dai	2.08007e-06	37.1216	0	10.4703
+2 RESULT_2	Borneo;Esan	0.00117187	37.1216	0.000508887	10.4703
+2 RESULT_2	Borneo;Mozambique_Chopi	0.00122607	37.1216	0.000532424	10.4703
+2 RESULT_2	Borneo;Sumba	1.11565e-05	37.1216	1.2294e-06	10.4703
+2 RESULT_2	Borneo;Yoruba	0.00116036	37.1216	0.000510688	10.4703
+2 RESULT_2	Dai;Esan	0.00117157	37.1216	0.000511023	10.4703
+2 RESULT_2	Dai;Mozambique_Chopi	0.00122612	37.1216	0.000535368	10.4703
+2 RESULT_2	Dai;Yoruba	0.00115984	37.1216	0.000512979	10.4703
+2 RESULT_2	Esan;Mozambique_Chopi	1.58534e-05	37.1216	0	10.4703
+2 RESULT_2	Sumba;Dai	1.30484e-05	37.1216	5.75881e-07	10.4703
+2 RESULT_2	Sumba;Esan	0.00106263	37.1216	0.000442309	10.4703
+2 RESULT_2	Sumba;Mozambique_Chopi	0.0011122	37.1216	0.00046514	10.4703
+2 RESULT_2	Sumba;Yoruba	0.00105128	37.1216	0.000444137	10.4703
+2 RESULT_2	Yoruba;Mozambique_Chopi	1.56964e-05	37.1216	0	10.4703
+3 RESULT_2	refpops	amp0	time0	amp1	time1
+3 RESULT_2	Borneo;Dai	2.00742e-06	35.7491	0	10.2676
+3 RESULT_2	Borneo;Esan	0.00118542	35.7491	0.00048169	10.2676
+3 RESULT_2	Borneo;Mozambique_Chopi	0.00123977	35.7491	0.000504179	10.2676
+3 RESULT_2	Borneo;Sumba	1.10601e-05	35.7491	1.10297e-06	10.2676
+3 RESULT_2	Borneo;Yoruba	0.00117392	35.7491	0.000483631	10.2676
+3 RESULT_2	Dai;Esan	0.0011848	35.7491	0.000483953	10.2676
+3 RESULT_2	Dai;Mozambique_Chopi	0.00123963	35.7491	0.000507183	10.2676
+3 RESULT_2	Dai;Yoruba	0.00117312	35.7491	0.000486041	10.2676
+3 RESULT_2	Esan;Mozambique_Chopi	1.52983e-05	35.7491	0	10.2676
+3 RESULT_2	Sumba;Dai	1.28881e-05	35.7491	4.57631e-07	10.2676
+3 RESULT_2	Sumba;Esan	0.00107434	35.7491	0.00041807	10.2676
+3 RESULT_2	Sumba;Mozambique_Chopi	0.00112416	35.7491	0.000439887	10.2676
+3 RESULT_2	Sumba;Yoruba	0.00106303	35.7491	0.000420024	10.2676
+3 RESULT_2	Yoruba;Mozambique_Chopi	1.51419e-05	35.7491	0	10.2676
+4 RESULT_2	refpops	amp0	time0	amp1	time1
+4 RESULT_2	Borneo;Dai	1.85463e-06	32.8792	0	9.0565
+4 RESULT_2	Borneo;Esan	0.00126664	32.8792	0.000382352	9.0565
+4 RESULT_2	Borneo;Mozambique_Chopi	0.0013234	32.8792	0.000400899	9.0565
+4 RESULT_2	Borneo;Sumba	1.08665e-05	32.8792	8.02053e-07	9.0565
+4 RESULT_2	Borneo;Yoruba	0.00125535	32.8792	0.000384451	9.0565
+4 RESULT_2	Dai;Esan	0.00126519	32.8792	0.000384945	9.0565
+4 RESULT_2	Dai;Mozambique_Chopi	0.00132286	32.8792	0.000403971	9.0565
+4 RESULT_2	Dai;Yoruba	0.0012538	32.8792	0.000387151	9.0565
+4 RESULT_2	Esan;Mozambique_Chopi	1.41367e-05	32.8792	0	9.0565
+4 RESULT_2	Sumba;Dai	1.24264e-05	32.8792	2.64688e-07	9.0565
+4 RESULT_2	Sumba;Esan	0.00114475	32.8792	0.000330482	9.0565
+4 RESULT_2	Sumba;Mozambique_Chopi	0.00119716	32.8792	0.000348446	9.0565
+4 RESULT_2	Sumba;Yoruba	0.00113373	32.8792	0.00033255	9.0565
+4 RESULT_2	Yoruba;Mozambique_Chopi	1.39808e-05	32.8792	0	9.0565
+5 RESULT_2	refpops	amp0	time0	amp1	time1
+5 RESULT_2	Borneo;Dai	1.88332e-06	33.4161	0	9.44834
+5 RESULT_2	Borneo;Esan	0.00124114	33.4161	0.000408907	9.44834
+5 RESULT_2	Borneo;Mozambique_Chopi	0.00129705	33.4161	0.000428523	9.44834
+5 RESULT_2	Borneo;Sumba	1.09046e-05	33.4161	8.62025e-07	9.44834
+5 RESULT_2	Borneo;Yoruba	0.00122977	33.4161	0.000411009	9.44834
+5 RESULT_2	Dai;Esan	0.00123988	33.4161	0.000411432	9.44834
+5 RESULT_2	Dai;Mozambique_Chopi	0.00129658	33.4161	0.000431599	9.44834
+5 RESULT_2	Dai;Yoruba	0.00122838	33.4161	0.000413653	9.44834
+5 RESULT_2	Esan;Mozambique_Chopi	1.43541e-05	33.4161	0	9.44834
+5 RESULT_2	Sumba;Dai	1.25427e-05	33.4161	2.85755e-07	9.44834
+5 RESULT_2	Sumba;Esan	0.00112266	33.4161	0.000353771	9.44834
+5 RESULT_2	Sumba;Mozambique_Chopi	0.00117417	33.4161	0.000372786	9.44834
+5 RESULT_2	Sumba;Yoruba	0.00111154	33.4161	0.000355854	9.44834
+5 RESULT_2	Yoruba;Mozambique_Chopi	1.41982e-05	33.4161	0	9.44834
+6 RESULT_2	refpops	amp0	time0	amp1	time1
+6 RESULT_2	Borneo;Dai	2.07665e-06	37.0568	0	10.8561
+6 RESULT_2	Borneo;Esan	0.0011416	37.0568	0.000530455	10.8561
+6 RESULT_2	Borneo;Mozambique_Chopi	0.00119461	37.0568	0.000554862	10.8561
+6 RESULT_2	Borneo;Sumba	1.11262e-05	37.0568	1.25071e-06	10.8561
+6 RESULT_2	Borneo;Yoruba	0.00113002	37.0568	0.000532313	10.8561
+6 RESULT_2	Dai;Esan	0.0011414	37.0568	0.000532551	10.8561
+6 RESULT_2	Dai;Mozambique_Chopi	0.00119466	37.0568	0.00055783	10.8561
+6 RESULT_2	Dai;Yoruba	0.0011296	37.0568	0.000534575	10.8561
+6 RESULT_2	Esan;Mozambique_Chopi	1.58272e-05	37.0568	0	10.8561
+6 RESULT_2	Sumba;Dai	1.30793e-05	37.0568	5.54243e-07	10.8561
+6 RESULT_2	Sumba;Esan	0.00103622	37.0568	0.000461078	10.8561
+6 RESULT_2	Sumba;Mozambique_Chopi	0.00108462	37.0568	0.000484773	10.8561
+6 RESULT_2	Sumba;Yoruba	0.0010248	37.0568	0.00046297	10.8561
+6 RESULT_2	Yoruba;Mozambique_Chopi	1.56702e-05	37.0568	0	10.8561
+7 RESULT_2	refpops	amp0	time0	amp1	time1
+7 RESULT_2	Borneo;Dai	2.0032e-06	35.6695	0	10.3647
+7 RESULT_2	Borneo;Esan	0.00117804	35.6695	0.000486142	10.3647
+7 RESULT_2	Borneo;Mozambique_Chopi	0.00123208	35.6695	0.000508814	10.3647
+7 RESULT_2	Borneo;Sumba	1.10495e-05	35.6695	1.10159e-06	10.3647
+7 RESULT_2	Borneo;Yoruba	0.00116652	35.6695	0.000488108	10.3647
+7 RESULT_2	Dai;Esan	0.00117744	35.6695	0.000488402	10.3647
+7 RESULT_2	Dai;Mozambique_Chopi	0.00123194	35.6695	0.000511829	10.3647
+7 RESULT_2	Dai;Yoruba	0.00116573	35.6695	0.000490517	10.3647
+7 RESULT_2	Esan;Mozambique_Chopi	1.52661e-05	35.6695	0	10.3647
+7 RESULT_2	Sumba;Dai	1.28917e-05	35.6695	4.44596e-07	10.3647
+7 RESULT_2	Sumba;Esan	0.00106792	35.6695	0.00042191	10.3647
+7 RESULT_2	Sumba;Mozambique_Chopi	0.00111743	35.6695	0.000443911	10.3647
+7 RESULT_2	Sumba;Yoruba	0.00105659	35.6695	0.000423889	10.3647
+7 RESULT_2	Yoruba;Mozambique_Chopi	1.51098e-05	35.6695	0	10.3647
+8 RESULT_2	refpops	amp0	time0	amp1	time1
+8 RESULT_2	Borneo;Dai	2.04136e-06	36.3897	0	10.7722
+8 RESULT_2	Borneo;Esan	0.00114759	36.3897	0.000517876	10.7722
+8 RESULT_2	Borneo;Mozambique_Chopi	0.00120066	36.3897	0.000541802	10.7722
+8 RESULT_2	Borneo;Sumba	1.10822e-05	36.3897	1.18809e-06	10.7722
+8 RESULT_2	Borneo;Yoruba	0.00113602	36.3897	0.000519808	10.7722
+8 RESULT_2	Dai;Esan	0.00114725	36.3897	0.000520034	10.7722
+8 RESULT_2	Dai;Mozambique_Chopi	0.00120062	36.3897	0.000544801	10.7722
+8 RESULT_2	Dai;Yoruba	0.00113546	36.3897	0.000522128	10.7722
+8 RESULT_2	Esan;Mozambique_Chopi	1.55575e-05	36.3897	0	10.7722
+8 RESULT_2	Sumba;Dai	1.30074e-05	36.3897	4.93291e-07	10.7722
+8 RESULT_2	Sumba;Esan	0.00104142	36.3897	0.000449842	10.7722
+8 RESULT_2	Sumba;Mozambique_Chopi	0.00108991	36.3897	0.000473073	10.7722
+8 RESULT_2	Sumba;Yoruba	0.00103002	36.3897	0.000451801	10.7722
+8 RESULT_2	Yoruba;Mozambique_Chopi	1.54008e-05	36.3897	0	10.7722
+9 RESULT_2	refpops	amp0	time0	amp1	time1
+9 RESULT_2	Borneo;Dai	2.10575e-06	37.6078	0	11.092
+9 RESULT_2	Borneo;Esan	0.00112337	37.6078	0.000550552	11.092
+9 RESULT_2	Borneo;Mozambique_Chopi	0.00117584	37.6078	0.000575746	11.092
+9 RESULT_2	Borneo;Sumba	1.11512e-05	37.6078	1.31366e-06	11.092
+9 RESULT_2	Borneo;Yoruba	0.00111178	37.6078	0.00055237	11.092
+9 RESULT_2	Dai;Esan	0.00112335	37.6078	0.000552577	11.092
+9 RESULT_2	Dai;Mozambique_Chopi	0.00117598	37.6078	0.000578698	11.092
+9 RESULT_2	Dai;Yoruba	0.00111151	37.6078	0.00055457	11.092
+9 RESULT_2	Esan;Mozambique_Chopi	1.605e-05	37.6078	0	11.092
+9 RESULT_2	Sumba;Dai	1.31545e-05	37.6078	5.97434e-07	11.092
+9 RESULT_2	Sumba;Esan	0.00102035	37.6078	0.000478816	11.092
+9 RESULT_2	Sumba;Mozambique_Chopi	0.00106817	37.6078	0.000503282	11.092
+9 RESULT_2	Sumba;Yoruba	0.00100889	37.6078	0.000480677	11.092
+9 RESULT_2	Yoruba;Mozambique_Chopi	1.58926e-05	37.6078	0	11.092
+10 RESULT_2	refpops	amp0	time0	amp1	time1
+10 RESULT_2	Borneo;Dai	2.2333e-06	40.0298	0	11.796
+10 RESULT_2	Borneo;Esan	0.00106751	40.0298	0.000619004	11.796
+10 RESULT_2	Borneo;Mozambique_Chopi	0.00111853	40.0298	0.000646848	11.796
+10 RESULT_2	Borneo;Sumba	1.12711e-05	40.0298	1.5683e-06	11.796
+10 RESULT_2	Borneo;Yoruba	0.00105589	40.0298	0.000620599	11.796
+10 RESULT_2	Dai;Esan	0.00106816	40.0298	0.00062076	11.796
+10 RESULT_2	Dai;Mozambique_Chopi	0.00111902	40.0298	0.00064971	11.796
+10 RESULT_2	Dai;Yoruba	0.00105624	40.0298	0.000622555	11.796
+10 RESULT_2	Esan;Mozambique_Chopi	1.70287e-05	40.0298	0	11.796
+10 RESULT_2	Sumba;Dai	1.34372e-05	40.0298	8.04779e-07	11.796
+10 RESULT_2	Sumba;Esan	0.000971661	40.0298	0.000539468	11.796
+10 RESULT_2	Sumba;Mozambique_Chopi	0.00101788	40.0298	0.000566517	11.796
+10 RESULT_2	Sumba;Yoruba	0.00096012	40.0298	0.000541138	11.796
+10 RESULT_2	Yoruba;Mozambique_Chopi	1.68695e-05	40.0298	0	11.796
+11 RESULT_2	refpops	amp0	time0	amp1	time1
+11 RESULT_2	Borneo;Dai	2.15163e-06	38.4777	0	10.76
+11 RESULT_2	Borneo;Esan	0.00115121	38.4777	0.000540217	10.76
+11 RESULT_2	Borneo;Mozambique_Chopi	0.00120498	38.4777	0.000564968	10.76
+11 RESULT_2	Borneo;Sumba	1.12443e-05	38.4777	1.35774e-06	10.76
+11 RESULT_2	Borneo;Yoruba	0.00113967	38.4777	0.000541893	10.76
+11 RESULT_2	Dai;Esan	0.00115124	38.4777	0.000542222	10.76
+11 RESULT_2	Dai;Mozambique_Chopi	0.00120522	38.4777	0.000567861	10.76
+11 RESULT_2	Dai;Yoruba	0.00113946	38.4777	0.000544065	10.76
+11 RESULT_2	Esan;Mozambique_Chopi	1.64016e-05	38.4777	0	10.76
+11 RESULT_2	Sumba;Dai	1.32131e-05	38.4777	6.87132e-07	10.76
+11 RESULT_2	Sumba;Esan	0.00104469	38.4777	0.000470132	10.76
+11 RESULT_2	Sumba;Mozambique_Chopi	0.00109376	38.4777	0.000494142	10.76
+11 RESULT_2	Sumba;Yoruba	0.00103329	38.4777	0.00047185	10.76
+11 RESULT_2	Yoruba;Mozambique_Chopi	1.62437e-05	38.4777	0	10.76
+12 RESULT_2	refpops	amp0	time0	amp1	time1
+12 RESULT_2	Borneo;Dai	2.04047e-06	36.3729	0	10.7723
+12 RESULT_2	Borneo;Esan	0.00114758	36.3729	0.000517683	10.7723
+12 RESULT_2	Borneo;Mozambique_Chopi	0.00120064	36.3729	0.000541601	10.7723
+12 RESULT_2	Borneo;Sumba	1.1081e-05	36.3729	1.18663e-06	10.7723
+12 RESULT_2	Borneo;Yoruba	0.001136	36.3729	0.000519617	10.7723
+12 RESULT_2	Dai;Esan	0.00114722	36.3729	0.000519842	10.7723
+12 RESULT_2	Dai;Mozambique_Chopi	0.00120059	36.3729	0.000544602	10.7723
+12 RESULT_2	Dai;Yoruba	0.00113544	36.3729	0.000521939	10.7723
+12 RESULT_2	Esan;Mozambique_Chopi	1.55507e-05	36.3729	0	10.7723
+12 RESULT_2	Sumba;Dai	1.30059e-05	36.3729	4.91626e-07	10.7723
+12 RESULT_2	Sumba;Esan	0.00104141	36.3729	0.000449666	10.7723
+12 RESULT_2	Sumba;Mozambique_Chopi	0.00108989	36.3729	0.000472891	10.7723
+12 RESULT_2	Sumba;Yoruba	0.00103	36.3729	0.000451628	10.7723
+12 RESULT_2	Yoruba;Mozambique_Chopi	1.5394e-05	36.3729	0	10.7723
+13 RESULT_2	refpops	amp0	time0	amp1	time1
+13 RESULT_2	Borneo;Dai	2.15346e-06	38.5124	0	11.6188
+13 RESULT_2	Borneo;Esan	0.00108116	38.5124	0.000592405	11.6188
+13 RESULT_2	Borneo;Mozambique_Chopi	0.00113226	38.5124	0.000619241	11.6188
+13 RESULT_2	Borneo;Sumba	1.11772e-05	38.5124	1.42982e-06	11.6188
+13 RESULT_2	Borneo;Yoruba	0.00106952	38.5124	0.000594171	11.6188
+13 RESULT_2	Dai;Esan	0.00108147	38.5124	0.000594292	11.6188
+13 RESULT_2	Dai;Mozambique_Chopi	0.00113255	38.5124	0.000622169	11.6188
+13 RESULT_2	Dai;Yoruba	0.00106956	38.5124	0.000596249	11.6188
+13 RESULT_2	Esan;Mozambique_Chopi	1.64156e-05	38.5124	0	11.6188
+13 RESULT_2	Sumba;Dai	1.32846e-05	38.5124	6.66187e-07	11.6188
+13 RESULT_2	Sumba;Esan	0.000983537	38.5124	0.000515676	11.6188
+13 RESULT_2	Sumba;Mozambique_Chopi	0.00102994	38.5124	0.000541753	11.6188
+13 RESULT_2	Sumba;Yoruba	0.000972004	38.5124	0.000517502	11.6188
+13 RESULT_2	Yoruba;Mozambique_Chopi	1.62577e-05	38.5124	0	11.6188
+14 RESULT_2	refpops	amp0	time0	amp1	time1
+14 RESULT_2	Borneo;Dai	2.27797e-06	40.8802	0	11.9181
+14 RESULT_2	Borneo;Esan	0.00105803	40.8802	0.000634884	11.9181
+14 RESULT_2	Borneo;Mozambique_Chopi	0.00110893	40.8802	0.000663333	11.9181
+14 RESULT_2	Borneo;Sumba	1.13225e-05	40.8802	1.64549e-06	11.9181
+14 RESULT_2	Borneo;Yoruba	0.00104642	40.8802	0.000636388	11.9181
+14 RESULT_2	Dai;Esan	0.00105887	40.8802	0.000636568	11.9181
+14 RESULT_2	Dai;Mozambique_Chopi	0.00110954	40.8802	0.00066616	11.9181
+14 RESULT_2	Dai;Yoruba	0.00104695	40.8802	0.000638277	11.9181
+14 RESULT_2	Esan;Mozambique_Chopi	1.73722e-05	40.8802	0	11.9181
+14 RESULT_2	Sumba;Dai	1.35252e-05	40.8802	8.79569e-07	11.9181
+14 RESULT_2	Sumba;Esan	0.000963408	40.8802	0.000553641	11.9181
+14 RESULT_2	Sumba;Mozambique_Chopi	0.00100946	40.8802	0.000581274	11.9181
+14 RESULT_2	Sumba;Yoruba	0.000951859	40.8802	0.000555228	11.9181
+14 RESULT_2	Yoruba;Mozambique_Chopi	1.72123e-05	40.8802	0	11.9181
+15 RESULT_2	refpops	amp0	time0	amp1	time1
+15 RESULT_2	Borneo;Dai	2.07581e-06	37.0409	0	10.9871
+15 RESULT_2	Borneo;Esan	0.00113127	37.0409	0.000537962	10.9871
+15 RESULT_2	Borneo;Mozambique_Chopi	0.00118388	37.0409	0.000562671	10.9871
+15 RESULT_2	Borneo;Sumba	1.11169e-05	37.0409	1.25825e-06	10.9871
+15 RESULT_2	Borneo;Yoruba	0.00111968	37.0409	0.000539839	10.9871
+15 RESULT_2	Dai;Esan	0.00113111	37.0409	0.000540043	10.9871
+15 RESULT_2	Dai;Mozambique_Chopi	0.00118394	37.0409	0.000565648	10.9871
+15 RESULT_2	Dai;Yoruba	0.00111929	37.0409	0.000542091	10.9871
+15 RESULT_2	Esan;Mozambique_Chopi	1.58208e-05	37.0409	0	10.9871
+15 RESULT_2	Sumba;Dai	1.30911e-05	37.0409	5.46952e-07	10.9871
+15 RESULT_2	Sumba;Esan	0.00102722	37.0409	0.000467612	10.9871
+15 RESULT_2	Sumba;Mozambique_Chopi	0.00107522	37.0409	0.000491608	10.9871
+15 RESULT_2	Sumba;Yoruba	0.00101578	37.0409	0.000469526	10.9871
+15 RESULT_2	Yoruba;Mozambique_Chopi	1.56638e-05	37.0409	0	10.9871
+16 RESULT_2	refpops	amp0	time0	amp1	time1
+16 RESULT_2	Borneo;Dai	1.98051e-06	35.2418	0	10.0471
+16 RESULT_2	Borneo;Esan	0.00120116	35.2418	0.000463457	10.0471
+16 RESULT_2	Borneo;Mozambique_Chopi	0.00125598	35.2418	0.000485225	10.0471
+16 RESULT_2	Borneo;Sumba	1.10307e-05	35.2418	1.04757e-06	10.0471
+16 RESULT_2	Borneo;Yoruba	0.00118969	35.2418	0.000465428	10.0471
+16 RESULT_2	Dai;Esan	0.00120039	35.2418	0.000465781	10.0471
+16 RESULT_2	Dai;Mozambique_Chopi	0.00125577	35.2418	0.000488242	10.0471
+16 RESULT_2	Dai;Yoruba	0.00118875	35.2418	0.000467892	10.0471
+16 RESULT_2	Esan;Mozambique_Chopi	1.50931e-05	35.2418	0	10.0471
+16 RESULT_2	Sumba;Dai	1.28108e-05	35.2418	4.21589e-07	10.0471
+16 RESULT_2	Sumba;Esan	0.00108802	35.2418	0.00040199	10.0471
+16 RESULT_2	Sumba;Mozambique_Chopi	0.00113834	35.2418	0.000423103	10.0471
+16 RESULT_2	Sumba;Yoruba	0.00107675	35.2418	0.000403966	10.0471
+16 RESULT_2	Yoruba;Mozambique_Chopi	1.49369e-05	35.2418	0	10.0471
+17 RESULT_2	refpops	amp0	time0	amp1	time1
+17 RESULT_2	Borneo;Dai	2.13332e-06	38.1303	0	11.3288
+17 RESULT_2	Borneo;Esan	0.00110468	38.1303	0.000570517	11.3288
+17 RESULT_2	Borneo;Mozambique_Chopi	0.00115658	38.1303	0.000596492	11.3288
+17 RESULT_2	Borneo;Sumba	1.11722e-05	38.1303	1.37508e-06	11.3288
+17 RESULT_2	Borneo;Yoruba	0.00109307	38.1303	0.000572298	11.3288
+17 RESULT_2	Dai;Esan	0.00110483	38.1303	0.000572472	11.3288
+17 RESULT_2	Dai;Mozambique_Chopi	0.0011568	38.1303	0.000599428	11.3288
+17 RESULT_2	Dai;Yoruba	0.00109296	38.1303	0.000574435	11.3288
+17 RESULT_2	Esan;Mozambique_Chopi	1.62612e-05	38.1303	0	11.3288
+17 RESULT_2	Sumba;Dai	1.32248e-05	38.1303	6.38903e-07	11.3288
+17 RESULT_2	Sumba;Esan	0.00100406	38.1303	0.000496432	11.3288
+17 RESULT_2	Sumba;Mozambique_Chopi	0.00105127	38.1303	0.000521662	11.3288
+17 RESULT_2	Sumba;Yoruba	0.000992568	38.1303	0.000498264	11.3288
+17 RESULT_2	Yoruba;Mozambique_Chopi	1.61035e-05	38.1303	0	11.3288
+18 RESULT_2	refpops	amp0	time0	amp1	time1
+18 RESULT_2	Borneo;Dai	2.09503e-06	37.4047	0	10.8095
+18 RESULT_2	Borneo;Esan	0.00114564	37.4047	0.000531628	10.8095
+18 RESULT_2	Borneo;Mozambique_Chopi	0.0011989	37.4047	0.00055607	10.8095
+18 RESULT_2	Borneo;Sumba	1.11555e-05	37.4047	1.27642e-06	10.8095
+18 RESULT_2	Borneo;Yoruba	0.00113408	37.4047	0.000533437	10.8095
+18 RESULT_2	Dai;Esan	0.00114549	37.4047	0.000533703	10.8095
+18 RESULT_2	Dai;Mozambique_Chopi	0.001199	37.4047	0.000559018	10.8095
+18 RESULT_2	Dai;Yoruba	0.0011337	37.4047	0.000535678	10.8095
+18 RESULT_2	Esan;Mozambique_Chopi	1.59679e-05	37.4047	0	10.8095
+18 RESULT_2	Sumba;Dai	1.31085e-05	37.4047	5.89027e-07	10.8095
+18 RESULT_2	Sumba;Esan	0.00103976	37.4047	0.00046224	10.8095
+18 RESULT_2	Sumba;Mozambique_Chopi	0.00108839	37.4047	0.000485963	10.8095
+18 RESULT_2	Sumba;Yoruba	0.00102835	37.4047	0.000464084	10.8095
+18 RESULT_2	Yoruba;Mozambique_Chopi	1.58107e-05	37.4047	0	10.8095
+19 RESULT_2	refpops	amp0	time0	amp1	time1
+19 RESULT_2	Borneo;Dai	2.05321e-06	36.6137	0	10.5289
+19 RESULT_2	Borneo;Esan	0.0011666	36.6137	0.000506511	10.5289
+19 RESULT_2	Borneo;Mozambique_Chopi	0.00122045	36.6137	0.00052997	10.5289
+19 RESULT_2	Borneo;Sumba	1.11127e-05	36.6137	1.19179e-06	10.5289
+19 RESULT_2	Borneo;Yoruba	0.00115507	36.6137	0.000508381	10.5289
+19 RESULT_2	Dai;Esan	0.00116622	36.6137	0.000508678	10.5289
+19 RESULT_2	Dai;Mozambique_Chopi	0.00122044	36.6137	0.000532944	10.5289
+19 RESULT_2	Dai;Yoruba	0.00115448	36.6137	0.000510705	10.5289
+19 RESULT_2	Esan;Mozambique_Chopi	1.5648e-05	36.6137	0	10.5289
+19 RESULT_2	Sumba;Dai	1.30028e-05	36.6137	5.26617e-07	10.5289
+19 RESULT_2	Sumba;Esan	0.00105799	36.6137	0.000440038	10.5289
+19 RESULT_2	Sumba;Mozambique_Chopi	0.00110726	36.6137	0.000462802	10.5289
+19 RESULT_2	Sumba;Yoruba	0.00104664	36.6137	0.000441932	10.5289
+19 RESULT_2	Yoruba;Mozambique_Chopi	1.54913e-05	36.6137	0	10.5289
+20 RESULT_2	refpops	amp0	time0	amp1	time1
+20 RESULT_2	Borneo;Dai	2.03297e-06	36.2312	0	10.4245
+20 RESULT_2	Borneo;Esan	0.00117414	36.2312	0.000496164	10.4245
+20 RESULT_2	Borneo;Mozambique_Chopi	0.00122818	36.2312	0.00051922	10.4245
+20 RESULT_2	Borneo;Sumba	1.10892e-05	36.2312	1.15313e-06	10.4245
+20 RESULT_2	Borneo;Yoruba	0.00116262	36.2312	0.000498067	10.4245
+20 RESULT_2	Dai;Esan	0.00117366	36.2312	0.000498372	10.4245
+20 RESULT_2	Dai;Mozambique_Chopi	0.00122811	36.2312	0.000522207	10.4245
+20 RESULT_2	Dai;Yoruba	0.00116194	36.2312	0.000500428	10.4245
+20 RESULT_2	Esan;Mozambique_Chopi	1.54933e-05	36.2312	0	10.4245
+20 RESULT_2	Sumba;Dai	1.29537e-05	36.2312	4.95426e-07	10.4245
+20 RESULT_2	Sumba;Esan	0.00106454	36.2312	0.000430871	10.4245
+20 RESULT_2	Sumba;Mozambique_Chopi	0.00111402	36.2312	0.000453241	10.4245
+20 RESULT_2	Sumba;Yoruba	0.0010532	36.2312	0.000432793	10.4245
+20 RESULT_2	Yoruba;Mozambique_Chopi	1.53368e-05	36.2312	0	10.4245
+21 RESULT_2	refpops	amp0	time0	amp1	time1
+21 RESULT_2	Borneo;Dai	2.09955e-06	37.4903	0	11.0204
+21 RESULT_2	Borneo;Esan	0.00112898	37.4903	0.000544997	11.0204
+21 RESULT_2	Borneo;Mozambique_Chopi	0.00118163	37.4903	0.000569973	11.0204
+21 RESULT_2	Borneo;Sumba	1.11475e-05	37.4903	1.29865e-06	11.0204
+21 RESULT_2	Borneo;Yoruba	0.0011174	37.4903	0.000546821	11.0204
+21 RESULT_2	Dai;Esan	0.00112892	37.4903	0.00054704	11.0204
+21 RESULT_2	Dai;Mozambique_Chopi	0.00118175	37.4903	0.000572927	11.0204
+21 RESULT_2	Dai;Yoruba	0.00111709	37.4903	0.000549036	11.0204
+21 RESULT_2	Esan;Mozambique_Chopi	1.60025e-05	37.4903	0	11.0204
+21 RESULT_2	Sumba;Dai	1.31366e-05	37.4903	5.88974e-07	11.0204
+21 RESULT_2	Sumba;Esan	0.00102524	37.4903	0.000473926	11.0204
+21 RESULT_2	Sumba;Mozambique_Chopi	0.00107325	37.4903	0.000498177	11.0204
+21 RESULT_2	Sumba;Yoruba	0.0010138	37.4903	0.000475791	11.0204
+21 RESULT_2	Yoruba;Mozambique_Chopi	1.58452e-05	37.4903	0	11.0204
+RESULT_2	refpops	amp0	time0	amp1	time1
+RESULT_2	Borneo;Dai	2.0763e-06 +/- 4.74228e-07 (Z=4.37826)	37.0502 +/- 8.96753 (Z=4.1316)	0 +/- 0 (Z=-nan)	10.8522 +/- 3.46852 (Z=3.12877)
+RESULT_2	Borneo;Esan	0.0011419 +/- 0.000260715 (Z=4.37985)	37.0502 +/- 8.96753 (Z=4.1316)	0.000530153 +/- 0.000299325 (Z=1.77116)	10.8522 +/- 3.46852 (Z=3.12877)
+RESULT_2	Borneo;Mozambique_Chopi	0.00119492 +/- 0.000268399 (Z=4.45203)	37.0502 +/- 8.96753 (Z=4.1316)	0.000554549 +/- 0.000311056 (Z=1.78279)	10.8522 +/- 3.46852 (Z=3.12877)
+RESULT_2	Borneo;Sumba	1.11259e-05 +/- 4.85472e-07 (Z=22.9178)	37.0502 +/- 8.96753 (Z=4.1316)	1.24989e-06 +/- 9.733e-07 (Z=1.28418)	10.8522 +/- 3.46852 (Z=3.12877)
+RESULT_2	Borneo;Yoruba	0.00113032 +/- 0.000261079 (Z=4.32943)	37.0502 +/- 8.96753 (Z=4.1316)	0.000532011 +/- 0.000298682 (Z=1.78119)	10.8522 +/- 3.46852 (Z=3.12877)
+RESULT_2	Dai;Esan	0.00114169 +/- 0.000258098 (Z=4.42349)	37.0502 +/- 8.96753 (Z=4.1316)	0.00053225 +/- 0.000298259 (Z=1.78452)	10.8522 +/- 3.46852 (Z=3.12877)
+RESULT_2	Dai;Mozambique_Chopi	0.00119497 +/- 0.000267132 (Z=4.47334)	37.0502 +/- 8.96753 (Z=4.1316)	0.000557517 +/- 0.000310787 (Z=1.79389)	10.8522 +/- 3.46852 (Z=3.12877)
+RESULT_2	Dai;Yoruba	0.0011299 +/- 0.000258702 (Z=4.36756)	37.0502 +/- 8.96753 (Z=4.1316)	0.000534275 +/- 0.000297734 (Z=1.79447)	10.8522 +/- 3.46852 (Z=3.12877)
+RESULT_2	Esan;Mozambique_Chopi	1.58245e-05 +/- 3.62615e-06 (Z=4.364)	37.0502 +/- 8.96753 (Z=4.1316)	0 +/- 0 (Z=-nan)	10.8522 +/- 3.46852 (Z=3.12877)
+RESULT_2	Sumba;Dai	1.30783e-05 +/- 1.22114e-06 (Z=10.7099)	37.0502 +/- 8.96753 (Z=4.1316)	5.53778e-07 +/- 7.03784e-07 (Z=0.786857)	10.8522 +/- 3.46852 (Z=3.12877)
+RESULT_2	Sumba;Esan	0.00103648 +/- 0.000226885 (Z=4.56831)	37.0502 +/- 8.96753 (Z=4.1316)	0.000460812 +/- 0.00026434 (Z=1.74326)	10.8522 +/- 3.46852 (Z=3.12877)
+RESULT_2	Sumba;Mozambique_Chopi	0.00108489 +/- 0.000235093 (Z=4.61473)	37.0502 +/- 8.96753 (Z=4.1316)	0.000484496 +/- 0.000275808 (Z=1.75664)	10.8522 +/- 3.46852 (Z=3.12877)
+RESULT_2	Sumba;Yoruba	0.00102506 +/- 0.000227485 (Z=4.50607)	37.0502 +/- 8.96753 (Z=4.1316)	0.000462704 +/- 0.00026383 (Z=1.75379)	10.8522 +/- 3.46852 (Z=3.12877)
+RESULT_2	Yoruba;Mozambique_Chopi	1.56675e-05 +/- 3.62138e-06 (Z=4.3264)	37.0502 +/- 8.96753 (Z=4.1316)	0 +/- 0 (Z=-nan)	10.8522 +/- 3.46852 (Z=3.12877)

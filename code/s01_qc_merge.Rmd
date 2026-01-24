@@ -280,7 +280,7 @@ to_keep <- which(loci_report_m$hwe_p > 0.01)
 malagasy_merged <- malagasy_merged %>% select_loci(all_of(to_keep))
 count_loci(malagasy_merged)
 malagasy_merged <-
-  malagasy_merged %>% select_loci_if(loci_missingness(genotypes) < 0.01)
+  malagasy_merged %>% select_loci_if(loci_missingness(genotypes) < 0.05)
 count_loci(malagasy_merged)
 ```
 
@@ -635,7 +635,7 @@ to_keep <- which(loci_report_m$hwe_p > 0.01)
 mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% select_loci(all_of(to_keep))
 count_loci(mad_bor_g1000_sum_neo)
 mad_bor_g1000_sum_neo <-
-  mad_bor_g1000_sum_neo %>% select_loci_if(loci_missingness(genotypes) < 0.01)
+  mad_bor_g1000_sum_neo %>% select_loci_if(loci_missingness(genotypes) < 0.05)
 count_loci(mad_bor_g1000_sum_neo)
 mad_bor_g1000_sum_neo <-
   mad_bor_g1000_sum_neo %>% select_loci_if(loci_maf(genotypes) > 0.025)

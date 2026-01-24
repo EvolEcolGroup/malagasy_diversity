@@ -1,0 +1,124 @@
+---
+title: "Supervised Admixture"
+date: "2026-01-23"
+knit: resrepo::knit_to_results
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidypopgen)
+library(tidygenclust)
+library(resrepo)
+library(ggplot2)
+```
+
+```{r set-directories}
+res_dir <- "../results/s05_b_supervised/"
+```
+
+# Load gt
+
+```{r}
+mad_bor_g1000_sum <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt",
+    reattach_to = "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld"
+  )
+```
+
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum)
+count_loci(mad_bor_g1000_sum)
+```
+
+# Subset mad_bor_g1000_sum
+
+```{r}
+moz_pop <- unique(grep("^Mozambique", mad_bor_g1000_sum$population, value = TRUE))
+
+pops <- c("Borneo", moz_pop, "Betsimisaraka", "Merina", "Diego", "Sakalava_Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro")
+
+mad_bor_g1000_sum_sub <- mad_bor_g1000_sum %>% filter(population %in% pops)
+
+mad_bor_g1000_sum_sub <- mad_bor_g1000_sum_sub %>% group_by(population)
+```
+
+# Write plink files
+
+```{r}
+gt_as_plink(mad_bor_g1000_sum_sub,
+  file = "../data/intermediate/admixture/admixture_supervised_subset",
+  overwrite = TRUE
+)
+```
+
+# Write .pop file 
+
+```{r}
+mad_bor_g1000_sum_sub$Region <- "-"
+mad_bor_g1000_sum_sub[mad_bor_g1000_sum_sub$population %in% c("Borneo", "Sumba", "Timor"), "Region"] <- "Asian"
+mad_bor_g1000_sum_sub[mad_bor_g1000_sum_sub$population %in% c("Betsimisaraka", "Merina", "Diego", "Sakalava_Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro"), "Region"] <- "-"
+# whaterver is left as "Other" set to Africa
+mad_bor_g1000_sum_sub[mad_bor_g1000_sum_sub$population %in% moz_pop, "Region"] <- "African"
+
+write.table(mad_bor_g1000_sum_sub$Region,
+  file = "../data/intermediate/admixture/admixture_supervised_subset.pop",
+  row.names = FALSE, col.names = FALSE, quote = FALSE
+)
+```
+
+# Run admixture
+
+```{bash}
+cd ~/Git/malagasy_diversity/code
+bash s05_admixture_supervised.sh
+```
+
+# Read output
+
+```{r}
+predicted_q <- read_q_files("../data/intermediate/admixture")
+```
+
+# Plot
+
+```{r}
+# rename moz_pops to "Mozambique" in mad_bor_g1000_sum_sub$population 
+mad_bor_g1000_sum_sub$population <- ifelse(mad_bor_g1000_sum_sub$population %in% moz_pop, "Mozambique", mad_bor_g1000_sum_sub$population)
+
+# rename mad_bor_g1000_sum$population "Sakalava Tsimihety" to "Sakalava/Tsimihety"
+mad_bor_g1000_sum_sub$population[mad_bor_g1000_sum_sub$population == "Sakalava_Tsimihety"] <- "Sakalava/Tsimihety"
+# rename mad_bor_g1000_sum$population "Diego" to "Diego Mixed"
+mad_bor_g1000_sum_sub$population[mad_bor_g1000_sum_sub$population == "Diego"] <- "Diego Mixed"
+
+autoplot(get_q_matrix(predicted_q, k = 2, run = 1),
+  data = mad_bor_g1000_sum_sub,
+  annotate_group = TRUE, arrange_by_group = TRUE,
+  arrange_by_indiv = TRUE, reorder_within_groups = TRUE
+) + 
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "black")
+
+ggsave(paste0(res_dir, "Admixture_supervised_malagasy.jpg"),
+  width = 7, height = 6, dpi = 300
+)
+```
+
+
+***
+
+## Recording R environment
+
+Part of ensuring our workflow is reproducible is to keep track of the R environment.
+We will automatically save our R environment into a file called `r_environment.json`.
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s05_b_supervised.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+```

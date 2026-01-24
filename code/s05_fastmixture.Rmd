@@ -9,11 +9,12 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidypopgen)
 library(tidygenclust)
+library(resrepo)
 library(ggplot2)
 library(patchwork)
 
 # Set cores
-n_cores <- 10
+n_cores <- 15
 data.table::setDTthreads(n_cores)
 bigparallelr::set_blas_ncores(n_cores)
 ```
@@ -22,14 +23,14 @@ bigparallelr::set_blas_ncores(n_cores)
 res_dir <- "../results/s05_fastmixture/"
 ```
 
-This script uses fastMIXTURE (Santander et al., 2024) through the package tidypopgen (Carter and Manica, 2025) and clumppling (ref) through the package tidygenclust (ref) to estimate ancestry proportions of individuals in the global dataset. 
+This script uses fastMIXTURE (Santander et al., 2024) through the package tidypopgen (Carter and Manica, 2025), and clumppling (ref) through the package tidygenclust (ref) to estimate ancestry proportions of individuals in the global dataset. 
 
 # Load gt
 
 ```{r}
 mad_bor_g1000_sum <-
-  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.gt",
-    reattach_to = "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean"
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt",
+    reattach_to = "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld"
   )
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
 ```
@@ -46,7 +47,7 @@ fastMIXTURE was run on the full, cleaned dataset of `r nrow(mad_bor_g1000_sum)` 
 ```{r}
 if (file.exists("../data/intermediate/fastmixture/fastmixture_m.RData")) {
   qmats <-
-    readRDS("~/Dropbox/gitdata/malagasy_diversity/data/intermediate/fastmixture/fastmixture_m.RData")
+    readRDS("../data/intermediate/fastmixture/fastmixture_m.RData")
 } else {
   tictoc::tic()
   k <- c(2:10)
@@ -55,8 +56,10 @@ if (file.exists("../data/intermediate/fastmixture/fastmixture_m.RData")) {
     n_runs = 3,
     threads = 1,
     batches = 16,
-    seed = c(1,2,3),
-    no_freqs = TRUE
+    seed = c(1, 2, 3),
+    no_freqs = TRUE,
+    cv = 5,
+    cv_tole = 1e-7
   )
   saveRDS(qmats, "../data/intermediate/fastmixture/fastmixture_m.RData")
   time <- tictoc::toc()
@@ -66,18 +69,56 @@ if (file.exists("../data/intermediate/fastmixture/fastmixture_m.RData")) {
 fastMIXTURE was run unsupervised for k values `min(range(unique(qmats$k)))` to `r max(range(unique(qmats$k)))`, with `r rle(qmats$k)$lengths[1]` repeats. 
 
 ```{r}
-# check order
-testthat::expect_equal(qmats$id, mad_bor_g1000_sum$id)
-# add grouping variable
-qmats$group <- mad_bor_g1000_sum$population
+qmats <- readRDS("../data/intermediate/fastmixture/fastmixture_m.RData")
 ```
 
-# Reorder the gt_admix object
 
 ```{r}
-qmats <- gt_admix_reorder_q(qmats)
+# check order
+testthat::expect_equal(qmats$id, mad_bor_g1000_sum$id)
+testthat::expect_equal(qmats$group, mad_bor_g1000_sum$population)
 ```
 
+
+# Reorder gen_tibble
+
+```{r}
+mad_bor_g1000_sum$Region <- "Other"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Borneo", "Sumba", "Timor"), "Region"] <- "Island southeast Asia"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("BEB", "PJL"), "Region"] <- "South Asia"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("CHS", "KHV"), "Region"] <- "East Asia"
+# Not really happy about grouping all African samples here though...
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("ESN", "GWD", "LWK", "MSL", "YRI"), "Region"] <- "Africa"
+mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Betsimisaraka", "Merina", "Diego", "Sakalava_Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro"), "Region"] <- "Malagasy"
+# wharerver is left as "Other" set to Africa
+mad_bor_g1000_sum[mad_bor_g1000_sum$Region == "Other", "Region"] <- "Africa"
+
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% arrange(Region, population)
+```
+
+# Reorder qmats according to population order in mad_bor_g1000_sum
+
+```{r}
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% filter(.data$id %in% qmats$id)
+
+mad_bor_g1000_sum <- mad_bor_g1000_sum[match(qmats$id, mad_bor_g1000_sum$id), ]
+
+region <- mad_bor_g1000_sum$Region
+region <- factor(region, levels = unique(mad_bor_g1000_sum$Region))
+
+qmats <- gt_admix_reorder_q(qmats, group = region)
+```
+
+# CV
+
+```{r}
+autoplot(qmats, type = "cv")
+ggsave(paste0(res_dir, "fastmixture_cv_error.jpg"),
+  width = 7, height = 6, dpi = 300
+)
+```
+
+Cross validation error indicates that low values of K are unsuitable to describe variation in the dataset. We therefore explore K = 6 and above.
 
 # Clumppling
 
@@ -86,19 +127,53 @@ clump <- gt_clumppling(input_path = qmats)
 ```
 
 ```{r}
-out <- clump %>% autoplot(type = "all_modes", group = qmats$group)
+out <- clump %>% autoplot(
+  type = "all_modes",
+  group = as.character(qmats$group)
+)
 out
+ggsave(paste0(res_dir, "clumppling_all_modes.jpg"),
+  width = 7, height = 6, dpi = 300
+)
 ```
 
 ```{r}
-clump %>% autoplot(type = "major_modes", group = qmats$group)
+devtools::load_all("/home/EJC199/Git/tidygenclust")
+
+# subset according to index
+sub_clump <- subset_gt_clumppling(clump, k = 6:10)
+
+# with group labels
+sub_clump %>% autoplot(
+  type = "all_modes",
+  group = as.character(qmats$group)
+)
+ggsave(paste0(res_dir, "clumppling_all_modes_k6_10.jpg"),
+  width = 7, height = 6, dpi = 300
+)
+
+# subset according to index
+sub_clump <- subset_gt_clumppling(clump, k = 6)
+
+# with group labels
+sub_clump %>% autoplot(
+  type = "all_modes",
+  group = as.character(qmats$group)
+)
+ggsave(paste0(res_dir, "clumppling_all_modes_k6.jpg"),
+  width = 7, height = 6, dpi = 300
+)
+```
+
+```{r}
+clump %>% autoplot(type = "major_modes")
 ggsave(paste0(res_dir, "clumppling_major_modes.jpg"),
   width = 7, height = 7, dpi = 300
 )
 ```
 
 ```{r}
-clump_out <- clump %>% autoplot(type = "modes", group = qmats$group)
+clump_out <- clump %>% autoplot(type = "modes")
 clump_out
 ggsave(paste0(res_dir, "clumppling_modes.jpg"),
   width = 7, height = 7, dpi = 300
@@ -106,153 +181,135 @@ ggsave(paste0(res_dir, "clumppling_modes.jpg"),
 ```
 
 ```{r}
-clump %>% autoplot(type = "modes_within_k", k = 3, group = qmats$group)
-```
-
-
-# Initial plot
-
-
-```{r}
-autoplot(get_q_matrix(qmats, k = 3, run = 1),
-  data = mad_bor_g1000_sum,
+autoplot(get_q_matrix(qmats, k = 6, run = 1),
   annotate_group = TRUE,
   arrange_by_group = TRUE,
   arrange_by_indiv = TRUE,
   reorder_within_groups = TRUE
 )
+
+ggsave(paste0(res_dir, "fastmixture_k6.jpg"),
+  width = 7, height = 5, dpi = 300
+)
 ```
 
-# Add full population names 
+
+# Add Malagasy population names
 
 ```{r}
-pop_names <-
-  read.csv("../data/raw/data_input/igsr-1000-genomes-phase-3-release.tsv",
-    sep = "\t"
-  )
-
-# find matching id in pop_names Sample.name and mad_bor_g1000_sum id, and for the matches, replace the population in mad_bor_g1000_sum with the population in pop_names
-for (i in seq_len(nrow(pop_names))) {
-  if (pop_names$Sample.name[i] %in% mad_bor_g1000_sum$id) {
-    mad_bor_g1000_sum[mad_bor_g1000_sum$id == pop_names$Sample.name[i], "population"] <- pop_names$Population.name[i]
-  }
-}
-
-# replace "Luhya,Luhya" with "Luhya"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Luhya,Luhya"] <- "Luhya"
-# replace "Esan,Esan" with "Esan"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Esan,Esan"] <- "Esan"
-# replace "Gambian Mandinka,Gambian" with "Gambian Mandinka"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Gambian Mandinka,Gambian"] <- "Gambian Mandinka"
-# replace "Mende,Mende" with "Mende"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Mende,Mende"] <- "Mende"
-# replace "Kinh,Kinh Vietnamese" with "Kinh Vietnamese"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Kinh,Kinh Vietnamese"] <- "Kinh Vietnamese"
-# replcae "Punjabi,Punjabi" with "Punjabi"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Punjabi,Punjabi"] <- "Punjabi"
-# replcae "Benga,Bengali" with "Bengali"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Bengali,Bengali"] <- "Bengali"
-
-# replace any _ with a space
-mad_bor_g1000_sum$population <- gsub("_", " ", mad_bor_g1000_sum$population)
-```
-
-```{r}
-# reorder
-mad_bor_g1000_sum$Region <- "Other"
-mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Borneo", "Sumba", "Timor"), "Region"] <- "Island southeast Asia"
-mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Bengali", "Punjabi"), "Region"] <- "South Asia"
-mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Southern Han Chinese", "Kinh Vietnamese"), "Region"] <- "East Asia"
-# Not really happy about grouping all African samples here though...
-mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Esan", "Gambian Mandinka", "Luhya", "Mende", "Yoruba"), "Region"] <- "Africa"
-mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Betsimisaraka", "Merina", "Diego", "Sakalava Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro"), "Region"] <- "Malagasy"
-# wharerver is left as "Other" set to Africa
-mad_bor_g1000_sum[mad_bor_g1000_sum$Region == "Other", "Region"] <- "Africa"
-
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% arrange(Region, population)
-```
-
-# Arrange and save plot
-
-```{r}
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% arrange(Region, population)
-pop_levels <- unique(mad_bor_g1000_sum$population)
-
-mad_bor_g1000_sum <- mad_bor_g1000_sum %>% filter(.data$id %in% qmats$id)
-mad_bor_g1000_sum <- mad_bor_g1000_sum[match(qmats$id, mad_bor_g1000_sum$id), ]
-pops <- mad_bor_g1000_sum$population
-pops <- factor(pops, levels = pop_levels)
-
-qmats <- gt_admix_reorder_q(qmats, group = pops)
-
-autoplot(get_q_matrix(qmats, k = 3, run = 1),
-  annotate_group = TRUE, arrange_by_group = TRUE,
-  arrange_by_indiv = TRUE, reorder_within_groups = TRUE
+mad_bor_g1000_sum$Region <- ifelse(mad_bor_g1000_sum$Region == "Malagasy",
+  mad_bor_g1000_sum$population,
+  mad_bor_g1000_sum$Region
 )
 
-#ggsave(paste0(res_dir, "fastmixture_autoplot.jpg"),
-#  width = 7, height = 7, dpi = 300
-#)
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% arrange(Region, population)
 ```
 
-# Check which ancestry components the .Q files represent 
+# Reorder qmats according to population order in mad_bor_g1000_sum
 
 ```{r}
-augmented <- augment(get_q_matrix(qmats, k = 3, run = 1),
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% filter(.data$id %in% qmats$id)
+
+mad_bor_g1000_sum <- mad_bor_g1000_sum[match(qmats$id, mad_bor_g1000_sum$id), ]
+# rename mad_bor_g1000_sum$Region "Sakalava Tsimihety" to "Sakalava/Tsimihety"
+mad_bor_g1000_sum$Region[mad_bor_g1000_sum$Region == "Sakalava_Tsimihety"] <- "Sakalava/Tsimihety"
+# rename mad_bor_g1000_sum$population "Diego" to "Diego Mixed"
+mad_bor_g1000_sum$Region[mad_bor_g1000_sum$Region == "Diego"] <- "Diego Mixed"
+
+region <- mad_bor_g1000_sum$Region
+region <- factor(region, levels = unique(mad_bor_g1000_sum$Region))
+
+qmats <- gt_admix_reorder_q(qmats, group = region)
+```
+
+# Plot
+
+```{r}
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  group_by(Region)
+
+autoplot(get_q_matrix(qmats, k = 6, run = 1),
+  annotate_group = TRUE,
+  arrange_by_group = TRUE,
+  arrange_by_indiv = TRUE,
+  reorder_within_groups = TRUE
+) +
+  theme( # Rotate and adjust alignment
+    axis.text.x = element_text(angle = -45, hjust = 0, vjust = 1, size = 6)
+  )
+
+ggsave(paste0(res_dir, "fastmixture_k6_malagasy_named.jpg"),
+  width = 7, height = 5, dpi = 300
+)
+```
+
+
+```{r}
+# rerun clumppling
+clump <- gt_clumppling(input_path = qmats)
+
+devtools::load_all("/home/EJC199/Git/tidygenclust")
+
+# find samples of interest within gt_admix object `qmats`
+malagasy_index <- which(qmats$group %in% c(
+  "Betsimisaraka", "Merina", "Diego Mixed",
+  "Sakalava/Tsimihety", "Betsileo",
+  "Vezo", "Mikea", "Temoro"
+))
+
+# subset according to index
+sub_clump <- subset_gt_clumppling(clump, indivs = malagasy_index)
+
+# with group labels
+sub_clump %>% autoplot(
+  type = "all_modes",
+  group = as.character(qmats$group[malagasy_index])
+)
+
+ggsave(paste0(res_dir, "clumppling_all_modes_malagasy_only.jpg"),
+  width = 7, height = 6, dpi = 300
+)
+
+# subset according to index
+sub_clump <- subset_gt_clumppling(clump, k = 6:10, indivs = malagasy_index)
+
+# with group labels
+sub_clump %>% autoplot(
+  type = "all_modes",
+  group = as.character(qmats$group[malagasy_index])
+)
+
+ggsave(paste0(res_dir, "clumppling_all_modes_malagasy_only_k6_10.jpg"),
+  width = 7, height = 6, dpi = 300
+)
+
+# subset according to index
+sub_clump <- subset_gt_clumppling(clump, k = 6, indivs = malagasy_index)
+
+# with group labels
+sub_clump %>% autoplot(
+  type = "all_modes",
+  group = as.character(qmats$group[malagasy_index])
+)
+
+ggsave(paste0(res_dir, "clumppling_all_modes_malagasy_only_k6.jpg"),
+  width = 7, height = 6, dpi = 300
+)
+```
+
+# Check which ancestry components each .Q represents
+
+```{r}
+augmented <- augment(get_q_matrix(qmats, k = 2, run = 1),
   data = mad_bor_g1000_sum
 )
 
-# filter augmeneted to $population GWD and print head
-augmented_gwd <- augmented %>% filter(population == "Gambian Mandinka")
+# filter augmented to $population CHS and print head
+augmented_chs <- augmented %>% filter(population == "CHS")
+head(augmented_chs) # .Q1 representing Asian ancestry
+
+augmented_gwd <- augmented %>% filter(population == "GWD")
 head(augmented_gwd)
-
-# filter augmented to $population Borneo and print head
-augmented_borneo <- augmented %>% filter(population == "Borneo")
-head(augmented_borneo)
-
-# .Q3 representing Asian ancestry and .Q2 representing African ancestry
-```
-
-# Look at variance within each population
-
-```{r}
-vars <- augmented %>%
-  group_by(population) %>%
-  summarise(Q1 = var(.Q1), Q2 = var(.Q2), Q3 = var(.Q3))
-head(vars)
-```
-
-```{r}
-ggplot(vars, aes(x = population, y = Q1)) +
-  geom_point() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  labs(
-    title = "Variance of Q1 within each population",
-    x = "Population", y = "Variance of Q1"
-  ) +
-  scale_y_continuous(limits = c(0, max(vars$Q1) + 0.01))
-
-ggplot(vars, aes(x = population, y = Q2)) +
-  geom_point() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  labs(
-    title = "Variance of Q2 within each population",
-    x = "Population", y = "Variance of Q2"
-  ) +
-  scale_y_continuous(limits = c(0, max(vars$Q2) + 0.01))
-
-ggplot(vars, aes(x = population, y = Q3)) +
-  geom_point() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  labs(
-    title = "Variance of Q3 within each population",
-    x = "Population", y = "Variance of Q3"
-  ) +
-  scale_y_continuous(limits = c(0, max(vars$Q3) + 0.01))
-```
-
-
-```{r}
 ```
 
 
@@ -271,6 +328,4 @@ filename_renv <- paste0(
   ".json"
 )
 renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
-
 ```
-

@@ -24,6 +24,13 @@ mad_bor_g1000_sum_neo <-
   gt_load("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_no_ld.gt")
 ```
 
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum_neo)
+count_loci(mad_bor_g1000_sum_neo)
+```
+
 # Load 1000 Genomes
 
 ```{r}
@@ -204,14 +211,14 @@ mad_bor_g1000_sum_neo <-
 qmats <-
   readRDS("~/Dropbox/gitdata/malagasy_diversity/data/intermediate/fastmixture/fastmixture_m.RData")
 # tidy with the gt
-mad_bor_g1000_sum_neo <- augment(get_q_matrix(qmats, k = 3, run = 1),
+mad_bor_g1000_sum_neo <- augment(get_q_matrix(qmats, k = 2, run = 1),
   data = mad_bor_g1000_sum_neo
 )
 # filter to merina
 merina <- mad_bor_g1000_sum_neo %>% filter(population == "Merina")
 # split groups
 # .Q3 representing Asian ancestry and .Q2 representing African ancestry
-merina$population <- ifelse(merina$.Q3 > 0.5, "MerinaA", "MerinaB")
+merina$population <- ifelse(merina$.Q1 > 0.5, "MerinaA", "MerinaB")
 merina <- merina[, c("id", "population")]
 merina$id <- sub("RR.*", "", merina$id)
 
@@ -579,6 +586,13 @@ saveRDS(result, "../results/s07_ALDER/alder_results_all.RData")
    computed using data from all chromosomes and y is the standard
    error obtained from the jackknife.' README file for ALDER
 
+```{r}
+# subset result to only MerinaA and merinaB, not merina together
+result <- subset(
+  result,
+  result$`test pop` != "Merina"
+)
+```
 
 # Different African populations, using Borneo
 
@@ -606,8 +620,12 @@ p1 <- ggplot(borneo_res, aes(x = `ref B`, y = admixture_date, colour = `ref B`))
   theme_minimal() +
   theme(
     axis.text.x = element_blank(),
-    legend.position = "inside",
-    legend.position.inside = c(0.8, 0.15),
+    legend.position = "right",
+    #legend.position = "inside",
+    #legend.position.inside = c(0.8, 0.15),
+    axis.title = element_text(size = 14),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
     axis.line = element_blank(),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
@@ -646,8 +664,12 @@ p2 <- ggplot(mozambique_res, aes(x = `ref A`, y = admixture_date, colour = `ref 
   theme_minimal() +
   theme(
     axis.text.x = element_blank(),
-    legend.position = "inside",
-    legend.position.inside = c(0.8, 0.15),
+    legend.position = "right",
+    #legend.position = "inside",
+    #legend.position.inside = c(0.8, 0.15),
+    axis.title = element_text(size = 14),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
     axis.line = element_blank(),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
