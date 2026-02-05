@@ -9,6 +9,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(tidypopgen)
+library(dplyr)
 ```
 
 ```{r set-directories, include=FALSE}
@@ -388,5 +389,4 @@ filename_renv <- paste0(
   ".json"
 )
 renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
-
 ```

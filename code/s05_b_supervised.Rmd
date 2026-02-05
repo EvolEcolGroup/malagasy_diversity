@@ -36,9 +36,15 @@ count_loci(mad_bor_g1000_sum)
 # Subset mad_bor_g1000_sum
 
 ```{r}
-moz_pop <- unique(grep("^Mozambique", mad_bor_g1000_sum$population, value = TRUE))
+moz_pop <- unique(grep("^Mozambique",
+  mad_bor_g1000_sum$population,
+  value = TRUE
+))
 
-pops <- c("Borneo", moz_pop, "Betsimisaraka", "Merina", "Diego", "Sakalava_Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro")
+pops <- c(
+  "Borneo", moz_pop, "Betsimisaraka", "Merina", "Diego",
+  "Sakalava_Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro"
+)
 
 mad_bor_g1000_sum_sub <- mad_bor_g1000_sum %>% filter(population %in% pops)
 
@@ -85,19 +91,19 @@ predicted_q <- read_q_files("../data/intermediate/admixture")
 # Plot
 
 ```{r}
-# rename moz_pops to "Mozambique" in mad_bor_g1000_sum_sub$population 
-mad_bor_g1000_sum_sub$population <- ifelse(mad_bor_g1000_sum_sub$population %in% moz_pop, "Mozambique", mad_bor_g1000_sum_sub$population)
-
-# rename mad_bor_g1000_sum$population "Sakalava Tsimihety" to "Sakalava/Tsimihety"
+# rename populations
+mad_bor_g1000_sum_sub$population <-
+  ifelse(mad_bor_g1000_sum_sub$population %in% moz_pop,
+    "Mozambique", mad_bor_g1000_sum_sub$population
+  )
 mad_bor_g1000_sum_sub$population[mad_bor_g1000_sum_sub$population == "Sakalava_Tsimihety"] <- "Sakalava/Tsimihety"
-# rename mad_bor_g1000_sum$population "Diego" to "Diego Mixed"
 mad_bor_g1000_sum_sub$population[mad_bor_g1000_sum_sub$population == "Diego"] <- "Diego Mixed"
 
 autoplot(get_q_matrix(predicted_q, k = 2, run = 1),
   data = mad_bor_g1000_sum_sub,
   annotate_group = TRUE, arrange_by_group = TRUE,
   arrange_by_indiv = TRUE, reorder_within_groups = TRUE
-) + 
+) +
   geom_hline(yintercept = 0.5, linetype = "dashed", color = "black")
 
 ggsave(paste0(res_dir, "Admixture_supervised_malagasy.jpg"),

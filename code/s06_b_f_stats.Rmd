@@ -44,28 +44,11 @@ mad_bor_g1000_sum <-
   mad_bor_g1000_sum %>% filter(!population %in% to_remove_pops)
 ```
 
-# Update labels
-
-```{r}
-# # rename mad_bor_g1000_sum$population "Sakalava Tsimihety" to "Sakalava/Tsimihety"
-# mad_bor_g1000_sum <- mad_bor_g1000_sum %>% mutate(population = case_when(
-#   population == "Sakalava_Tsimihety" ~ "Sakalava/Tsimihety",
-#   TRUE ~ population
-# ))
-# # rename mad_bor_g1000_sum$population "Diego" to "Diego Mixed"
-# mad_bor_g1000_sum <- mad_bor_g1000_sum %>% mutate(population = case_when(
-#   population == "Diego" ~ "Diego Mixed",
-#   TRUE ~ population
-# ))
-```
-
-
 # Group by population
 
 ```{r}
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
 ```
-
 
 # Create f2 blocks directory
 
@@ -82,7 +65,7 @@ if (dir.exists("../data/intermediate/f2")) {
 # Read in precomputed f2's
 
 ```{r}
-f2_blocks <- f2_from_precomp(f2_dir) # warning herre consider afprod
+f2_blocks <- f2_from_precomp(f2_dir) # warning here consider afprod
 dim(f2_blocks)
 count_snps(f2_blocks)
 ```
@@ -98,22 +81,16 @@ gc()
 all_pops <- unique(mad_bor_g1000_sum$population)
 
 malagasy <- c(
-  "Betsimisaraka", "Merina","Diego", "Sakalava_Tsimihety", #MerinaA, MerinaB
+  "Betsimisaraka", "Merina", "Diego", "Sakalava_Tsimihety", # MerinaA, MerinaB
   "Betsileo", "Temoro", "Vezo", "Mikea"
 )
 asian <- c("Borneo", "Sumba", "Timor", "KHV", "CHS", "PJL", "BEB")
-# removing ,"BEB","PJL"
-# african <- c("YRI", "LWK", "GWD", "ESN", "MSL")
-# Yoruba, Luhya, Gambian, Esan, Mende
 
 african <- setdiff(all_pops, c(malagasy, asian))
 
 # Running test directly crashes R session, instead we can run in a loop
-#test <- qp3pop(f2_blocks, malagasy, asian, african) # A, B ; C
-
 results <- vector("list", length(african))
 names(results) <- african
-
 for (c_pop in african) {
   message("Running C = ", c_pop)
   results[[c_pop]] <- qp3pop(
@@ -166,19 +143,28 @@ write.table(
 ```
 
 ```{r}
-# Examine z-scores remembering that z-score is affected by population size,
-# so interpretation should be careful
+# Examine z-scores remembering that z-score is affected by population size
 min_z <- test %>%
   group_by(Malagasy) %>%
   slice(which.min(z))
 min_z
 
-mad_bor_g1000_sum %>% filter(population == "DRC_Ngwi") %>% nrow()
-mad_bor_g1000_sum %>% filter(population == "DRC_Shi") %>% nrow()
+mad_bor_g1000_sum %>%
+  filter(population == "DRC_Ngwi") %>%
+  nrow()
+mad_bor_g1000_sum %>%
+  filter(population == "DRC_Shi") %>%
+  nrow()
 
-mad_bor_g1000_sum %>% filter(population == "Mozambique_Ronga") %>% nrow()
-mad_bor_g1000_sum %>% filter(population == "Mozambique_Chopi") %>% nrow()
-mad_bor_g1000_sum %>% filter(population == "Mozambique_Tswa") %>% nrow()
+mad_bor_g1000_sum %>%
+  filter(population == "Mozambique_Ronga") %>%
+  nrow()
+mad_bor_g1000_sum %>%
+  filter(population == "Mozambique_Chopi") %>%
+  nrow()
+mad_bor_g1000_sum %>%
+  filter(population == "Mozambique_Tswa") %>%
+  nrow()
 
 write.table(
   file = paste0(res_dir, "minimum_z-score_malagasy_pops"),
@@ -268,7 +254,7 @@ test_grouped %>%
   ) +
   theme_minimal() +
   theme(
-    #axis.text.x = element_blank(),
+    # axis.text.x = element_blank(),
     legend.position = "none",
     axis.line = element_blank(),
     panel.grid.major = element_blank(),
@@ -654,36 +640,6 @@ count_loci(mad_bor_g1000_sum)
 # Split Merina
 
 ```{r}
-# # Load fastmixture results
-# qmats <-
-#   readRDS("~/Dropbox/gitdata/malagasy_diversity/data/intermediate/fastmixture/fastmixture_m.RData")
-# # tidy with the gt
-# mad_bor_g1000_sum <- augment(get_q_matrix(qmats, k = 2, run = 1),
-#   data = mad_bor_g1000_sum
-# )
-# # filter to merina
-# merina <- mad_bor_g1000_sum %>% filter(population == "Merina")
-# # split groups
-# # .Q3 representing Asian ancestry and .Q2 representing African ancestry
-# merina$population <- ifelse(merina$.Q1 > 0.5, "MerinaA", "MerinaB")
-# merina <- merina[, c("id", "population")]
-# #merina$id <- sub("RR.*", "", merina$id)
-# 
-# # match V2 and merina$id and replace the population column in merina_fam with
-# # the population column in merina
-# matching_m <- match(mad_bor_g1000_sum$id, merina$id)
-# mad_bor_g1000_sum$population <- ifelse(!is.na(matching_m),
-#   merina$population[matching_m], mad_bor_g1000_sum$population
-# )
-# 
-# # count number of MerinaA
-# cat("Merina group > 0.5", length(which(mad_bor_g1000_sum$population == "MerinaA")))
-# cat("Merina group < 0.5", length(which(mad_bor_g1000_sum$population == "MerinaB")))
-# 
-# rm(qmats)
-```
-
-```{r}
 qmats <- read_q_files("../data/intermediate/admixture")
 
 fam <- read.table(
@@ -703,6 +659,10 @@ mad_bor_g1000_sum_sub <- augment(get_q_matrix(qmats, k = 2, run = 1),
 )
 # filter to merina
 merina <- mad_bor_g1000_sum_sub %>% filter(population == "Merina")
+
+# save output
+saveRDS(merina, file = paste0(res_dir, "merina_qmats.rds"))
+
 # split groups
 # .Q3 representing Asian ancestry and .Q2 representing African ancestry
 merina$population <- ifelse(merina$.Q1 > 0.5, "MerinaA", "MerinaB")
@@ -716,9 +676,14 @@ mad_bor_g1000_sum$population <- ifelse(!is.na(matching_m),
 )
 
 # count number of MerinaA
-cat("Merina group > 0.5", length(which(mad_bor_g1000_sum$population == "MerinaA")))
-cat("Merina group < 0.5", length(which(mad_bor_g1000_sum$population == "MerinaB")))
-
+cat(
+  "Merina group > 0.5",
+  length(which(mad_bor_g1000_sum$population == "MerinaA"))
+)
+cat(
+  "Merina group < 0.5",
+  length(which(mad_bor_g1000_sum$population == "MerinaB"))
+)
 ```
 
 # Remove all populations with only one individual
@@ -767,7 +732,10 @@ g1000$population <- ifelse(!is.na(matching_m),
 
 GBR <- g1000 %>% filter(population == "GBR")
 
-show_loci(GBR)$name <- paste(show_loci(GBR)$chromosome, show_loci(GBR)$position, sep = "_")
+show_loci(GBR)$name <- paste(show_loci(GBR)$chromosome,
+  show_loci(GBR)$position,
+  sep = "_"
+)
 
 f4_merged_data <- rbind(f4_merged_data, GBR,
   as_is = FALSE, flip_strand = TRUE,
@@ -815,7 +783,7 @@ Sister taxon and outgroup on the left, target in the centre, and sister populati
 
 ```{r}
 malagasy <- c(
-  "Betsimisaraka", "MerinaA","MerinaB","Diego", "Sakalava_Tsimihety",
+  "Betsimisaraka", "MerinaA", "MerinaB", "Diego", "Sakalava_Tsimihety",
   "Betsileo", "Temoro", "Vezo", "Mikea"
 )
 
@@ -826,7 +794,7 @@ qp4_african_p <- qpf4ratio(f2_blocks, pop_matrix)
 
 qp4_african_p$pop3 <- factor(qp4_african_p$pop3,
   levels = c(
-    "Betsimisaraka", "MerinaA","MerinaB", "Diego",
+    "Betsimisaraka", "MerinaA", "MerinaB", "Diego",
     "Sakalava_Tsimihety", "Betsileo",
     "Temoro", "Vezo", "Mikea"
   )
@@ -875,7 +843,7 @@ ggplot(qp4_african_p, aes(x = alpha, y = pop3, colour = pop3, fill = pop3)) +
   theme_minimal() +
   theme(
     # axis.text.x = element_blank(),
-    #axis.text.y = element_text(size = 8),
+    # axis.text.y = element_text(size = 8),
     legend.position = "right",
     axis.line = element_blank(),
     panel.grid.major = element_blank(),

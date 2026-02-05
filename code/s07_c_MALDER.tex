@@ -412,25 +412,40 @@ separately}\label{adjust-for-a-second-dataset-with-merina-labelled-separately}
 \NormalTok{mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{population }\OtherTok{\textless{}{-}}
   \FunctionTok{as.character}\NormalTok{(mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{population)}
 
-\CommentTok{\# Load fastmixture results}
-\NormalTok{mad\_bor\_g1000\_sum\_neo }\OtherTok{\textless{}{-}}
-  \FunctionTok{gt\_load}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/mad\_bor\_g1000\_sum\_neo\_clean.gt"}\NormalTok{)}
-\NormalTok{qmats }\OtherTok{\textless{}{-}}
-  \FunctionTok{readRDS}\NormalTok{(}\StringTok{"\textasciitilde{}/Dropbox/gitdata/malagasy\_diversity/data/intermediate/fastmixture/fastmixture\_m.RData"}\NormalTok{)}
+\CommentTok{\# load supervised admixture results}
+\NormalTok{qmats }\OtherTok{\textless{}{-}} \FunctionTok{read\_q\_files}\NormalTok{(}\StringTok{"../data/intermediate/admixture"}\NormalTok{)}
+\CommentTok{\# add id to individuals}
+\NormalTok{fam }\OtherTok{\textless{}{-}} \FunctionTok{read.table}\NormalTok{(}
+  \StringTok{"../data/intermediate/admixture/admixture\_supervised\_subset.fam"}\NormalTok{,}
+  \AttributeTok{header =} \ConstantTok{FALSE}
+\NormalTok{)}
+\NormalTok{qmats}\SpecialCharTok{$}\NormalTok{id }\OtherTok{\textless{}{-}}\NormalTok{ fam}\SpecialCharTok{$}\NormalTok{V2}
+
+\CommentTok{\# load gt that admixture results were calculated from}
+\NormalTok{mad\_bor\_g1000\_sum }\OtherTok{\textless{}{-}}
+  \FunctionTok{gt\_load}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/mad\_bor\_g1000\_sum\_neo\_clean\_ld.gt"}\NormalTok{)}
+
+\CommentTok{\# subset mad\_bor\_g1000\_sum to only individuals in qmats$id}
+\NormalTok{mad\_bor\_g1000\_sum\_sub }\OtherTok{\textless{}{-}}\NormalTok{ mad\_bor\_g1000\_sum }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(id }\SpecialCharTok{\%in\%}\NormalTok{ qmats}\SpecialCharTok{$}\NormalTok{id)}
+
 \CommentTok{\# tidy with the gt}
-\NormalTok{mad\_bor\_g1000\_sum\_neo }\OtherTok{\textless{}{-}} \FunctionTok{augment}\NormalTok{(}\FunctionTok{get\_q\_matrix}\NormalTok{(qmats, }\AttributeTok{k =} \DecValTok{2}\NormalTok{, }\AttributeTok{run =} \DecValTok{1}\NormalTok{),}
-  \AttributeTok{data =}\NormalTok{ mad\_bor\_g1000\_sum\_neo}
+\NormalTok{mad\_bor\_g1000\_sum\_sub }\OtherTok{\textless{}{-}} \FunctionTok{augment}\NormalTok{(}\FunctionTok{get\_q\_matrix}\NormalTok{(qmats, }\AttributeTok{k =} \DecValTok{2}\NormalTok{, }\AttributeTok{run =} \DecValTok{1}\NormalTok{),}
+  \AttributeTok{data =}\NormalTok{ mad\_bor\_g1000\_sum\_sub}
 \NormalTok{)}
 \CommentTok{\# filter to merina}
-\NormalTok{merina }\OtherTok{\textless{}{-}}\NormalTok{ mad\_bor\_g1000\_sum\_neo }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(population }\SpecialCharTok{==} \StringTok{"Merina"}\NormalTok{)}
+\NormalTok{merina }\OtherTok{\textless{}{-}}\NormalTok{ mad\_bor\_g1000\_sum\_sub }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(population }\SpecialCharTok{==} \StringTok{"Merina"}\NormalTok{)}
+
 \CommentTok{\# split groups}
 \CommentTok{\# .Q3 representing Asian ancestry and .Q2 representing African ancestry}
 \NormalTok{merina}\SpecialCharTok{$}\NormalTok{population }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(merina}\SpecialCharTok{$}\NormalTok{.Q1 }\SpecialCharTok{\textgreater{}} \FloatTok{0.5}\NormalTok{, }\StringTok{"MerinaA"}\NormalTok{, }\StringTok{"MerinaB"}\NormalTok{)}
 \NormalTok{merina }\OtherTok{\textless{}{-}}\NormalTok{ merina[, }\FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"population"}\NormalTok{)]}
+
+\CommentTok{\#merina \textless{}{-} readRDS("../results/s06\_b\_f\_stats/merina\_qmats.rds")}
 \NormalTok{merina}\SpecialCharTok{$}\NormalTok{id }\OtherTok{\textless{}{-}} \FunctionTok{sub}\NormalTok{(}\StringTok{"RR.*"}\NormalTok{, }\StringTok{""}\NormalTok{, merina}\SpecialCharTok{$}\NormalTok{id)}
 
-\CommentTok{\# match V2 and merina$id and replace the population column in merina\_fam with}
-\CommentTok{\# the population column in merina}
+\CommentTok{\# match mad\_bor\_g1000\_sum\_neo\_fam$id and merina$id and replace the population}
+\CommentTok{\# column in mad\_bor\_g1000\_sum\_neo\_fam with the population column in merina}
 \NormalTok{matching\_m }\OtherTok{\textless{}{-}} \FunctionTok{match}\NormalTok{(mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{id, merina}\SpecialCharTok{$}\NormalTok{id)}
 \NormalTok{mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{population }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(matching\_m),}
 \NormalTok{  merina}\SpecialCharTok{$}\NormalTok{population[matching\_m], mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{population}

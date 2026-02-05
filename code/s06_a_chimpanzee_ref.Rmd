@@ -29,7 +29,10 @@ Aligned using overchain https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver
 NOTE: chainfile https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToPanTro3.over.chain.gz (2011-02-22) aligns to the 2011 assembly of PanTro3 (GCA_000001515.3) which is older than the 2016 assembly (GCA_000001515.5) used by Ensembl REST API below. This is noted at https://hgdownload.soe.ucsc.edu/goldenPath/panTro5/bigZips/ which states 'This directory contains the May 2016 (Pan_tro 3.0/panTro5) assembly of the chimp genome (panTro5, Chimpanzee Sequencing and Analysis Consortium), as well as repeat annotations and GenBank sequences.' Therefore we use the newer PanTro5 chainfile in the bigsnpr command.
 
 ```{r}
-bim <- show_loci(mad_bor_g1000_sum)[, c("chr_int", "name", "genetic_dist", "position", "allele_ref", "allele_alt")]
+bim <- show_loci(mad_bor_g1000_sum)[, c(
+  "chr_int", "name", "genetic_dist",
+  "position", "allele_ref", "allele_alt"
+)]
 
 names(bim) <- c("chr", "name", "genetic_dist", "pos", "a1", "a0")
 
@@ -44,7 +47,6 @@ pan_bim <- snp_modifyBuild(
 )
 
 pan_bim <- na.omit(pan_bim)
-
 ```
 
 # Get chimp reference base for each SNP
@@ -99,7 +101,10 @@ tictoc::toc()
 # Save chimp reference data
 
 ```{r}
-colnames(pan_bim) <- c("chr_int", "name", "genetic_dist", "position", "allele_ref", "allele_alt", "chimp_ref_base")
+colnames(pan_bim) <- c(
+  "chr_int", "name", "genetic_dist", "position",
+  "allele_ref", "allele_alt", "chimp_ref_base"
+)
 saveRDS(pan_bim, "../results/s06_f_stats/mad_bor_g1000_sum_snps_with_chimp.rds")
 ```
 
@@ -109,9 +114,13 @@ saveRDS(pan_bim, "../results/s06_f_stats/mad_bor_g1000_sum_snps_with_chimp.rds")
 # remove NAs
 pan_bim_no_na <- na.omit(pan_bim)
 pan_bim$triallelic <- NA
-remove_triallelic <- function(pan_bim){
-  three_alleles <- c(pan_bim["allele_ref"], pan_bim["allele_alt"], pan_bim["chimp_ref_base"])
-  if(length(unique(three_alleles))==3){
+remove_triallelic <- function(pan_bim) {
+  three_alleles <- c(
+    pan_bim["allele_ref"],
+    pan_bim["allele_alt"],
+    pan_bim["chimp_ref_base"]
+  )
+  if (length(unique(three_alleles)) == 3) {
     pan_bim["triallelic"] <- TRUE
   } else {
     pan_bim["triallelic"] <- FALSE
@@ -138,7 +147,7 @@ mad_bor_g1000_sum_chimp <- mad_bor_g1000_sum %>%
 # Save
 
 ```{r}
-if(file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_chimp.gt")){
+if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_chimp.gt")) {
   file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_chimp.gt")
 }
 ```
@@ -154,7 +163,7 @@ gt_save(
 # Create a gen_tibble of the chimp reference alleles
 
 ```{r}
-if(file.exists("../data/intermediate/pan_tro_liftover/chimp_ref.gt")){
+if (file.exists("../data/intermediate/pan_tro_liftover/chimp_ref.gt")) {
   file.remove("../data/intermediate/pan_tro_liftover/chimp_ref.gt")
   file.remove("../data/intermediate/pan_tro_liftover/chimp_ref.bk")
   file.remove("../data/intermediate/pan_tro_liftover/chimp_ref.rds")
@@ -192,4 +201,3 @@ filename_renv <- paste0(
 )
 renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
 ```
-
