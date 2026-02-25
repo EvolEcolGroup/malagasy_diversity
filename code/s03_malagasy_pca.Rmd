@@ -3,6 +3,7 @@ title: "Madagascar only PCA"
 date: "2024-11-01"
 knit: resrepo::knit_to_results
 output: pdf_document
+bibliography: references.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -11,7 +12,7 @@ library(tidypopgen)
 library(ggplot2)
 ```
 
-```{r set-directories}
+```{r set-directories, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 res_dir <- "../results/s03_malagasy_pca/"
 ```
 
@@ -72,7 +73,7 @@ unique(diego$ethnicity)
 malagasy_merged[malagasy_merged$population == "Sakalava_Tsimihety", "population"] <- "Sakalava/Tsimihety"
 malagasy_merged[malagasy_merged$population == "Diego", "population"] <- "Diego Mixed"
 
-ggplot(pcs, aes(
+p1 <- ggplot(pcs, aes(
   x = V1, y = V2,
   group = malagasy_merged$population,
   colour = malagasy_merged$population,
@@ -95,10 +96,13 @@ ggplot(pcs, aes(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     panel.background = element_rect(fill = "white"),
-    legend.position = c(0.3, 0.3)
+    legend.position = c(0.15, 0.3)
   )
+p1
 
 ggsave(paste0(res_dir, "madagascar_pca.jpg"), width = 7, height = 5, dpi = 300)
+
+saveRDS(p1, paste0(res_dir, "madagascar_pca.rds"))
 ```
 
 ```{r}
@@ -106,7 +110,8 @@ autoplot(random_pca, type = "scree")
 ```
 
 This PCA uses the KING relatedness filtering of 0.088, equivalent to
-second degree relatives. There is justification for keeping second
+second degree relatives @manichaikulRobustRelationshipInference2010a.
+There is justification for keeping second
 degree close relatives (aunts, uncles, grandparents, grandchildren,
 nieces, nephews, and half-siblings) because the prevalence of
 consanguinity in each population is unknown, but likely to be high in
@@ -141,13 +146,7 @@ than 0.0884 will be excluded from the output. '
 
 ------------------------------------------------------------------------
 
-## Recording R environment
-
-Part of ensuring our workflow is reproducible is to keep track of the R
-environment. We will automatically save our R environment into a file
-called `r_environment.json`.
-
-```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 filename_rmd <- "s03_malagasy_pca.Rmd"
 filename_renv <- paste0(
   res_dir, "/renv_",
@@ -156,7 +155,4 @@ filename_renv <- paste0(
 )
 renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
 xfun::session_info()
-```
-
-```{r}
 ```

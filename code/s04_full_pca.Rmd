@@ -374,12 +374,93 @@ ggsave(paste0(res_dir, "pca_subsampled_regions_together_large_legend.jpg"),
 ```
 
 
-***
+```{r}
+#Shape scale for malagasy is c(1, 3, 7, 15, 17, 19, 21, 23)
+#Colour scale for malagasy is   scale_color_brewer(palette = "Dark2") + scale_fill_brewer(palette = "Dark2")
 
-## Recording R environment
+# If we made all regional populations 
 
-Part of ensuring our workflow is reproducible is to keep track of the R environment.
-We will automatically save our R environment into a file called `r_environment.json`.
+# if $malagasy is 1, then it becomes $population, otherwise it becomes "Other"
+mad_bor_g1000_sum$shape <- ifelse(
+  mad_bor_g1000_sum$malagasy == 1,
+  mad_bor_g1000_sum$population,
+  "Other"
+)
+
+
+p2 <- ggplot(pcs, aes(
+  x = V1, y = V2,
+  colour = mad_bor_g1000_sum$Region,
+  shape = as.factor(mad_bor_g1000_sum$shape)
+)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = NULL,
+    x = paste0("PC 1 (", round(variance$percent[1], 2), "%)"),
+    y = paste0("PC 2 (", round(variance$percent[2], 2), "%)"),
+    colour = NULL, shape = "none"
+  ) +
+  theme(legend.position = "right") +
+  guides(
+    shape = "none",
+    colour = guide_legend(override.aes = list(
+      shape = c(
+        16, 16, 16, 16,
+        1, 3, 7, 15, 17, 19, 21, 23
+      ),
+      size = 2
+    ))
+  ) +
+  scale_colour_manual(
+    values = c(
+      "Africa" = "#F8766D",
+      "East Asia" = "#00BA38",
+      "South Asia" = "#C77CFF",
+      "Island southeast Asia" = "#FFD8A8",
+      "Betsileo" = "#1B9E77",
+      "Betsimisaraka" = "#D95F02",
+      "Diego Mixed" = "#7570B3",
+      "Merina" = "#E7298A",
+      "Mikea" = "#66A61E",
+      "Sakalava/Tsimihety" = "#E6AB02",
+      "Temoro" = "#A6761D",
+      "Vezo" = "#666666"
+    )
+  ) +
+  scale_shape_manual(values = c(
+    "Other" = 16,
+    "Betsileo" = 1,
+    "Betsimisaraka" = 3,
+    "Diego Mixed" = 7,
+    "Merina" = 15,
+    "Mikea" = 17,
+    "Sakalava/Tsimihety" = 19,
+    "Temoro" = 21,
+    "Vezo" = 23
+  )) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16),
+    #axis.text = element_text(size = 13),
+    #legend.text = element_text(size = 11),
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white"),
+    legend.position = c(0.15, 0.37)
+  )
+
+p2
+
+ggsave(paste0(res_dir, "test_pca.jpg"),
+  width = 7, height = 5, dpi = 300
+)
+
+saveRDS(p2, paste0(res_dir, "global_pca.rds"))
+```
+
+
+------------------------------------------------------------------------
 
 ```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 filename_rmd <- "s04_full_pca.Rmd"
