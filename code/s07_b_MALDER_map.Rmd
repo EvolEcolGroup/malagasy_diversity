@@ -192,6 +192,47 @@ ggsave(paste0(res_dir, "malder_dates_gradient.jpg"),
 )
 ```
 
+
+```{r}
+kml_data_single_site <- kml_data %>%
+  group_by(Name) %>% 
+  summarize(geometry = st_union(geometry)) %>% 
+  st_centroid()
+kml_data_single_site$yrs <- kml_data$yrs[match(kml_data_single_site$Name, kml_data$Name)]
+
+ggplot() +
+  geom_sf(data = madagascar_dissolved) +
+  geom_sf(
+    data = sf::st_as_sf(kml_data_single_site),
+    aes(color = yrs, fill = yrs),
+    size = 2
+  ) +
+  coord_sf(
+    crs = st_crs(29702),
+    xlim = c(-1000000, 1800000),
+    ylim = c(1, 2000000),
+    expand = FALSE
+  ) + # Laborde projection
+  theme(
+    panel.background = element_rect(fill = "#F0F8FF", color = NA)
+  ) +
+  labs(
+    colour = "Admixture Date (BP)",
+    fill = "Admixture Date (BP)",
+    x = NULL, y = NULL
+  ) +
+  geom_label_repel(
+    data = labels_data,
+    aes(x = x, y = y, label = Name),
+    size = 3, segment.color = "transparent"
+  ) +
+  guides()
+ggsave(paste0(res_dir, "malder_dates_gradient_single_site.jpg"),
+  width = 7, height = 4, dpi = 300
+)
+```
+
+
 ***
 
 ## Recording R environment
