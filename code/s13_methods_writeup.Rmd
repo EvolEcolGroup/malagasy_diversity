@@ -15,6 +15,7 @@ bibliography: references.bib
 knitr::opts_chunk$set(echo = TRUE)
 library(tidypopgen)
 library(kableExtra)
+library(writexl)
 ```
 
 ```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
@@ -70,7 +71,7 @@ pops <- c(
   "Sakalava_Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro"
 )
 mad_bor_g1000_sum_subsample_supervised_admix <- mad_bor_g1000_sum_ld %>% filter(population %in% pops)
-  
+
 # Fastmixture
 K <- 2:10
 runs <- 3
@@ -114,65 +115,159 @@ Pairwise F~st~ distances between Malagasy populations were calculated in tidypop
 
 # Supplementary Data
 
-![Supplementary Figure 1: Cross-validation error for fastmixture.](../results/s05_fastmixture/fastmixture_cv_error.jpg)
+![Supplementary Figure 1: Principal components analysis of Malagasy data (n = 167), combined with data from Pierron et al. (2014) (Mikea, Vezo, and Temoro data points, n = 69). Colour and shape indicates self-identified ethnicity. ‘Diego Mixed’ individuals belong to Anjoaty, Antakarana, Sakalava Tavaratra, and Sakalava ethnic groups.](../results/s03_malagasy_pca/madagascar_pca.jpg)
 
-![Supplementary Figure 2: Supervised admixture at K = 2 for for Malagasy compared to reference populations. Individuals from Borneo from Brucato et al. (2016), and individuals from Mozambique populations from Fortes-Lima et al., (2024). Mozambique individuals are labelled together, but this group contains individuals given the following population labels: "Mozambique_Nhungwe", "Mozambique_Tsonga", "Mozambique_Ronga", "Mozambique_TongaMoz", "Mozambique_Chuwabu", "Mozambique_Tswa", "Mozambique_Chopi", "Mozambique_Sena", "Mozambique_Makhuwa”.](../results/s05_b_supervised/Admixture_supervised_malagasy.jpg)
+![Supplementary Figure 2: Cross-validation error for fastmixture.](../results/s05_fastmixture/fastmixture_cv_error.jpg)
 
-![Supplementary Figure 3: Estimated admixture dates for Malagasy populations using MALDER (Pickrell et al., 2014), with Borneo as an Asian source population and varied African source populations. Horizontal bar indicates estimated date of admixture, vertical bars represent standard error from leave-one-chromosome-out jackknifing.](../results/s07_MALDER/varied_african_pops.jpg)
+![Supplementary Figure 3: Supervised admixture at K = 2 for Malagasy compared to reference populations. Individuals from Borneo from Brucato et al. (2016), and individuals from Mozambique populations from Fortes-Lima et al., (2024). Mozambique individuals are labelled together, but this group contains individuals given the following population labels: "Mozambique_Nhungwe", "Mozambique_Tsonga", "Mozambique_Ronga", "Mozambique_TongaMoz", "Mozambique_Chuwabu", "Mozambique_Tswa", "Mozambique_Chopi", "Mozambique_Sena", "Mozambique_Makhuwa”.](../results/s05_b_supervised/Admixture_supervised_malagasy.jpg)
 
-![Supplementary Figure 4: Estimated admixture dates for Malagasy populations using MALDER (Pickrell et al., 2014), with Mozambique as an African source population and varied Asian source populations. Horizontal bar indicates estimated date of admixture, vertical bars represent standard error from leave-one-chromosome-out jackknifing.](../results/s07_MALDER/varied_asian_pops.jpg)
+![Supplementary Figure 4: African ancestry proportion for each Malagasy population derived from supervised admixture at K = 2.](../results/s05_b_supervised/Afr_anc_violin_all_pops.jpg)
+
+![Supplementary Figure 5: African ancestry proportion for Merina individuals derived from supervised admixture at K = 2, showing the bimodal distribution of ancestry among Merina individuals..](../results/s05_b_supervised/Afr_anc_violin_merina.jpg)
+
+![Supplementary Figure 6: Estimated admixture dates for Malagasy populations using MALDER (Pickrell et al., 2014), with Borneo as an Asian source population and varied African source populations. Horizontal bar indicates estimated date of admixture, vertical bars represent standard error from leave-one-chromosome-out jackknifing.](../results/s07_MALDER/varied_african_pops.jpg)
+
+![Supplementary Figure 7: Estimated admixture dates for Malagasy populations using MALDER (Pickrell et al., 2014), with Mozambique as an African source population and varied Asian source populations. Horizontal bar indicates estimated date of admixture, vertical bars represent standard error from leave-one-chromosome-out jackknifing.](../results/s07_MALDER/varied_asian_pops.jpg)
+
+\clearpage
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+df <- data.frame(
+  table(mad_bor_g1000_sum$population)
+)
+
+colnames(df) <- c("Population", "Sample size")
+# rename
+df$Population <- sub("BOR", "Borneo", df$Population)
+df$Population <- sub("CHS", "Han, China", df$Population)
+df$Population <- sub("KHV", "Kinh, Vietnam", df$Population)
+df$Population <- sub("PJL", "Punjabi, Pakistan", df$Population)
+df$Population <- sub("BEB", "Bengali, Bengal", df$Population)
+
+df$Population <- sub("ESN", "Esan, Nigeria", df$Population)
+df$Population <- sub("YRI", "Yoruba, Nigeria", df$Population)
+df$Population <- sub("GWD", "Mandinka, The Gambia", df$Population)
+df$Population <- sub("LWK", "Luhye, Kenya", df$Population)
+df$Population <- sub("MSL", "Mende, Sierra Leone", df$Population)
+
+df$source <- NA
+df$source <- ifelse(df$Population == "Borneo", "Brucato et al., 2016", df$source)
+df$source <- ifelse(df$Population %in% c("Sumba", "Timor"), "Cox et al., 2016", df$source)
+df$source <- ifelse(df$Population %in% c("Vezo", "Mikea", "Temoro"), "Pierron et al., 2014", df$source)
+df$source <- ifelse(df$Population %in% c("Merina", "Betsileo", "Sakalava_Tsimihety", "Betsimisaraka", "Diego"), "This study", df$source)
+df$source <- ifelse(df$Population %in% c("Esan, Nigeria", "Yoruba, Nigeria", "Mandinka, The Gambia", "Luhye, Kenya", "Mende, Sierra Leone", "Han, China", "Kinh, Vietnam", "Punjabi, Pakistan", "Bengali, Bengal"), "1000 Genomes Project Consortium, 2015", df$source)
+df$source <- ifelse(is.na(df$source), "Fortes-Lima et al., 2024", df$source)
+
+df <- rbind(df, c("Total", sum(df$`Sample size`)))
+
+write.csv(df, "../results/s13_methods_writeup/sample_sizes_global_dataset.txt", sep = ",", qmethod = "double", row.names = FALSE)
+```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-analysis <- c("Malagasy PCA", "Global PCA", "Unsupervised clustering", "Supervised clustering", "F3 statistics", "F4 ratio statistics", "MALDER", "Pairwise FST")
-package_function <- c("tidypopgen: gt_pca_randomSVD", "tidypopgen: gt_pca_randomSVD", "tidygenclust: gt_fastmixture", "ADMIXTURE: ADMIXTURE", "tidypopgen: gt_extract_f2; admixtools2 (version 2.0.8) (Maier and Patterson, 2024): qp3pop", "tidypopgen: gt_extract_f2; admixtools2 (version 2.0.8) (Maier and Patterson, 2024): qpf4ratio", "MALDER (version 1.0) (Pickrell et al., 2014): MALDER", "tidypopgen: pairwise_pop_fst - method = “WC84”  (Weir and Cockerham, 1984)")
-data <- c("Malagasy dataset", "Global dataset", "Global dataset", "Subset of Global dataset", "Global dataset", "Global dataset + Pan and European outgroups", "Global dataset", "Global dataset")
-indiv_filter <- rep("Missingness > 0.1; KING kinship > 0.0884", 8)
+kable(df, caption = "Sample sizes for each population in the global dataset after filtering.") %>%
+  kable_styling(
+    latex_options = c("repeat_header", "longtable")
+  )
+```
+
+\newgeometry{left=1cm,right=1cm,top=1cm,bottom=1cm}
+\begin{landscape}
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 full_loci_fiter <- "Non-autosomal; Missingness < 0.05; HWE p > 0.01; MAF > 0.025; LD clumping"
-loci_filter <- c(rep(full_loci_fiter, 6),
-                 "Non-autosomal; Missingness < 0.05; HWE p > 0.01; MAF > 0.025",
-                 full_loci_fiter)
-total_indiv <- c(nrow(malagasy_merged_ld),
-                 nrow(mad_bor_g1000_sum_ld),
-                 nrow(mad_bor_g1000_sum_ld),
-                 nrow(mad_bor_g1000_sum_subsample_supervised_admix),
-                 nrow(mad_bor_g1000_sum_ld),
-                 nrow(mad_bor_g1000_sum_ld) + 48, #TODO check
-                 nrow(mad_bor_g1000_sum),
-                 nrow(mad_bor_g1000_sum_ld))
-total_loci <- c(count_loci(malagasy_merged_ld),
-                count_loci(mad_bor_g1000_sum_ld),
-                count_loci(mad_bor_g1000_sum_ld),
-                count_loci(mad_bor_g1000_sum_subsample_supervised_admix),
-                count_loci(mad_bor_g1000_sum_ld),
-                77993, #TODO check
-                425904, #TODO check
-                count_loci(mad_bor_g1000_sum_ld))
 
+df <- data.frame(
+  analysis <- c("Malagasy PCA", "Global PCA", "Unsupervised clustering", "Supervised clustering", "F3 statistics", "F4 ratio statistics", "MALDER", "Pairwise FST"),
+  package_function <- c(
+    "tidypopgen: gt\\_pca\\_randomSVD",
+    "tidypopgen: gt\\_pca\\_randomSVD",
+    "tidygenclust: gt\\_fastmixture",
+    "ADMIXTURE: ADMIXTURE",
+    "tidypopgen: gt\\_extract\\_f2; admixtools2 (version 2.0.8) (Maier and Patterson, 2024): qp3pop",
+    "tidypopgen: gt\\_extract\\_f2; admixtools2 (version 2.0.8) (Maier and Patterson, 2024): qpf4ratio",
+    "MALDER (version 1.0) (Pickrell et al., 2014): MALDER",
+    "tidypopgen: pairwise\\_pop\\_fst - method = \"WC84\" (Weir and Cockerham, 1984)"
+  ),
+  data <- c("Malagasy dataset", "Global dataset", "Global dataset", "Subset of Global dataset", "Global dataset", "Global dataset + Pan and European outgroups", "Global dataset", "Global dataset"),
+  indiv_filter <- rep("Missingness > 0.1; KING kinship > 0.0884", 8),
+  loci_filter <- c(
+    rep(full_loci_fiter, 6),
+    "Non-autosomal; Missingness < 0.05; HWE p > 0.01; MAF > 0.025",
+    full_loci_fiter
+  ),
+  total_indiv <- c(
+    nrow(malagasy_merged_ld),
+    nrow(mad_bor_g1000_sum_ld),
+    nrow(mad_bor_g1000_sum_ld),
+    nrow(mad_bor_g1000_sum_subsample_supervised_admix),
+    nrow(mad_bor_g1000_sum_ld),
+    nrow(mad_bor_g1000_sum_ld) + 48,
+    nrow(mad_bor_g1000_sum),
+    nrow(mad_bor_g1000_sum_ld)
+  ),
+  total_loci <- c(
+    count_loci(malagasy_merged_ld),
+    count_loci(mad_bor_g1000_sum_ld),
+    count_loci(mad_bor_g1000_sum_ld),
+    count_loci(mad_bor_g1000_sum_subsample_supervised_admix),
+    count_loci(mad_bor_g1000_sum_ld),
+    77993,
+    425904,
+    count_loci(mad_bor_g1000_sum_ld)
+  )
+)
+colnames(df) <- c("Analysis", "Package/function", "Dataset", "Individuals Removed", "n indivs", "Loci filtering", "n SNPs")
 
-cbind(analysis, package_function, data, indiv_filter, total_indiv, loci_filter, total_loci) %>%
-  as.data.frame() %>%
-  kable(col.names = c("Analysis", "Package/function", "Dataset", "Individuals Removed", "n indivs", "Loci filtering", "n SNPs"), caption = "Supplementary Table 1: Summary of analyses and software used in this study.")
+kable(df,
+  format = "latex",
+  booktabs = TRUE,
+  escape = FALSE,
+  caption = "Summary of analyses and software used in this study."
+) %>%
+  column_spec(2, width = "5cm") %>%
+  column_spec(4, width = "4cm") %>%
+  column_spec(5, width = "4cm") %>%
+  kable_styling(
+    latex_options = c("hold_position", "scale_down"),
+    font_size = 8
+  )
+```
 
+\end{landscape}
+\restoregeometry
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+min_f3 <- read.table("../results/s06_b_f_stats/minimum_f3_malagasy_pops",
+  header = TRUE, sep = "\t"
+)
+
+kable(min_f3, caption = "Minimum f3 statistic values across all combinations of references for each Malagasy population.
+")
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 min_f3 <- read.table("../results/s06_b_f_stats/minimum_z-score_malagasy_pops",
-                     header = TRUE, sep = "\t")
+  header = TRUE, sep = "\t"
+)
 
-kable(min_f3, caption = "Supplementary Table 2: Minimum z-scores for f3 statistics across all combinations for each Malagasy population.")
+kable(min_f3, caption = "Minimum z-scores for f3 statistics across all combinations for each Malagasy population.")
 ```
 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 f4_ratios <- read.table("../results/s06_b_f_stats/f4_ratio_african_admixture",
-                     header = TRUE, sep = "\t")
+  header = TRUE, sep = "\t"
+)
 
-kable(f4_ratios, caption = "Supplementary Table 3: f4 ratios calculated with admixtools. f4 ratios were calculated in the configurations  f4(GBR,Chimpanzee;Malagasy,Borneo) / f4(GBR,Chimpanzee;Esan,Borneo) and f4(GBR,Chimpanzee;Malagasy,Esan) / f4(GBR,Chimpanzee;Borneo,Esan)
+kable(f4_ratios, caption = "f4 ratios calculated with admixtools. f4 ratios were calculated in the configurations  f4(GBR,Chimpanzee;Malagasy,Borneo) / f4(GBR,Chimpanzee;Esan,Borneo) and f4(GBR,Chimpanzee;Malagasy,Esan) / f4(GBR,Chimpanzee;Borneo,Esan)
 ")
 ```
 
+
 ```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 malder <- readRDS("../results/s07_MALDER/malder_results_all.RData")
+
+malder <- malder %>% select(-c(test_res, admixture_date, CI, amp_exp, amp_exp_CI))
 
 asian <- c("Borneo", "Sumba", "Dai")
 african <- c("Esan", "Yoruba", "Mozambique_Chopi")
@@ -185,9 +280,24 @@ malder <- malder %>%
 \begin{landscape}
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-kable(malder,longtable = T, caption = "Supplementary Table 4: MALDER results for all Malagasy populations, with varied African and Asian source populations. Columns are as follows: ...") %>%
-  kable_styling(latex_options = c("striped", "repeat_header", "scale_down"),
-    font_size = 6)
+kable(malder, longtable = T, caption = "MALDER results for all Malagasy populations, with varied African and Asian source populations. p value: significance of model tested. test pop: Malagasy target population. ref A: Asian population. ref B: African population. 2 ref z score: z score. 2 ref decay: Date, in generations before present, since admixture began with standard error. 2 ref amp exp: Amplitude of the LD decay curve. amp aff: Affine term estimating population substructure.") %>%
+  kable_styling(
+    latex_options = c("repeat_header", "scale_down")
+  )
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+fst_matrix <- read.table("../results/s08_FST/fst_matrix_full.txt",
+  header = TRUE, row.names = 1, sep = ","
+)
+fst_matrix <- as.data.frame(fst_matrix)
+kable(fst_matrix,
+  format = "latex",
+  booktabs = TRUE,
+  escape = FALSE,
+  row.names = TRUE,
+  caption = "Pairwise FST values between all Malagasy populations.")
 ```
 
 \end{landscape}
