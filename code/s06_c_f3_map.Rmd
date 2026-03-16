@@ -1,0 +1,781 @@
+---
+title: "Bantu African dataset maps"
+date: "2025-11-04"
+knit: resrepo::knit_to_results
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(rnaturalearth)
+library(sf)
+library(dplyr)
+library(ggrepel)
+library(readxl)
+library(gridExtra)
+library(stringr)
+library(tidyr)
+library(tidypopgen)
+library(kgp)
+```
+
+```{r set-directories, include=FALSE}
+res_dir <- "../results/s06_c_f3_map/"
+```
+
+This script combines metadata from the Fortez-Lima et al 2023 paper with our full dataset to create a map showing f3 values for African populations with Mozambique as an African source population and Borneo as an Asian source population.
+
+# Read metadata
+
+```{r echo=FALSE, results='hide', message=FALSE}
+dat2 <-
+  as.data.frame(
+    read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx",
+      sheet = 2
+    )
+  )
+colnames(dat2) <- dat2[1, ]
+dat2 <- dat2[-1, ]
+# rename the 'Only-Africa dataset' column
+colnames(dat2)[which(colnames(dat2) == "Only-Africa dataset")] <- "Africa"
+# include only entries in Africa
+dat2 <- dat2 %>%
+  filter(Africa == "Yes")
+# remove rows with missing lat/lon
+dat2 <- dat2 %>%
+  filter(!is.na(Latitude) & !is.na(Longitude))
+# transform to sf object
+dat2 <- st_as_sf(dat2, coords = c("Longitude", "Latitude"), crs = 4326)
+# make sample size numeric
+dat2$N <- as.numeric(dat2$N)
+```
+
+```{r}
+# create plot of Africa
+africa <- ne_countries(continent = c("Africa"), scale = 50, returnclass = "sf")
+# plot by sample size
+p2 <- ggplot() +
+  geom_sf(data = africa) +
+  geom_sf(data = dat2, aes(color = N), size = 2, alpha = 0.7) +
+  theme(panel.background = element_rect(fill = "white", color = NA)) +
+  scale_color_viridis_c()
+p2
+# plot by group
+p3 <- ggplot() +
+  geom_sf(data = africa) +
+  geom_sf(data = dat2, aes(color = Group), size = 2, alpha = 0.7) +
+  theme(panel.background = element_rect(fill = "white", color = NA))
+p3
+# plot by country
+p4 <- ggplot() +
+  geom_sf(data = africa) +
+  geom_sf(data = dat2, aes(color = Country), size = 2, alpha = 0.7) +
+  theme(panel.background = element_rect(fill = "white", color = NA))
+p4
+```
+
+The metadata plotted above contain 111 populations - the data in the 'Only African' dataset in Fortez-Lima et al 2023.
+
+We have some data data from the 'Full-genotyped' dataset as this contains '81 populations with sample sizes lower than 10 individuals'. 
+
+# Read in our full genetic dataset
+
+```{r}
+NEO_full <- gt_load("../data/intermediate/rbind_data/NEO_full.gt")
+length(unique(NEO_full$population))
+length(unique(dat2$`Population label`))
+```
+
+Our full dataset contains 164 populations, the main metadata only contain 111.
+
+```{r}
+mad_bor_g1000_sum_ld <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
+nrow(mad_bor_g1000_sum_ld)
+```
+
+```{r}
+kgpmeta <- kgpmeta
+matching_m <- match(mad_bor_g1000_sum_ld$population, kgpmeta$pop)
+mad_bor_g1000_sum_ld$Latitude <- ifelse(!is.na(matching_m),
+  kgpmeta$lat[matching_m],
+  NA
+)
+mad_bor_g1000_sum_ld$Longitude <- ifelse(!is.na(matching_m),
+  kgpmeta$lng[matching_m],
+  NA
+)
+```
+
+# Filter to populations in NEO_full
+
+```{r}
+pop <- c(
+  "KHV", "BEB", "PJL", "CHS",
+  "Borneo",
+  "Sumba", "Timor",
+  "Mikea", "Vezo",
+  "Temoro", "Diego",
+  "Merina",
+  "Betsimisaraka",
+  "Sakalava_Tsimihety",
+  "Betsileo"
+)
+mad_bor_g1000_sum_ld <- mad_bor_g1000_sum_ld %>% filter(!population %in% pop)
+
+# filter to only populations in NEO_full
+# mad_bor_g1000_sum_ld <- mad_bor_g1000_sum_ld %>%
+#  filter(population %in% NEO_full$population)
+nrow(mad_bor_g1000_sum_ld)
+length(unique(mad_bor_g1000_sum_ld$population))
+linguistic_groups <- dat2
+```
+
+# Additional metadata sheets
+
+Now we read in all sheets in the excel supplementary data to try and get coordinates for all populations in our full dataset.
+
+```{r echo=FALSE, results='hide', message=FALSE}
+dat1 <-
+  as.data.frame(
+    read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx",
+      sheet = 1
+    )
+  )
+colnames(dat1) <- dat1[1, ]
+dat1 <- dat1[-1, ]
+
+NEO_full$dataset <- dat1[match(NEO_full$id, dat1$`ID Lab`), "EGA Dataset"]
+
+dat2 <-
+  as.data.frame(
+    read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx",
+      sheet = 2
+    )
+  )
+colnames(dat2) <- dat2[1, ]
+dat2 <- dat2[-1, ]
+# rename the 'Only-Africa dataset' column
+colnames(dat2)[which(colnames(dat2) == "Only-Africa dataset")] <- "Africa"
+# include only entries in Africa
+dat2 <- dat2 %>%
+  filter(Africa == "Yes")
+# remove rows with missing lat/lon
+dat2 <- dat2 %>%
+  filter(!is.na(Latitude) & !is.na(Longitude))
+# subset to just `Population label` and Latitude and Longitude
+dat2 <- dat2[, c("Population label", "Latitude", "Longitude", "Country")]
+# rename `Population label` to Population
+colnames(dat2)[which(colnames(dat2) == "Population label")] <- "Population"
+
+dat3 <-
+  as.data.frame(
+    read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx",
+      sheet = 3
+    )
+  )
+colnames(dat3) <- dat3[1, ]
+dat3 <- dat3[-1, ]
+dat3 <- dat3[, c("Population", "Latitude", "Longitude")]
+
+dat4 <-
+  as.data.frame(
+    read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx",
+      sheet = 4
+    )
+  )
+colnames(dat4) <- dat4[1, ]
+dat4 <- dat4[-1, ]
+dat4 <- dat4[, c("Population", "Latitude", "Longitude")]
+
+dat12 <-
+  as.data.frame(
+    read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx",
+      sheet = 12
+    )
+  )
+colnames(dat12) <- dat12[1, ]
+dat12 <- dat12[-1, ]
+
+dat10 <-
+  as.data.frame(
+    read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx",
+      sheet = 10
+    )
+  )
+colnames(dat10) <- dat10[1, ]
+dat10 <- dat10[-1, ]
+dat10 <- dat10[, c("Populations", "Latitude", "Longitude")]
+colnames(dat10)[which(colnames(dat10) == "Populations")] <- "Population"
+
+dat9 <-
+  as.data.frame(
+    read_excel("../data/raw/data_input/41586_2023_6770_MOESM4_ESM.xlsx",
+      sheet = 9
+    )
+  )
+colnames(dat9) <- dat9[1, ]
+dat9 <- dat9[-1, ]
+dat9 <- dat9[, c("Population", "Latitude", "Longitude", "Country")]
+dat9$Population <- paste0(dat9$Country, "_", dat9$Population)
+```
+
+Sheet 9 contains data used in the spatially explicit framework, previously published in: https://www.nature.com/articles/s41586-020-2859-7 
+
+# Merge metadata
+
+```{r}
+# give dat3 and dat4 and dat10 a Country column with value "Unknown"
+dat3$Country <- "Unknown"
+dat4$Country <- "Unknown"
+dat10$Country <- "Unknown"
+
+# remove any duplicates of dat2$population in dat3, dat4, dat9, dat10
+dat_2_pops <- dat2$Population
+dat3 <- dat3[!dat3$Population %in% dat_2_pops, ]
+dat4 <- dat4[!dat4$Population %in% dat_2_pops, ]
+dat9 <- dat9[!dat9$Population %in% dat_2_pops, ]
+dat10 <- dat10[!dat10$Population %in% dat_2_pops, ]
+
+all_pops <- rbind(dat2, dat3, dat4, dat9, dat10)
+dups <- duplicated(all_pops)
+# remove duplicates
+all_pops <- all_pops[!dups, ]
+```
+
+Coordinates are available for 136 populations after merging the metadata.
+
+However, setdiff shows 106 of the populations in NEO_full are not in the metadata!
+
+```{r}
+# setdiff(NEO_full$population, all_pops$Population)
+# setdiff(mad_bor_g1000_sum_ld$population, all_pops$Population)
+```
+
+In some cases the mismatch is a naming issue, eg
+
+ - Namibia_DamaraKSP in dat$`Population label` is probably "Namibia_Damara" in NEO_full)
+ - There are coords for Sotho, but in NEO_full there are southern and northern Sotho...
+ - SouthAfrica_Coloured in NEO_full is probably SouthAfrica_ColouredAskham in dat$`Population label` - both have 12 individuals
+
+# Fix some naming issues
+
+```{r}
+# rename DRC_Bangubangu to DRC_BanguBangu in NEO_full$population
+NEO_full$population <- ifelse(NEO_full$population == "DRC_Bangubangu",
+  "DRC_BanguBangu",
+  NEO_full$population
+)
+
+# rename DRC_Bangubangu to DRC_BanguBangu in mad_bor_g1000_sum_ld$population
+mad_bor_g1000_sum_ld$population <-
+  ifelse(mad_bor_g1000_sum_ld$population == "DRC_Bangubangu",
+    "DRC_BanguBangu",
+    mad_bor_g1000_sum_ld$population
+  )
+
+# rename SouthAfrica_ColouredWellington to SouthAfrica_Coloured-Wellington
+NEO_full$population <-
+  ifelse(NEO_full$population == "SouthAfrica_ColouredWellington",
+    "SouthAfrica_Coloured-Wellington",
+    NEO_full$population
+  )
+mad_bor_g1000_sum_ld$population <-
+  ifelse(mad_bor_g1000_sum_ld$population == "SouthAfrica_ColouredWellington",
+    "SouthAfrica_Coloured-Wellington",
+    mad_bor_g1000_sum_ld$population
+  )
+
+# rename SouthAfrica_ColouredColesberg to SouthAfrica_Coloured-Colesberg
+NEO_full$population <-
+  ifelse(NEO_full$population == "SouthAfrica_ColouredColesberg",
+    "SouthAfrica_Coloured-Colesberg",
+    NEO_full$population
+  )
+mad_bor_g1000_sum_ld$population <-
+  ifelse(mad_bor_g1000_sum_ld$population == "SouthAfrica_ColouredColesberg",
+    "SouthAfrica_Coloured-Colesberg",
+    mad_bor_g1000_sum_ld$population
+  )
+
+# rename Namibia_Damara to Namibia_Damara-KSP
+NEO_full$population <- ifelse(NEO_full$population == "Namibia_Damara",
+  "Namibia_Damara-KSP",
+  NEO_full$population
+)
+mad_bor_g1000_sum_ld$population <-
+  ifelse(mad_bor_g1000_sum_ld$population == "Namibia_Damara",
+    "Namibia_Damara-KSP",
+    mad_bor_g1000_sum_ld$population
+  )
+
+# rename SouthAfrica_Coloured to SouthAfrica_Coloured-Askham
+NEO_full$population <- ifelse(NEO_full$population == "SouthAfrica_Coloured",
+  "SouthAfrica_Coloured-Askham",
+  NEO_full$population
+)
+mad_bor_g1000_sum_ld$population <-
+  ifelse(mad_bor_g1000_sum_ld$population == "SouthAfrica_Coloured",
+    "SouthAfrica_Coloured-Askham",
+    mad_bor_g1000_sum_ld$population
+  )
+```
+
+# Add country, latitude, and longitude
+
+```{r}
+mad_bor_g1000_sum_ld$Country <-
+  all_pops$Country[match(mad_bor_g1000_sum_ld$population, all_pops$Population)]
+# add lat and long to mad_bor_g1000_sum_ld
+mad_bor_g1000_sum_ld$Latitude <- ifelse(is.na(mad_bor_g1000_sum_ld$Latitude),
+  all_pops$Latitude[match(mad_bor_g1000_sum_ld$population, all_pops$Population)],
+  mad_bor_g1000_sum_ld$Latitude
+)
+# all_pops$Latitude[match(mad_bor_g1000_sum_ld$population, all_pops$Population)]
+mad_bor_g1000_sum_ld$Longitude <- ifelse(is.na(mad_bor_g1000_sum_ld$Longitude),
+  all_pops$Longitude[match(mad_bor_g1000_sum_ld$population, all_pops$Population)],
+  mad_bor_g1000_sum_ld$Longitude
+)
+```
+
+```{r}
+length(unique(mad_bor_g1000_sum_ld[which(is.na(mad_bor_g1000_sum_ld$Latitude)), ]$population))
+```
+
+Still 99 populations do not contain location metadata.
+
+```{r}
+mad_bor_g1000_sum_ld %>%
+  group_by(population) %>%
+  filter(is.na(Latitude)) %>%
+  summarize(count = n()) %>%
+  filter(count > 1)
+```
+We do not calculate f3's for populations with only one individual, so we have 57 populations for which we have calculated f3's that do not have location metadata.
+
+# Add metadata from other publications
+
+Some datasets come from other publications which we can find metadata for
+
+E.g Semo et al 2020
+
+```{r echo=FALSE, results='hide', message=FALSE}
+# read in the metadata
+semo <-
+  as.data.frame(
+    read_excel("../data/raw/data_input/msz224-suppl_data/SupplementaryTables_REVISED.xlsx",
+      sheet = 1
+    )
+  )
+semo$Name <- paste0(semo$Country, "_", semo$`Ethnic group`)
+
+mad_bor_g1000_sum_ld$Latitude <-
+  ifelse(mad_bor_g1000_sum_ld$population %in% semo$Name,
+    semo$Latitude[match(mad_bor_g1000_sum_ld$population, semo$Name)],
+    mad_bor_g1000_sum_ld$Latitude
+  )
+mad_bor_g1000_sum_ld$Longitude <-
+  ifelse(mad_bor_g1000_sum_ld$population %in% semo$Name,
+    semo$Longitude[match(mad_bor_g1000_sum_ld$population, semo$Name)],
+    mad_bor_g1000_sum_ld$Longitude
+  )
+mad_bor_g1000_sum_ld$Country <-
+  ifelse(mad_bor_g1000_sum_ld$population %in% semo$Name,
+    semo$Country[match(mad_bor_g1000_sum_ld$population, semo$Name)],
+    mad_bor_g1000_sum_ld$Country
+  )
+```
+
+```{r}
+mad_bor_g1000_sum_ld %>%
+  group_by(population) %>%
+  filter(is.na(Latitude)) %>%
+  summarize(count = n()) %>%
+  filter(count > 1)
+```
+
+
+Sengupta et al 2021: https://www.nature.com/articles/s41467-021-22207-y#Sec38
+
+
+# Plot populations with genetic data and coordinates
+
+```{r}
+mad_is_na <- mad_bor_g1000_sum_ld %>%
+  filter(is.na(Latitude))
+
+# sort by alphabetical order of population
+mad_is_na <- mad_is_na %>%
+  arrange(population)
+
+length(unique(mad_is_na$population)) # 99 populations without latitude
+
+mad_bor_g1000_sum_ld_no_na <- mad_bor_g1000_sum_ld %>%
+  filter(!is.na(Latitude))
+
+mad_bor_g1000_sum_ld_no_na <- gt_add_sf(mad_bor_g1000_sum_ld_no_na,
+  coords = c("Longitude", "Latitude"), crs = st_crs(4326)
+)
+
+africa <- ne_countries(continent = c("Africa"), scale = 50, returnclass = "sf")
+
+ggplot() +
+  geom_sf(data = africa) +
+  geom_sf(
+    data = mad_bor_g1000_sum_ld_no_na$geometry,
+    aes(colour = mad_bor_g1000_sum_ld_no_na$Country)
+  ) +
+  coord_sf(crs = st_crs(4326)) +
+  theme_minimal()
+```
+
+# Read in f3's 
+
+We only have f3's for populations with more than 1 individual.
+
+```{r}
+adm_f3 <- read.table("../results/s06_b_f_stats/f3_results_all_combinations",
+  sep = "\t", header = TRUE,
+  stringsAsFactors = FALSE
+)
+
+adm_f3_african <- adm_f3 %>%
+  filter(Asian == "Borneo")
+```
+
+# Rename f3 populations as above
+
+```{r}
+# rename DRC_Bangubangu to DRC_BanguBangu
+adm_f3_african$African <- ifelse(adm_f3_african$African == "DRC_Bangubangu",
+  "DRC_BanguBangu",
+  adm_f3_african$African
+)
+
+# rename SouthAfrica_ColouredWellington to SouthAfrica_Coloured-Wellington
+adm_f3_african$African <-
+  ifelse(adm_f3_african$African == "SouthAfrica_ColouredWellington",
+    "SouthAfrica_Coloured-Wellington",
+    adm_f3_african$African
+  )
+
+# rename SouthAfrica_ColouredColesberg to SouthAfrica_Coloured-Colesberg
+adm_f3_african$African <-
+  ifelse(adm_f3_african$African == "SouthAfrica_ColouredColesberg",
+    "SouthAfrica_Coloured-Colesberg",
+    adm_f3_african$African
+  )
+
+# rename Namibia_Damara to Namibia_Damara-KSP
+adm_f3_african$African <- ifelse(adm_f3_african$African == "Namibia_Damara",
+  "Namibia_Damara-KSP",
+  adm_f3_african$African
+)
+
+# rename SouthAfrica_Coloured to SouthAfrica_Coloured-Askham
+adm_f3_african$African <-
+  ifelse(adm_f3_african$African == "SouthAfrica_Coloured",
+    "SouthAfrica_Coloured-Askham",
+    adm_f3_african$African
+  )
+
+adm_f3_african$African <-
+  ifelse(adm_f3_african$African == "Mandinka, The Gambia",
+    "GWD",
+    adm_f3_african$African
+  )
+
+adm_f3_african$African <-
+  ifelse(adm_f3_african$African == "Yoruba, Nigeria",
+    "YRI",
+    adm_f3_african$African
+  )
+
+adm_f3_african$African <-
+  ifelse(adm_f3_african$African == "Mende, Sierra Leone",
+    "MSL",
+    adm_f3_african$African
+  )
+
+adm_f3_african$African <-
+  ifelse(adm_f3_african$African == "Esan, Nigeria",
+    "ESN",
+    adm_f3_african$African
+  )
+
+adm_f3_african$African <-
+  ifelse(adm_f3_african$African == "Luhya, Kenya",
+    "LWK",
+    adm_f3_african$African
+  )
+```
+
+
+
+# Add f3's to mad_bor_g1000_sum_ld_no_na
+
+```{r}
+# create a subset for each Malagasy population
+for (i in unique(adm_f3_african$Malagasy)) {
+  malagasy_pop <- i
+  subset <- paste0("adm_f3_african_", malagasy_pop)
+  assign(subset, adm_f3_african %>%
+    filter(Malagasy == malagasy_pop))
+}
+
+# list all the subsets
+subset_list <- ls(pattern = "adm_f3_african_")
+
+for (i in subset_list) {
+  malagasy_pop <- str_replace(i, "adm_f3_african_", "")
+  f3 <- paste0("f3_", malagasy_pop)
+  se <- paste0("se_", malagasy_pop)
+  dataset <- get(i)
+  mad_bor_g1000_sum_ld_no_na <- mad_bor_g1000_sum_ld_no_na %>%
+    mutate(!!f3 := dataset$est[match(population, dataset$African)]) %>%
+    mutate(!!se := dataset$se[match(population, dataset$African)])
+}
+
+mad_bor_g1000_sum_ld_no_na <- mad_bor_g1000_sum_ld_no_na %>% filter(!is.na(f3_Betsileo))
+```
+
+# Add linguistic group 
+
+```{r}
+mad_bor_g1000_sum_ld_no_na <- mad_bor_g1000_sum_ld_no_na %>%
+  mutate(linguistic_group = linguistic_groups$Group[match(mad_bor_g1000_sum_ld_no_na$population, linguistic_groups$`Population label`)])
+
+# add Mozambique_Ronga linguistic_group as BSP
+mad_bor_g1000_sum_ld_no_na$linguistic_group <-
+  ifelse(mad_bor_g1000_sum_ld_no_na$population == "Mozambique_Ronga",
+    "BSP",
+    mad_bor_g1000_sum_ld_no_na$linguistic_group
+  )
+
+# add Zambia_Tumbuka linguistic_group as BSP
+mad_bor_g1000_sum_ld_no_na$linguistic_group <-
+  ifelse(mad_bor_g1000_sum_ld_no_na$population == "Zambia_Tumbuka",
+    "BSP",
+    mad_bor_g1000_sum_ld_no_na$linguistic_group
+  )
+
+# add GWD, MSL, ESN, and YRI as NKP
+mad_bor_g1000_sum_ld_no_na$linguistic_group <-
+  ifelse(mad_bor_g1000_sum_ld_no_na$population %in% c("GWD", "MSL", "ESN", "YRI"),
+    "NKP",
+    mad_bor_g1000_sum_ld_no_na$linguistic_group
+  )
+# add LWK as BSP
+mad_bor_g1000_sum_ld_no_na$linguistic_group <-
+  ifelse(mad_bor_g1000_sum_ld_no_na$population == "LWK",
+    "BSP",
+    mad_bor_g1000_sum_ld_no_na$linguistic_group
+  )
+```
+
+# Plot f3's on the map: All groups
+
+```{r}
+# list all the subsets
+subset_list <- ls(pattern = "adm_f3_african_")
+
+plot_maps <- function(subset_list, mad_bor_g1000_sum_ld_no_na, africa) {
+  counter <- 1
+  plot_list <- list()
+
+  for (i in subset_list) {
+    malagasy_pop <- str_replace(i, "adm_f3_african_", "")
+    f3 <- paste0("f3_", malagasy_pop)
+    se <- paste0("se_", malagasy_pop)
+
+    # mean f3 value
+    mean_f3 <- mean(unique(mad_bor_g1000_sum_ld_no_na[[f3]]), na.rm = TRUE)
+
+    # sd f3 value
+    sd_f3 <- sd(unique(mad_bor_g1000_sum_ld_no_na[[f3]]), na.rm = TRUE)
+
+    # number of pops tested
+    n_f3 <- length(unique(mad_bor_g1000_sum_ld_no_na$population))
+
+    # conf margin for 95% confidence interval
+    margin <- qt(0.975, df = n_f3 - 1) * sd_f3 / sqrt(n_f3)
+
+    # set upper limit to 2 * conf interval above the mean
+    upper <- mean_f3 + (margin * 3)
+
+    minimum_f3 <- mad_bor_g1000_sum_ld_no_na %>%
+      slice_min(.data[[f3]])
+    minval <- unique(as.numeric(minimum_f3[[f3]]))
+
+    this_plot <- ggplot() +
+      geom_sf(data = africa) +
+      geom_sf(
+        data = mad_bor_g1000_sum_ld_no_na$geometry,
+        aes(
+          colour = mad_bor_g1000_sum_ld_no_na[[f3]],
+          shape  = mad_bor_g1000_sum_ld_no_na$linguistic_group
+        ),
+        alpha = 0.7, size = 2
+      ) +
+      scale_color_viridis_c(
+        na.value = "grey80",
+        limits = c(minval, 0),
+        guide = guide_colorbar(barheight = 7),
+        rescaler = function(x, from = c(minval, 0)) {
+          scales::rescale(
+            pmin(x, upper),
+            from = c(minval, upper)
+          )
+        },
+
+        # keep out-of-bounds from distorting the scale
+        oob = scales::squish
+      ) +
+      coord_sf(crs = st_crs(4326)) +
+      theme_minimal() +
+      labs(colour = "f3", shape = "Linguistic group") +
+      guides(alpha = "none", size = "none") +
+      ggtitle(malagasy_pop)
+
+    plot_list[[counter]] <- this_plot
+    counter <- counter + 1
+  }
+
+  return(plot_list)
+}
+
+res <- plot_maps(subset_list, mad_bor_g1000_sum_ld_no_na, africa)
+
+for (p in res) {
+  print(p)
+  ggsave(paste0(res_dir, "f3_all_african_pops_", p$labels$title, ".jpg"),
+    width = 6, height = 4, dpi = 300
+  )
+}
+```
+
+# Add Bantu language group
+
+```{r}
+mad_bor_g1000_sum_ld_no_na <- mad_bor_g1000_sum_ld_no_na %>%
+  mutate(bantu_group = linguistic_groups$`Bantu Group`[match(mad_bor_g1000_sum_ld_no_na$population, linguistic_groups$`Population label`)])
+
+mad_bor_g1000_sum_ld_no_na$bantu_group <-
+  ifelse(mad_bor_g1000_sum_ld_no_na$population == "Zambia_Tumbuka",
+    "E-BSP",
+    mad_bor_g1000_sum_ld_no_na$bantu_group
+  )
+mad_bor_g1000_sum_ld_no_na$bantu_group <-
+  ifelse(mad_bor_g1000_sum_ld_no_na$population == "LWK",
+    "E-BSP",
+    mad_bor_g1000_sum_ld_no_na$bantu_group
+  )
+```
+
+# Plot f3's on the map: Bantu groups
+
+@TODO the min and max value aren't varying properly for each plot here
+
+```{r}
+plot_bantu_maps <- function(subset_list, mad_bor_g1000_sum_ld_no_na, africa) {
+  counter <- 1
+  plot_list <- list()
+
+  for (i in subset_list) {
+    malagasy_pop <- str_replace(i, "adm_f3_african_", "")
+    f3 <- paste0("f3_", malagasy_pop)
+    se <- paste0("se_", malagasy_pop)
+
+    mad_bantu <- mad_bor_g1000_sum_ld_no_na %>%
+      filter(!bantu_group == "-")
+
+    # Maximum f3
+    max_f3 <- mad_bantu %>%
+      slice_max(.data[[f3]])
+    maxval <- unique(as.numeric(max_f3[[f3]]))
+
+    # minimum f3
+    minimum_f3 <- mad_bantu %>%
+      slice_min(.data[[f3]])
+    minval <- unique(as.numeric(minimum_f3[[f3]]))
+
+    # mean f3 value
+    mean_f3 <- mean(unique(mad_bantu[[f3]]), na.rm = TRUE)
+
+    # sd f3 value
+    sd_f3 <- sd(unique(mad_bantu[[f3]]), na.rm = TRUE)
+
+    # number of pops tested
+    n_f3 <- length(unique(mad_bantu$population))
+
+    # conf margin for 95% confidence interval
+    margin <- qt(0.975, df = n_f3 - 1) * sd_f3 / sqrt(n_f3)
+
+    # set upper limit to 2 * conf interval above the mean
+    upper <- mean_f3 + (margin * 3)
+
+    this_plot <- ggplot() +
+      geom_sf(data = africa) +
+      geom_sf(
+        data = mad_bantu$geometry,
+        aes(colour = mad_bantu[[f3]], shape = mad_bantu$bantu_group),
+        alpha = 0.8, size = 2
+      ) +
+      # add viridis+
+      scale_color_viridis_c(
+        na.value = "grey80",
+        limits = c(minval, maxval),
+        guide = guide_colorbar(barheight = 7),
+        rescaler = function(x, from = c(minval, maxval)) {
+          scales::rescale(
+            pmin(x, upper),
+            from = c(minval, upper)
+          )
+        },
+
+        # keep out-of-bounds from distorting the scale
+        oob = scales::squish
+      ) +
+      # make shapes all filled and not hollow
+      scale_shape_manual(values = c(16, 17, 15, 18, 19)) +
+      coord_sf(crs = st_crs(4326)) +
+      theme_minimal() +
+      labs(colour = "f3", shape = "Bantu group") +
+      guides(alpha = "none", size = "none") +
+      ggtitle(malagasy_pop)
+
+    plot_list[[counter]] <- this_plot
+    counter <- counter + 1
+  }
+
+  return(plot_list)
+}
+
+res <- plot_bantu_maps(subset_list, mad_bor_g1000_sum_ld_no_na, africa)
+
+for (p in res) {
+  print(p)
+  ggsave(paste0(res_dir, "f3_bantu_pops_", p$labels$title, ".jpg"),
+    width = 6, height = 4, dpi = 300
+  )
+}
+```
+
+Bantu groups:
+E-BSP: Eastern Bantu-speaking populations
+NW-BSP 2: North-Western Bantu-speaking populations
+SW-BSP: South-Western Bantu-speaking populations
+W-BSP: West-Western Bantu-speaking populations
+
+***
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s06_c_f3_map.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+```

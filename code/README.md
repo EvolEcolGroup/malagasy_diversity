@@ -11,6 +11,7 @@ s05_fastmixture: FastMixture analysis of global samples
 s05_b_supervised: Supervised ADMIXTURE analysis of Malagasy samples
 s06_a_chimpanzee_ref: preparation for f4 ratio statistics
 s06_b_f_stats: f3 and f4 statistics
+s06_c_f3_map: f3 statistics map
 s07_MALDER: MALDER analysis for dating waves of genetic admixture
 s07a_convertf.par: Parameter file for converting EIGENSTRAT to PLINK format
 s07a_convertf_merina_sep.par: Parameter file for converting EIGENSTRAT to PLINK format for Merina samples
