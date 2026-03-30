@@ -18,3 +18,4 @@ s07a_convertf_merina_sep.par: Parameter file for converting EIGENSTRAT to PLINK 
 s07_b_MALDER_map: Map of MALDER results
 s08_FST: FST calculations between populations
 s09_data_source_map: Map of sample locations
+s10: Supplementary Information and Supplementary data 
