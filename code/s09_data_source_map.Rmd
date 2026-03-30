@@ -1,5 +1,5 @@
 ---
-title: "Map of 5 data collection areas in Madagascar"
+title: "Map of data collection areas in Madagascar"
 date: "2024-02-07"
 knit: resrepo::knit_to_results
 output: pdf_document
@@ -14,6 +14,9 @@ library(sf)
 library(dplyr)
 library(ggrepel)
 library(cowplot)
+library(ggspatial)
+library(crstools)
+library(tidypopgen)
 ```
 
 ```{r set-directories}
@@ -26,40 +29,47 @@ res_dir <- "../results/s09_data_source_map/"
 target <- c("Madagascar", "Mozambique", "Comoros", "Mauritius", "Seychelles", "Mayotte", "United Republic of Tanzania", "Malawi", "Zimbabwe", "South Africa", "Eswatini", "Zambia", "Lesotho", "Somalia", "Kenya", "Ethiopia", "Uganda", "Rwanda", "Burundi", "Djibouti", "Eritrea", "South Sudan", "Botswana", "Namibia", "Angola", "Democratic Republic of the Congo", "Central African Republic", "Republic of the Congo", "Equatorial Guinea", "Cameroon")
 
 # @TODO "Reunion" "Equatorial Guinea"!!
-Madagascar_inset <- ne_countries(country = target, type = "map_units", scale = 50)
+madagascar_inset <- ne_countries(
+  country = target,
+  type = "map_units",
+  scale = 50
+)
 ```
 
 ```{r}
 # Dissolve map country boundaries into a single geometry
-Madagascar_dissolved <- Madagascar_inset %>%
+madagascar_dissolved <- madagascar_inset %>%
   st_union() %>%
   st_as_sf() # Convert back to sf object
 ```
 
 ```{r}
 # Africa
-africa <- ne_countries(continent = "Africa", scale = 50, returnclass = "sf") %>%
+africa <- ne_countries(
+  continent = "Africa",
+  scale = 50,
+  returnclass = "sf"
+) %>%
   st_union() %>%
   st_as_sf()
 ```
 
+# Read in sampling locations
 
 ```{r}
-# kml_data <- sf::st_read(dsn = "../data/raw/data_input/Data_with_pierron.kml")
-# kml_data <- sf::st_transform(kml_data, crs = 29702)
-#
-# # Add names
-# kml_data$Name <- c("Merina", "Sakalava", "Betsimisaraka", "Betsileo", "Diego", "Temoro", "Vezo", "Mikea", "Mikea", "Mikea", "Mikea", "Mikea", "Mikea", "Mikea")
-#
+kml_data <-
+  readRDS("../data/raw/data_input/sampling_locations_with_pierron.rds")
 
-kml_data <- readRDS("../data/raw/data_input/sampling_locations_with_pierron.rds")
-
-
+# add a column to indicate whether they are from our sample or
+# from the literature
 ours <- rep(0, 5)
 pierron <- rep(1, 9)
 sample <- c(ours, pierron)
 kml_data$sample <- sample
+```
 
+
+```{r}
 kml_data <- kml_data %>%
   mutate(
     x = st_coordinates(.)[, 1],
@@ -71,36 +81,23 @@ labels_data <- kml_data %>%
   summarise(
     x = mean(x),
     y = mean(y),
-    geometry = st_centroid(st_union(geometry)) # Optional: Keeps geometry if needed
+    geometry = st_centroid(st_union(geometry))
   )
 
 # Replace kml_data$Name == "Sakalava_Tsimihety" with "Sakalava/Tsimihety"
 kml_data$Name[kml_data$Name == "Sakalava_Tsimihety"] <- "Sakalava/Tsimihety"
 # Replace kmldata$Name == "Diego" with "Diego Mixed"
 kml_data$Name[kml_data$Name == "Diego"] <- "Diego Mixed"
-
-ggplot() +
-  geom_sf(data = Madagascar_dissolved) +
-  geom_sf(data = sf::st_as_sf(kml_data), aes(shape = factor(sample)), size = 1) +
-  coord_sf(crs = st_crs(29702), xlim = c(-1000000, 1800000), ylim = c(1, 2000000), expand = FALSE) + # Laborde projection, commonly used for Madagascar
-  theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
-  scale_shape_manual(values = c(16, 17), labels = c("Our sample", "From literature")) +
-  labs(shape = NULL) +
-  # geom_text(data = kml_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3)
-  geom_text(data = labels_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3) +
-  # geom_text_repel(data = labels_data, aes(x = x, y = y, label = Name), max.overlaps = 10, force = 200)+
-  labs(x = NULL, y = NULL)
-
-
-ggsave(paste0(res_dir, "madagascar_map_labels.jpg"), width = 7, height = 7, dpi = 300)
 ```
 
 ```{r}
 kml_data_single_site <- kml_data %>%
-  group_by(Name) %>% 
-  summarize(geometry = st_union(geometry)) %>% 
+  group_by(Name) %>%
+  summarize(geometry = st_union(geometry)) %>%
   st_centroid()
 ```
+
+# Map with population symbols
 
 ```{r}
 kml_data <- kml_data[order(kml_data$Name), ]
@@ -108,26 +105,38 @@ kml_data <- kml_data[order(kml_data$Name), ]
 kml_data$shape <- c(1, 3, 7, 15, 17, 17, 17, 17, 17, 17, 17, 19, 21, 23)
 
 main_map <- ggplot() +
-  geom_sf(data = Madagascar_dissolved) +
-  geom_sf(data = sf::st_as_sf(kml_data), aes(shape = Name, color = Name, fill = Name), size = 2) +
-  coord_sf(crs = st_crs(29702), xlim = c(-1000000, 1800000), ylim = c(1, 2000000), expand = FALSE) + # Laborde projection, commonly used for Madagascar
+  geom_sf(data = madagascar_dissolved) +
+  geom_sf(
+    data = sf::st_as_sf(kml_data),
+    aes(shape = Name, color = Name, fill = Name), size = 2
+  ) +
+  coord_sf(
+    crs = st_crs(29702),
+    xlim = c(-1000000, 1800000),
+    ylim = c(1, 2000000),
+    expand = FALSE
+  ) +
   theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
   scale_shape_manual(values = c(1, 3, 7, 15, 17, 19, 21, 23)) +
   labs(shape = NULL) +
-  # geom_text(data = labels_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3)+
   labs(x = NULL, y = NULL, color = NULL, shape = NULL, fill = NULL) +
   scale_color_brewer(palette = "Dark2") +
   scale_fill_brewer(palette = "Dark2") +
   guides() +
   theme(
     legend.position = c(0.85, 0.65),
-    # legend.position = "right",
     legend.background = element_rect(fill = "white")
   )
 
 main_map
-ggsave(paste0(res_dir, "madagascar_map_pca_symbols.jpg"), width = 7, height = 5, dpi = 300)
+ggsave(paste0(res_dir, "madagascar_map_pca_symbols.jpg"),
+  width = 7, height = 5, dpi = 300
+)
 ```
+
+# Map with population symbols - single site per pop
+
+Mikea village locations are averaged into a single point at the centre.
 
 ```{r}
 kml_data_single_site <- kml_data_single_site[order(kml_data_single_site$Name), ]
@@ -135,286 +144,180 @@ kml_data_single_site <- kml_data_single_site[order(kml_data_single_site$Name), ]
 kml_data_single_site$shape <- c(1, 3, 7, 15, 17, 19, 21, 23)
 
 main_map_single_site <- ggplot() +
-  geom_sf(data = Madagascar_dissolved) +
-  geom_sf(data = sf::st_as_sf(kml_data_single_site), aes(shape = Name, color = Name, fill = Name), size = 2) +
-  coord_sf(crs = st_crs(29702), xlim = c(-1000000, 1800000), ylim = c(1, 2000000), expand = FALSE) + # Laborde projection, commonly used for Madagascar
+  geom_sf(data = madagascar_dissolved) +
+  geom_sf(
+    data = sf::st_as_sf(kml_data_single_site),
+    aes(shape = Name, color = Name, fill = Name), size = 2
+  ) +
+  coord_sf(
+    crs = st_crs(29702),
+    xlim = c(-1000000, 1800000),
+    ylim = c(1, 2000000),
+    expand = FALSE
+  ) +
   theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
   scale_shape_manual(values = c(1, 3, 7, 15, 17, 19, 21, 23)) +
   labs(shape = NULL) +
-  # geom_text(data = labels_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3)+
   labs(x = NULL, y = NULL, color = NULL, shape = NULL, fill = NULL) +
   scale_color_brewer(palette = "Dark2") +
   scale_fill_brewer(palette = "Dark2") +
   guides() +
   theme(
     legend.position = c(0.85, 0.65),
-    # legend.position = "right",
     legend.background = element_rect(fill = "white")
   )
 
 main_map_single_site
-ggsave(paste0(res_dir, "madagascar_map_pca_symbols_single_site.jpg"), width = 7, height = 5, dpi = 300)
+ggsave(paste0(res_dir, "madagascar_map_pca_symbols_single_site.jpg"),
+  width = 7, height = 5, dpi = 300
+)
 ```
 
 
 ```{r}
 p3 <- ggplot() +
-  geom_sf(data = Madagascar_dissolved) +
-  geom_sf(data = sf::st_as_sf(kml_data), aes(shape = Name, color = Name, fill = Name), size = 2) +
-  coord_sf(crs = st_crs(29702), xlim = c(-100000, 1000000), ylim = c(-130000, 1850000), expand = FALSE) + # Laborde projection, commonly used for Madagascar
+  geom_sf(data = madagascar_dissolved) +
+  geom_sf(
+    data = sf::st_as_sf(kml_data),
+    aes(shape = Name, color = Name, fill = Name), size = 2
+  ) +
+  coord_sf(
+    crs = st_crs(29702),
+    xlim = c(-100000, 1000000),
+    ylim = c(-240000, 2000000),
+    expand = FALSE
+  ) +
   theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
   scale_shape_manual(values = c(1, 3, 7, 15, 17, 19, 21, 23)) +
   labs(shape = NULL) +
-  # geom_text(data = labels_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3)+
   labs(x = NULL, y = NULL, color = NULL, shape = NULL, fill = NULL) +
   scale_color_brewer(palette = "Dark2") +
   scale_fill_brewer(palette = "Dark2") +
   guides() +
   theme(
-    legend.position = c(0.81, 0.13),
-    # legend.position = "none",
-    legend.text = element_text(size = 6),
-    legend.key.size = unit(0.65, "lines"),
-    legend.background = element_rect(fill = "white")
-  ) 
-p3
-
-ggsave(paste0(res_dir, "madagascar_map_pca_symbols_slim.jpg"), width = 5, height = 5, dpi = 300)
-
-saveRDS(p3, paste0(res_dir, "madagascar_map_pca_symbols_slim.rds"))
-```
-
-```{r}
-p3 <- ggplot() +
-  geom_sf(data = Madagascar_dissolved) +
-  geom_sf(data = sf::st_as_sf(kml_data_single_site), aes(shape = Name, color = Name, fill = Name), size = 2) +
-  coord_sf(crs = st_crs(29702), xlim = c(-100000, 1000000), ylim = c(-130000, 1850000), expand = FALSE) + # Laborde projection, commonly used for Madagascar
-  theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
-  scale_shape_manual(values = c(1, 3, 7, 15, 17, 19, 21, 23)) +
-  labs(shape = NULL) +
-  # geom_text(data = labels_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3)+
-  labs(x = NULL, y = NULL, color = NULL, shape = NULL, fill = NULL) +
-  scale_color_brewer(palette = "Dark2") +
-  scale_fill_brewer(palette = "Dark2") +
-  guides() +
-  theme(
-    legend.position = c(0.81, 0.13),
-    # legend.position = "none",
-    legend.text = element_text(size = 6),
-    legend.key.size = unit(0.65, "lines"),
-    legend.background = element_rect(fill = "white")
-  ) 
-p3
-
-ggsave(paste0(res_dir, "madagascar_map_pca_symbols_slim_single_site.jpg"), width = 5, height = 5, dpi = 300)
-
-saveRDS(p3, paste0(res_dir, "madagascar_map_pca_symbols_slim_single_site.rds"))
-```
-
-
-
-```{r}
-p3 <- ggplot() +
-  geom_sf(data = Madagascar_dissolved) +
-  geom_sf(data = sf::st_as_sf(kml_data), aes(shape = Name, color = Name, fill = Name), size = 2) +
-  coord_sf(crs = st_crs(29702), xlim = c(-100000, 1000000), ylim = c(-240000, 2000000), expand = FALSE) + # Laborde projection, commonly used for Madagascar
-  theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
-  scale_shape_manual(values = c(1, 3, 7, 15, 17, 19, 21, 23)) +
-  labs(shape = NULL) +
-  # geom_text(data = labels_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3)+
-  labs(x = NULL, y = NULL, color = NULL, shape = NULL, fill = NULL) +
-  scale_color_brewer(palette = "Dark2") +
-  scale_fill_brewer(palette = "Dark2") +
-  guides() +
-  theme(
-    #legend.position = c(0.81, 0.13),
     legend.position = "none",
-    #legend.text = element_text(size = 6),
-    #legend.key.size = unit(0.65, "lines"),
     legend.background = element_rect(fill = "white")
-  ) 
+  )
 p3
 
-ggsave(paste0(res_dir, "madagascar_map_pca_symbols_slimer.jpg"), width = 5, height = 5, dpi = 300)
-
+ggsave(paste0(res_dir, "madagascar_map_pca_symbols_slimer.jpg"),
+  width = 5, height = 5, dpi = 300
+)
 ```
 
 ```{r}
 p3 <- ggplot() +
-  geom_sf(data = Madagascar_dissolved) +
-  geom_sf(data = sf::st_as_sf(kml_data_single_site), aes(shape = Name, color = Name, fill = Name), size = 2) +
-  coord_sf(crs = st_crs(29702), xlim = c(-100000, 1000000), ylim = c(-240000, 2000000), expand = FALSE) + # Laborde projection, commonly used for Madagascar
+  geom_sf(data = madagascar_dissolved) +
+  geom_sf(
+    data = sf::st_as_sf(kml_data_single_site),
+    aes(shape = Name, color = Name, fill = Name), size = 2
+  ) +
+  coord_sf(
+    crs = st_crs(29702),
+    xlim = c(-100000, 1000000),
+    ylim = c(-240000, 2000000),
+    expand = FALSE
+  ) +
   theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
   scale_shape_manual(values = c(1, 3, 7, 15, 17, 19, 21, 23)) +
   labs(shape = NULL) +
-  # geom_text(data = labels_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3)+
   labs(x = NULL, y = NULL, color = NULL, shape = NULL, fill = NULL) +
   scale_color_brewer(palette = "Dark2") +
   scale_fill_brewer(palette = "Dark2") +
   guides() +
   theme(
-    #legend.position = c(0.81, 0.13),
     legend.position = "none",
-    #legend.text = element_text(size = 6),
-    #legend.key.size = unit(0.65, "lines"),
     legend.background = element_rect(fill = "white")
   ) +
   geom_label_repel(
     data = labels_data,
     aes(x = x, y = y, label = Name),
     size = 3, segment.color = "transparent"
-  ) 
+  )
 p3
 
-ggsave(paste0(res_dir, "madagascar_map_pca_symbols_slimer_single_site.jpg"), width = 5, height = 5, dpi = 300)
-
+ggsave(paste0(res_dir, "madagascar_map_pca_symbols_slimer_single_site.jpg"),
+  width = 5, height = 5, dpi = 300
+)
 ```
 
 
-# Create an inset
-
 ```{r}
-africa <- ne_countries(scale = "medium", continent = c("Africa", "Asia", "Europe"), returnclass = "sf") %>% st_union()
-madagascar_outline <- ne_countries(scale = "medium", country = "Madagascar", returnclass = "sf")
-
-inset_map <- ggplot() +
-  geom_sf(data = africa, fill = "gray90", color = "gray60") +
-  geom_sf(data = madagascar_outline, fill = "gray60", color = "gray60") +
-  coord_sf(xlim = c(-15, 130), ylim = c(-40, 40)) +
-  theme_void() +
-  theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5))
-
-# --- Combine main map and inset ---
-final_plot <- ggdraw() +
-  draw_plot(main_map) +
-  draw_plot(inset_map, x = 0.6, y = 0.05, width = 0.25, height = 0.25) # adjust position/size
-
-final_plot
-
-ggsave(paste0(res_dir, "madagascar_map_pca_symbols_inset.jpg"), width = 7, height = 5, dpi = 300)
-```
-
-```{r}
-inset_map <- ggplot() +
-  geom_sf(data = africa, fill = "gray90", color = "gray60") +
-  geom_sf(data = madagascar_outline, fill = "gray60", color = "gray60") +
-  coord_sf(xlim = c(-15, 130), ylim = c(-40, 40)) +
-  theme_void() +
-  theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5))
-
-# --- Combine main map and inset ---
-final_plot <- ggdraw() +
-  draw_plot(main_map_single_site) +
-  draw_plot(inset_map, x = 0.6, y = 0.05, width = 0.25, height = 0.25) # adjust position/size
-
-final_plot
-
-ggsave(paste0(res_dir, "madagascar_map_pca_symbols_inset_single_site.jpg"), width = 7, height = 5, dpi = 300)
-```
-
-# Extra map for poster
-
-```{r}
-# filter kml data to only betsileo, merina, betsimisaraka, and sakalava
-kml_data_subset <- kml_data[kml_data$Name %in% c("Betsileo", "Merina", "Betsimisaraka", "Sakalava"), ]
-# rename "sakalava" to "Sakalava/Tsimihety
-kml_data_subset$Name[kml_data_subset$Name == "Sakalava"] <- "Sakalava/Tsimihety"
-ggplot() +
-  geom_sf(data = Madagascar_dissolved) +
-  geom_sf(data = sf::st_as_sf(kml_data_subset), aes(shape = Name, color = Name, fill = Name), size = 2) +
-  coord_sf(crs = st_crs(29702), xlim = c(-1000000, 1800000), ylim = c(1, 2000000), expand = FALSE) + # Laborde projection, commonly used for Madagascar
-  theme(panel.background = element_rect(fill = "#F0F8FF", color = NA)) +
-  scale_shape_manual(values = c(1, 3, 15, 19)) +
-  labs(shape = NULL) +
-  # geom_text(data = labels_data, aes(x = x, y = y, label = Name), size = 3, hjust = -0.3)+
-  labs(x = NULL, y = NULL, color = "Population", shape = "Population", fill = "Population") +
-  # scale_color_brewer(palette = "Dark2")+
-  scale_color_manual(values = c("Betsileo" = "#1B9E77", "Merina" = "#7570B3", "Betsimisaraka" = "#D95F02", "Sakalava/Tsimihety" = "#E7298A")) +
-  # scale_fill_brewer(palette = "Dark2")+
-  scale_fill_manual(values = c("Betsileo" = "#1B9E77", "Merina" = "#7570B3", "Betsimisaraka" = "#D95F02", "Sakalava/Tsimihety" = "#E7298A")) +
-  guides()
-
-
-# ggsave("/home/EJC199/Dropbox/malagasy_assortative_mating/map.jpg", width = 7, height = 5, dpi = 500)
-```
-
-
-
-
-
-```{r}
-coord_gt <- gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_coords.gt")
-coord_gt$Latitude <- ifelse(coord_gt$population == "Sumba", -9.4, coord_gt$Latitude)
-coord_gt$Longitude <- ifelse(coord_gt$population == "Sumba", 120.0, coord_gt$Longitude)
-coord_gt$Latitude <- ifelse(coord_gt$population == "Timor", -9.14, coord_gt$Latitude)
-coord_gt$Longitude <- ifelse(coord_gt$population == "Timor", 124.56, coord_gt$Longitude)
+coords_gt_path <-
+  "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_coords.gt"
+coord_gt <- gt_load(coords_gt_path)
+coord_gt$Latitude <-
+  ifelse(coord_gt$population == "Sumba", -9.4, coord_gt$Latitude)
+coord_gt$Longitude <-
+  ifelse(coord_gt$population == "Sumba", 120.0, coord_gt$Longitude)
+coord_gt$Latitude <-
+  ifelse(coord_gt$population == "Timor", -9.14, coord_gt$Latitude)
+coord_gt$Longitude <-
+  ifelse(coord_gt$population == "Timor", 124.56, coord_gt$Longitude)
+# approximate location for Borneo populations
+coord_gt$Latitude <-
+  ifelse(coord_gt$population == "Borneo", -2, coord_gt$Latitude)
+coord_gt$Longitude <-
+  ifelse(coord_gt$population == "Borneo", 115.0, coord_gt$Longitude)
 coord_gt <- coord_gt %>% filter(!is.na(Latitude))
 coord_gt <- gt_add_sf(coord_gt, coords = c("Longitude", "Latitude"))
 ```
 
 
+# Map of sampling locations
+
+For populations where sampling location metadata was available.
+
 ```{r}
-africa_eurasia <- ne_countries(continent = c("Africa", "Asia", "Europe", "Oceania"), scale = 50, returnclass = "sf")
+new_crs <- suggest_crs(c(-11, 130, -40, 35))
+
+coord_gt <- st_transform(coord_gt, crs = new_crs$proj4)
+
+africa_eurasia <-
+  ne_countries(
+    continent = c("Africa", "Asia", "Europe", "Oceania"),
+    scale = 50, returnclass = "sf"
+  )
+africa_eurasia <- st_transform(africa_eurasia, crs = new_crs$proj4)
+
+kml_data_single_site <- st_transform(kml_data_single_site, crs = new_crs$proj4)
+kml_data_single_site$ours <- c(0, 0, 0, 0, 1, 0, 1, 1)
+
+labels_data <- coord_gt %>%
+  group_by(population) %>%
+  summarise(
+    x = mean(as.numeric(Longitude)),
+    y = mean(as.numeric(Latitude)),
+    geometry = st_centroid(st_union(geometry))
+  )
 
 ggplot() +
   geom_sf(data = africa_eurasia) +
   geom_sf(
     data = coord_gt$geometry
   ) +
-  coord_sf(xlim = c(-11, 130), ylim = c(-40, 35)) +
-  # theme_minimal()+
-  # theme_void() +
-  theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
-        panel.background = element_rect(fill = "#F0F8FF", color = NA))
-
-ggsave(paste0(res_dir, "data_source_map.jpg"), width = 7, height = 5, dpi = 300)
-```
-
-
-# Data currently merged in: Malagasy, 1000 Genomes, Borneo, Sumba
-
-```{r}
-
-
-# Specify countries to highlight and assign colors
-highlighted_countries <- africa_eurasia %>%
-  mutate(fill_color = case_when(
-    name %in% c("Madagascar", "Kenya", "Nigeria", "Sierra Leone", "The Gambia", "China", "Vietnam", "Pakistan", "Bangladesh", "Indonesia") ~ "highlight", # Countries to color
-    TRUE ~ "base" # Default color for other countries
-  ))
-
-
-# Plot current data
-ggplot() +
-  geom_sf(data = highlighted_countries, aes(fill = fill_color)) +
-  scale_fill_manual(values = c("highlight" = "#FFDBBB", "base" = "gray80")) +
-  # coord_sf(crs = st_crs(29702), xlim = c(-1500000,4800000), ylim = c(-1500000,4500000)) +
-  theme(panel.background = element_rect(fill = "#F0F8FF", color = NA))
-
-
-
-
-
-```
-
-```{r}
-
-east_african_coast <- ne_countries(scale = "medium", country = c("Madagascar", "South Africa", "Eswatini",  "Lesotho", "Zimbabwe", "United Republic of Tanzania", "Malawi", "Somalia", "Kenya", "Mozambique"), returnclass = "sf")
-
-ggplot() +
-  geom_sf(data = africa, fill = "gray90", color = "gray60") +
-  geom_sf(data = east_african_coast, fill = "gray60", color = "gray60") +
-  coord_sf(xlim = c(25, 130), ylim = c(-40, 40)) +
+  geom_sf(data = kml_data_single_site$geometry) +
+  annotation_scale(
+    location = "bl", # "bl" = bottom left
+    width_hint = 0.2, # Tells R to try and make the bar ~20% of the plot width
+    style = "ticks", # Options: "ticks" or "bar"
+    unit_category = "metric"
+  ) +
+  coord_sf(
+    xlim = c(-11, 130), ylim = c(-40, 35),
+    default_crs = st_crs(4326),
+    crs = new_crs$proj4
+  ) +
+  theme_minimal() +
   theme_void() +
-  theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
-        panel.background = element_rect(fill = "#F0F8FF", color = NA))
-
-
-ggsave(paste0(res_dir, "madagascar_inset.jpg"), width = 7, height = 5, dpi = 300)
+  theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
+    panel.background = element_rect(fill = "#F0F8FF", color = NA)
+  )
+ggsave(paste0(res_dir, "data_source_map.jpg"),
+  width = 7, height = 5, dpi = 300
+)
 ```
-
-
-
 
 ***
 
