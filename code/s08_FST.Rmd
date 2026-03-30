@@ -119,7 +119,7 @@ fst_merina_together <- ggheatmap(fst_matrix_sub) +
 fst_merina_together
 
 ggsave(paste0(res_dir, "fst_merina_together.jpg"),
- width = 7, height = 5, dpi = 300
+  width = 7, height = 5, dpi = 300
 )
 ```
 
@@ -128,33 +128,6 @@ print(fst_matrix_sub)
 ```
 
 # Population level FST for Merina subsets
-
-```{r}
-# # Load fastmixture Q matrix
-# qmats <- readRDS("../data/intermediate/fastmixture/fastmixture_m.RData")
-# mad_bor_g1000_sum <-
-#   gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
-```
-
-```{r}
-# # tidy with the gt
-# mad_bor_g1000_sum <- augment(get_q_matrix(qmats, k = 2, run = 1),
-#   data = mad_bor_g1000_sum
-# )
-# # filter to merina
-# merina <- mad_bor_g1000_sum %>% filter(population == "Merina")
-# # split groups
-# merina$population <- ifelse(merina$.Q1 > 0.5, "Merina A", "Merina B")
-# merina <- merina[, c("id", "population")]
-#
-# # match V2 and merina$id and replace the population column in
-# # merina_fam with the population column in merina
-# matching_m <- match(mad_bor_g1000_sum$id, merina$id)
-# mad_bor_g1000_sum$population <- ifelse(!is.na(matching_m),
-#   merina$population[matching_m],
-#   mad_bor_g1000_sum$population
-# )
-```
 
 ```{r}
 qmats <- read_q_files("../data/intermediate/admixture")
@@ -192,15 +165,23 @@ mad_bor_g1000_sum$population <- ifelse(!is.na(matching_m),
 )
 
 # count number of MerinaA
-cat("Merina group > 0.5", length(which(mad_bor_g1000_sum$population == "Merina A")))
-cat("Merina group < 0.5", length(which(mad_bor_g1000_sum$population == "Merina B")))
+cat(
+  "Merina group > 0.5",
+  length(which(mad_bor_g1000_sum$population == "Merina A")),
+  "\n"
+)
+cat(
+  "Merina group < 0.5",
+  length(which(mad_bor_g1000_sum$population == "Merina B")),
+  "\n"
+)
 ```
 
 
 # Pairwise Fst
 
 ```{r}
-# rename mad_bor_g1000_sum$population "Sakalava_Tsimihety" to "Sakalava/Tsimihety"
+# rename "Sakalava_Tsimihety" to "Sakalava/Tsimihety"
 mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Sakalava_Tsimihety"] <- "Sakalava/Tsimihety"
 # rename mad_bor_g1000_sum$population "Diego" to "Diego Mixed"
 mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Diego"] <- "Diego Mixed"
@@ -217,6 +198,12 @@ mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
 ```{r}
 fst_matrix <- mad_bor_g1000_sum %>%
   pairwise_pop_fst(by_locus = FALSE, method = "WC84", type = "pairwise")
+
+write.csv(fst_matrix, paste0(res_dir, "fst_matrix_full.txt"),
+  sep = ",",
+  row.names = TRUE,
+  col.names = TRUE
+)
 ```
 
 # Pairwise Fst heatmap with dendrogram and Merina split
@@ -272,17 +259,12 @@ fst_merina_split
 
 
 ggsave(paste0(res_dir, "fst_merina_split.jpg"),
- width = 7, height = 5, dpi = 300
+  width = 7, height = 5, dpi = 300
 )
 ```
 
 
 ***
-
-## Recording R environment
-
-Part of ensuring our workflow is reproducible is to keep track of the R environment.
-We will automatically save our R environment into a file called `r_environment.json`.
 
 ```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 filename_rmd <- "s08_FST.Rmd"
