@@ -1,5 +1,5 @@
 ---
-title: "Madagascar only PCA"
+title: "Madagascar data PCA"
 date: "2024-11-01"
 knit: resrepo::knit_to_results
 output: pdf_document
@@ -35,7 +35,12 @@ nrow(malagasy_merged)
 # Count individuals from each group 
 
 ```{r}
-pierron_data <- length(which(malagasy_merged$population %in% c("Mikea", "Vezo", "Temoro")))
+pierron_data <-
+  length(
+    which(
+      malagasy_merged$population %in% c("Mikea", "Vezo", "Temoro")
+    )
+  )
 pierron_data
 nrow(malagasy_merged) - pierron_data
 ```
@@ -55,23 +60,16 @@ pcs <- as.data.frame(random_pca$u)
 variance <- tidy(random_pca)
 ```
 
-# Digeo Individuals
-
-```{r}
-malagasy_sample_sheet <-
-  as_tibble(read.csv("../data/raw/data_input/Malagasy_pop_gen_sample_sheet_2015_cleaned.csv"))
-diego_groups <- malagasy_sample_sheet %>% filter(District == "Diego")
-diego <- malagasy_merged %>%
-  filter(sub("RR.*", "", id) %in% diego_groups$Sample.ID)
-diego$ethnicity <- diego_groups$Ethnic.group[match(sub("RR.*", "", diego$id), diego_groups$Sample.ID)]
-unique(diego$ethnicity)
-```
-
 # Plot
 
 ```{r}
-malagasy_merged[malagasy_merged$population == "Sakalava_Tsimihety", "population"] <- "Sakalava/Tsimihety"
-malagasy_merged[malagasy_merged$population == "Diego", "population"] <- "Diego Mixed"
+malagasy_merged <- malagasy_merged %>%
+  mutate(population = case_when(
+    population == "Sakalava_Tsimihety" ~ "Sakalava/Tsimihety",
+    population == "Diego" ~ "Diego Mixed",
+    TRUE ~ population
+  ))
+
 
 p1 <- ggplot(pcs, aes(
   x = V1, y = V2,
@@ -96,21 +94,39 @@ p1 <- ggplot(pcs, aes(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     panel.background = element_rect(fill = "white"),
-    legend.position = c(0.15, 0.3)
+    legend.position.inside = c(0.15, 0.3)
   )
 p1
 
 ggsave(paste0(res_dir, "madagascar_pca.jpg"), width = 7, height = 5, dpi = 300)
-
-saveRDS(p1, paste0(res_dir, "madagascar_pca.rds"))
 ```
 
 ```{r}
 autoplot(random_pca, type = "scree")
 ```
 
-This PCA uses the KING relatedness filtering of 0.088, equivalent to
-second degree relatives @manichaikulRobustRelationshipInference2010a.
+# Digeo Individuals
+
+For figure caption, list the ethnicity of individuals in the 'Diego Mixed' group.
+
+```{r}
+meta <- "../data/raw/data_input/Malagasy_pop_gen_sample_sheet_2015_cleaned.csv"
+malagasy_sample_sheet <-
+  as_tibble(read.csv(meta))
+diego_groups <- malagasy_sample_sheet %>% filter(District == "Diego")
+diego <- malagasy_merged %>%
+  filter(sub("RR.*", "", id) %in% diego_groups$Sample.ID)
+diego <- diego %>%
+  mutate(id = sub("RR.*", "", id))
+diego <- left_join(diego, diego_groups, by = c("id" = "Sample.ID"))
+unique(diego$Ethnic.group)
+```
+
+# Additional notes
+
+The data in this PCA were filtered for relatedness using a KING kinship
+coefficient threhsold of 0.0884, equivalent to
+removing any related pairs up to second degree relatives @manichaikulRobustRelationshipInference2010a.
 There is justification for keeping second
 degree close relatives (aunts, uncles, grandparents, grandchildren,
 nieces, nephews, and half-siblings) because the prevalence of
@@ -118,12 +134,12 @@ consanguinity in each population is unknown, but likely to be high in
 places, and therefore removing all second degree relatives may
 substantially reduce the sample size.
 
-However, altering the relatedness filtering only reduced the sample size
-by \~10. The PCA plot shows a similar distribution of the Malagasy
+Altering relatedness filtering reduced the sample size
+by \~10. This PCA plot shows a similar distribution of the Malagasy
 samples, but with a slightly different spread and slightly reduced
 explained variance when compared to relatedness filtering with a kinship
 coefficient of 0.177 (first degree relatives). It therefore appears that
-the relatedness filtering has a small effect on the PCA, but the overall
+the relatedness filtering has a small effect on the PCA, and the overall
 structure of the Malagasy samples is maintained.
 
 'the KING option ‘‘–unrelated’’ proceeds as follows. Related individuals
