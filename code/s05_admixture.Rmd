@@ -1,5 +1,5 @@
 ---
-title: "admixture"
+title: "ADMIXTURE"
 date: "2024-11-14"
 knit: resrepo::knit_to_results
 output: pdf_document
@@ -24,7 +24,7 @@ bigparallelr::set_blas_ncores(n_cores)
 res_dir <- "../results/s05_admixture/"
 ```
 
-This script uses ADMIXTURE @alexanderFastModelbasedEstimation2009 through the package tidypopgen @carterTidypopgenTidyPopulation2026, and clumppling @liuClumpplingClusterMatching2024 through the package tidygenclust @tysallTidygenclustClusteringPopulation2025 to estimate ancestry proportions of individuals in the global dataset. 
+This script uses ADMIXTURE @alexanderFastModelbasedEstimation2009 through the package tidypopgen @carterTidypopgenTidyPopulation2025b to estimate ancestry proportions of individuals in the global dataset. 
 
 # Load gt
 
@@ -37,9 +37,9 @@ mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
 ```
 
 ```{r}
-gt_as_plink(mad_bor_g1000_sum, "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.bed")
+bed <- "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.bed"
+gt_as_plink(mad_bor_g1000_sum, bed)
 ```
-
 
 # Loci and sample count
 
@@ -51,9 +51,10 @@ count_loci(mad_bor_g1000_sum)
 ADMIXTURE was run on the full, cleaned dataset of `r nrow(mad_bor_g1000_sum)` individuals and `r count_loci(mad_bor_g1000_sum)` SNPs.
 
 ```{r}
-if (file.exists("../data/intermediate/admixture/unsupervised/admixture_m.RDS")) {
+adm_res <- "../data/intermediate/admixture/unsupervised/admixture_m.RDS"
+if (file.exists(adm_res)) {
   qmats <-
-    readRDS("../data/intermediate/admixture/unsupervised/admixture_m.RDS")
+    readRDS(adm_res)
 } else {
   tictoc::tic()
   k <- c(2:10)
@@ -69,11 +70,7 @@ if (file.exists("../data/intermediate/admixture/unsupervised/admixture_m.RDS")) 
 }
 ```
 
-ADMIXTURE was run unsupervised for k values `min(range(unique(qmats$k)))` to `r max(range(unique(qmats$k)))`, with `r rle(qmats$k)$lengths[1]` repeats. 
-
-```{r}
-qmats <- readRDS("../data/intermediate/admixture/unsupervised/admixture_m.RDS")
-```
+ADMIXTURE was run unsupervised for k values `min(range(unique(qmats$k)))` to `r max(range(unique(qmats$k)))`.
 
 ```{r}
 # check order
@@ -84,15 +81,26 @@ testthat::expect_equal(qmats$group, mad_bor_g1000_sum$population)
 # Reorder gen_tibble
 
 ```{r}
-mad_bor_g1000_sum$Region <- "Other"
-mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Borneo", "Sumba", "Timor"), "Region"] <- "Island southeast Asia"
-mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("BEB", "PJL"), "Region"] <- "South Asia"
-mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("CHS", "KHV"), "Region"] <- "East Asia"
-# Not really happy about grouping all African samples here though...
-mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("ESN", "GWD", "LWK", "MSL", "YRI"), "Region"] <- "Africa"
-mad_bor_g1000_sum[mad_bor_g1000_sum$population %in% c("Betsimisaraka", "Merina", "Diego", "Sakalava_Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro"), "Region"] <- "Malagasy"
-# wharerver is left as "Other" set to Africa
-mad_bor_g1000_sum[mad_bor_g1000_sum$Region == "Other", "Region"] <- "Africa"
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(Region = "Other")
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(Region = case_when(
+    population %in% c("Borneo", "Sumba", "Timor") ~ "Island southeast Asia",
+    population %in% c("BEB", "PJL") ~ "South Asia",
+    population %in% c("CHS", "KHV") ~ "East Asia",
+    population %in% c("ESN", "GWD", "LWK", "MSL", "YRI") ~ "Africa",
+    population %in% c(
+      "Betsimisaraka", "Merina", "Diego",
+      "Sakalava_Tsimihety", "Betsileo",
+      "Vezo", "Mikea", "Temoro"
+    ) ~ "Malagasy",
+    TRUE ~ "Other"
+  ))
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(Region = case_when(
+    Region == "Other" ~ "Africa",
+    TRUE ~ Region
+  ))
 
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% arrange(Region, population)
 ```
@@ -101,7 +109,6 @@ mad_bor_g1000_sum <- mad_bor_g1000_sum %>% arrange(Region, population)
 
 ```{r}
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% filter(.data$id %in% qmats$id)
-
 mad_bor_g1000_sum <- mad_bor_g1000_sum[match(qmats$id, mad_bor_g1000_sum$id), ]
 
 region <- mad_bor_g1000_sum$Region
@@ -168,11 +175,11 @@ group <- qmats$group
 group_x <- cumsum(table(tidypopgen:::fct_inorder_base(group)))
 
 segment_data <- data.frame(
-    x = group_x + 0.5,
-    xend = group_x + 0.5,
-    y = rep(0, length(group_x)),
-    yend = rep(1, length(group_x))
-  )
+  x = group_x + 0.5,
+  xend = group_x + 0.5,
+  y = rep(0, length(group_x)),
+  yend = rep(1, length(group_x))
+)
 
 get_mid_points <- function(vec) {
   (vec[-length(vec)] + vec[-1L]) / 2.
@@ -181,90 +188,33 @@ get_mid_points <- function(vec) {
 q_tbl <- as.data.frame(get_q_matrix(qmats, k = 2, run = 1))
 q_tbl$id <- attr(get_q_matrix(qmats, k = 2, run = 1), "id")
 q_tbl$group <-
-        rep(
-          attr(get_q_matrix(qmats, k = 2, run = 1), "group"),
-          each = nrow(q_tbl) / length(attr(get_q_matrix(qmats, k = 2, run = 1), "group"))
-        )
+  rep(
+    attr(get_q_matrix(qmats, k = 2, run = 1), "group"),
+    each = nrow(q_tbl) / length(attr(
+      get_q_matrix(qmats, k = 2, run = 1),
+      "group"
+    ))
+  )
 q_tbl$id <- seq_len(nrow(q_tbl))
 q_tbl <- q_tbl %>%
-        dplyr::arrange(.data$group, .data$id)
+  dplyr::arrange(.data$group, .data$id)
 q_tbl$id <- seq_len(nrow(q_tbl))
-  q_tbl <- q_tbl %>%
-    tidyr::pivot_longer(
-      cols = dplyr::starts_with(".Q"),
-      names_to = "q",
-      values_to = "percentage"
-    ) %>%
-    dplyr::mutate(percentage = as.numeric(.data$percentage))
 q_tbl <- q_tbl %>%
-      dplyr::group_by(.data$group, .data$id) %>%
-      # only sort by group, so that we don't reorder individuals within groups
-      dplyr::arrange(.data$group) %>%
-      dplyr::mutate(
-        q = factor(
-          .data$q,
-          levels = .data$q[order(.data$percentage, decreasing = FALSE)]
-        )
-      )
-    dominant_q <- q_tbl %>%
-      dplyr::group_by(.data$id) %>%
-      dplyr::summarize(dominant_q = max(.data$percentage), .groups = "drop")
-
-    q_tbl <- q_tbl %>%
-      dplyr::left_join(dominant_q, by = "id")
-
-    q_tbl <- q_tbl %>%
-      dplyr::group_by(.data$group) %>%
-      dplyr::arrange(desc(.data$dominant_q), .by_group = TRUE)
-
-  levels_q <- unique(q_tbl$id)
-  q_tbl <- q_tbl %>%
-    dplyr::mutate(id = factor(.data$id, levels = levels_q))
-
-
-plot_a <- plot_a + 
-  ggplot2::geom_segment(
-      data = segment_data,
-      ggplot2::aes(
-        x = .data$x,
-        y = .data$y,
-        xend = .data$xend,
-        yend = .data$yend
-      ),
-      inherit.aes = FALSE
-    ) +
-  ggplot2::scale_x_discrete(
-    breaks = unique(q_tbl$id)[get_mid_points(c(0, group_x))],
-    labels = names(group_x),
-    position = "top"
-  )  +
-  ggplot2::theme(
-    axis.text.x = ggplot2::element_text(angle = 45, vjust = 1, hjust = 0)
-  ) +
-  theme(axis.text.x.top = element_text(size = 10),
-        axis.text.x.bottom = element_blank())
-```
-
-
-```{r}
-q_mat2 <- get_q_matrix(qmats, k = 2, run = 1)
-
-q_tbl <- tidy(q_mat2, mad_bor_g1000_sum)
-
-group <- as.character(qmats$group)
-group_x <- cumsum(table(tidypopgen:::fct_inorder_base(group)))
-
+  tidyr::pivot_longer(
+    cols = dplyr::starts_with(".Q"),
+    names_to = "q",
+    values_to = "percentage"
+  ) %>%
+  dplyr::mutate(percentage = as.numeric(.data$percentage))
 q_tbl <- q_tbl %>%
   dplyr::group_by(.data$group, .data$id) %>%
-  # only sort by group, so that we don't reorder individuals within groups
   dplyr::arrange(.data$group) %>%
   dplyr::mutate(
     q = factor(
       .data$q,
       levels = .data$q[order(.data$percentage, decreasing = FALSE)]
     )
-  ) # nolint
-
+  )
 dominant_q <- q_tbl %>%
   dplyr::group_by(.data$id) %>%
   dplyr::summarize(dominant_q = max(.data$percentage), .groups = "drop")
@@ -275,32 +225,13 @@ q_tbl <- q_tbl %>%
 q_tbl <- q_tbl %>%
   dplyr::group_by(.data$group) %>%
   dplyr::arrange(desc(.data$dominant_q), .by_group = TRUE)
+
 levels_q <- unique(q_tbl$id)
 q_tbl <- q_tbl %>%
   dplyr::mutate(id = factor(.data$id, levels = levels_q))
 
 
-plt <- ggplot2::ggplot(
-  q_tbl,
-  ggplot2::aes(.data$id, .data$percentage, fill = .data$q)
-) +
-  ggplot2::geom_col(
-    width = 1,
-    position = ggplot2::position_stack(reverse = TRUE)
-  ) +
-  tidypopgen::theme_distruct() +
-  ggplot2::labs(y = "K = 2") +
-  ggplot2::coord_cartesian(ylim = c(0, 1), clip = "off") +
-  tidypopgen::scale_fill_distruct()
-# add vertical lines if we have groups
-segment_data <- data.frame(
-  x = group_x + 0.5,
-  xend = group_x + 0.5,
-  y = rep(0, length(group_x)),
-  yend = rep(1, length(group_x))
-)
-
-plt <- plt +
+plot_a <- plot_a +
   ggplot2::geom_segment(
     data = segment_data,
     ggplot2::aes(
@@ -310,23 +241,20 @@ plt <- plt +
       yend = .data$yend
     ),
     inherit.aes = FALSE
-  )
-
-get_mid_points <- function(vec) {
-  (vec[-length(vec)] + vec[-1L]) / 2.
-}
-plt <- plt +
+  ) +
   ggplot2::scale_x_discrete(
-    breaks = get_mid_points(c(0, group_x)),
+    breaks = unique(q_tbl$id)[get_mid_points(c(0, group_x))],
     labels = names(group_x),
     position = "top"
   ) +
   ggplot2::theme(
     axis.text.x = ggplot2::element_text(angle = 45, vjust = 1, hjust = 0)
+  ) +
+  theme(
+    axis.text.x.top = element_text(size = 10),
+    axis.text.x.bottom = element_blank()
   )
-plt
 ```
-
 
 # Add Malagasy population names
 
@@ -345,10 +273,14 @@ mad_bor_g1000_sum <- mad_bor_g1000_sum %>% arrange(Region, population)
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% filter(.data$id %in% qmats$id)
 
 mad_bor_g1000_sum <- mad_bor_g1000_sum[match(qmats$id, mad_bor_g1000_sum$id), ]
-# rename mad_bor_g1000_sum$Region "Sakalava Tsimihety" to "Sakalava/Tsimihety"
-mad_bor_g1000_sum$Region[mad_bor_g1000_sum$Region == "Sakalava_Tsimihety"] <- "Sakalava/Tsimihety"
-# rename mad_bor_g1000_sum$population "Diego" to "Diego Mixed"
-mad_bor_g1000_sum$Region[mad_bor_g1000_sum$Region == "Diego"] <- "Diego Mixed"
+
+# rename "Sakalava Tsimihety" and "Diego"
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(Region = case_when(
+    Region == "Sakalava_Tsimihety" ~ "Sakalava/Tsimihety",
+    Region == "Diego" ~ "Diego Mixed",
+    TRUE ~ Region
+  ))
 
 region <- mad_bor_g1000_sum$Region
 region <- factor(region, levels = unique(mad_bor_g1000_sum$Region))
@@ -428,7 +360,9 @@ gt_admix_subset <- function(qmats, index) {
   # subset group
   qmats_subset$group <- qmats_subset$group[index]
   # reset the levels of group
-  qmats_subset$group <- factor(qmats_subset$group, levels = unique(qmats_subset$group))
+  qmats_subset$group <- factor(qmats_subset$group,
+    levels = unique(qmats_subset$group)
+  )
 
   # subset Q
   for (i in seq_along(qmats$k)) {
@@ -507,16 +441,14 @@ augmented <- augment(get_q_matrix(qmats, k = 2, run = 1),
   data = mad_bor_g1000_sum
 )
 
-# filter augmented to $population CHS and print head
 augmented_chs <- augmented %>% filter(population == "CHS")
-head(augmented_chs) # .Q1 representing Asian ancestry
+head(augmented_chs)
 
 augmented_gwd <- augmented %>% filter(population == "GWD")
 head(augmented_gwd)
 ```
 
-
-***
+------------------------------------------------------------------------
 
 ```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 filename_rmd <- "s05_admixture.Rmd"

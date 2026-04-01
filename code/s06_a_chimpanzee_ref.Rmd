@@ -11,10 +11,15 @@ library(tidypopgen)
 library(bigsnpr)
 library(httr)
 library(parallel)
+
+# Set cores
+n_cores <- 15
+data.table::setDTthreads(n_cores)
+bigparallelr::set_blas_ncores(n_cores)
 ```
 
 ```{r set-directories}
-res_dir <- "../results/s06_f_stats/"
+res_dir <- "../results/s06_a_chimpanzee_ref/"
 ```
 
 ```{r}
@@ -55,7 +60,7 @@ Ensembl REST endpoint found here: https://rest.ensembl.org/documentation/info/se
 Ensembl uses Pan_tro_3.0 (GCA_000001515.5) 2016/05/03 here https://www.ensembl.org/Pan_troglodytes/Info/Annotation and here https://www.ensembl.org/Pan_troglodytes/Info/Index 
 
 ```{r}
-get_chimp_base <- function(chr, pos, sleep_time = 0.1) {
+get_chimp_base <- function(chr, pos, sleep_time = 0.15) {
   # Build region string (example: "1:123456-123456")
   region <- paste0(chr, ":", pos, "-", pos)
 
@@ -87,25 +92,26 @@ get_chimp_base <- function(chr, pos, sleep_time = 0.1) {
 ```
 
 ```{r}
-tictoc::tic()
+chimp_rds <- "../results/s06_a_chimpanzee_ref/mad_bor_g1000_sum_snps_with_chimp.rds"
+if (file.exists(chimp_rds)) {
+  pan_bim <- readRDS(chimp_rds)
+} else {
+  tictoc::tic()
 
-pan_bim$chimp_base <- mcmapply(
-  get_chimp_base,
-  chr = pan_bim$chr,
-  pos = pan_bim$pos,
-  mc.cores = 4
-)
-tictoc::toc()
-```
-
-# Save chimp reference data
-
-```{r}
-colnames(pan_bim) <- c(
-  "chr_int", "name", "genetic_dist", "position",
-  "allele_ref", "allele_alt", "chimp_ref_base"
-)
-saveRDS(pan_bim, "../results/s06_f_stats/mad_bor_g1000_sum_snps_with_chimp.rds")
+  pan_bim$chimp_base <- mcmapply(
+    get_chimp_base,
+    chr = pan_bim$chr,
+    pos = pan_bim$pos,
+    mc.cores = 4
+  )
+  tictoc::toc()
+  # Save chimp reference data
+  colnames(pan_bim) <- c(
+    "chr_int", "name", "genetic_dist", "position",
+    "allele_ref", "allele_alt", "chimp_ref_base"
+  )
+  saveRDS(pan_bim, chimp_rds)
+}
 ```
 
 # Clean up chimp reference data
@@ -147,11 +153,12 @@ mad_bor_g1000_sum_chimp <- mad_bor_g1000_sum %>%
 # Save
 
 ```{r}
-if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_chimp.gt")) {
-  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_chimp.gt")
+chimp_gt <-
+  "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_chimp.gt"
+if (file.exists(chimp_gt)) {
+  file.remove(chimp_gt)
 }
 ```
-
 
 ```{r}
 gt_save(
@@ -183,17 +190,10 @@ chimp <- gen_tibble(
 )
 ```
 
-
-
-***
-
-## Recording R environment
-
-Part of ensuring our workflow is reproducible is to keep track of the R environment.
-We will automatically save our R environment into a file called `r_environment.json`.
+------------------------------------------------------------------------
 
 ```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
-filename_rmd <- "s06_f_stats.Rmd"
+filename_rmd <- "s06_a_chimpanzee_ref.Rmd"
 filename_renv <- paste0(
   res_dir, "/renv_",
   tools::file_path_sans_ext(basename(filename_rmd)),
