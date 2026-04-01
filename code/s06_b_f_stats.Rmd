@@ -591,10 +591,21 @@ mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
 ```{r}
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% ungroup()
 chimp <- gt_load("../data/intermediate/pan_tro_liftover/chimp_ref.gt")
+```
+
+```{r}
+if(file.exists("../data/intermediate/pan_tro_liftover/chimp_ref_merged.gt")) {
+  file.remove("../data/intermediate/pan_tro_liftover/chimp_ref_merged.gt")
+  file.remove("../data/intermediate/pan_tro_liftover/chimp_ref_merged.rds")
+  file.remove("../data/intermediate/pan_tro_liftover/chimp_ref_merged.bk")
+}
+```
+
+```{r}
 f4_merged_data <- rbind(mad_bor_g1000_sum, chimp,
   as_is = FALSE, flip_strand = TRUE,
   quiet = FALSE, use_position = FALSE,
-  backingfile = tempfile()
+  backingfile = "../data/intermediate/pan_tro_liftover/chimp_ref_merged"
 )
 ```
 
@@ -621,10 +632,16 @@ show_loci(british)$name <- paste(show_loci(british)$chromosome,
   sep = "_"
 )
 
+if(file.exists("../data/intermediate/pan_tro_liftover/chimp_ref_outgroup.gt")) {
+  file.remove("../data/intermediate/pan_tro_liftover/chimp_ref_outgroup.gt")
+  file.remove("../data/intermediate/pan_tro_liftover/chimp_ref_outgroup.rds")
+  file.remove("../data/intermediate/pan_tro_liftover/chimp_ref_outgroup.bk")
+}
+
 f4_merged_data <- rbind(f4_merged_data, british,
   as_is = FALSE, flip_strand = TRUE,
   quiet = FALSE, use_position = FALSE,
-  backingfile = tempfile()
+  backingfile = "../data/intermediate/pan_tro_liftover/chimp_ref_outgroup"
 )
 
 nrow(f4_merged_data)

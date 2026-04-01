@@ -95,6 +95,9 @@ mad_bor_g1000_sum_neo_no_ld_path <-
   "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_no_ld.gt"
 mad_bor_g1000_sum_neo_malder <-
   gt_load(mad_bor_g1000_sum_neo_no_ld_path)
+
+# f4 ratio
+f4 <- gt_load("../data/intermediate/pan_tro_liftover/chimp_ref_outgroup.gt")
 ```
 
 # Supplementary 
@@ -271,8 +274,8 @@ df <- data.frame(
     nrow(mad_bor_g1000_sum_ld),
     nrow(mad_bor_g1000_sum_subsample_supervised_admix),
     nrow(mad_bor_g1000_sum_ld),
-    nrow(mad_bor_g1000_sum_ld) + 48,
-    nrow(mad_bor_g1000_sum),
+    nrow(f4),
+    nrow(mad_bor_g1000_sum_neo_malder),
     nrow(mad_bor_g1000_sum_ld)
   ),
   total_loci <- c(
@@ -281,8 +284,8 @@ df <- data.frame(
     count_loci(mad_bor_g1000_sum_ld),
     count_loci(mad_bor_g1000_sum_subsample_supervised_admix),
     count_loci(mad_bor_g1000_sum_ld),
-    77993,
-    425904,
+    count_loci(f4),
+    count_loci(mad_bor_g1000_sum_neo_malder),
     count_loci(mad_bor_g1000_sum_ld)
   )
 )
