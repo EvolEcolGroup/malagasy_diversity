@@ -138,8 +138,6 @@ MALDER @lohInferringAdmixtureHistories2013; @pickrellAncientWestEurasian2014 was
 
 Pairwise F~st~ distances between Malagasy populations were calculated in tidypopgen, using the method of @weirEstimatingFStatisticsAnalysis1984.
 
-# Supplementary Figures
-
 ![Supplementary Figure 1: Map of reference population locations.](../results/s09_data_source_map/data_source_map.jpg)
 
 ![Supplementary Figure 2: Principal components analysis of Malagasy data (n = 167), combined with data from Pierron et al. (2014) (Mikea, Vezo, and Temoro data points, n = 69). Colour and shape indicates self-identified ethnicity. ‘Diego Mixed’ individuals identified as Anjoaty, Antakarana, Sakalava Tavaratra, and Sakalava ethnicities.](../results/s03_malagasy_pca/madagascar_pca.jpg)
@@ -158,37 +156,20 @@ Pairwise F~st~ distances between Malagasy populations were calculated in tidypop
 
 ![Supplementary Figure 5e: f3 statistic values across different African references for the Mikea](../results/s06_c_f3_map/f3_all_african_pops_Mikea.jpg)
 
-![Supplementary Figure 5f: f3 statistic values across different African references for the Sakalava and Tsimihety](../results/s06_c_f3_map/f3_all_african_pops_Sakalava%20Tsimihety.jpg)
+![Supplementary Figure 5f: f3 statistic values across different African references for the Sakalava and Tsimihety](../results/s06_c_f3_map/f3_all_african_pops_Sakalava Tsimihety.jpg)
 
 ![Supplementary Figure 5g: f3 statistic values across different African references for the Temoro](../results/s06_c_f3_map/f3_all_african_pops_Temoro.jpg)
 
 ![Supplementary Figure 5h: f3 statistic values across different African references for the Vezo](../results/s06_c_f3_map/f3_all_african_pops_Vezo.jpg)
 
-![Supplementary Figure 6a: f3 statistic values across different Bantu African references for the Betsileo](../results/s06_c_f3_map/f3_bantu_pops_Betsileo.jpg)
 
-![Supplementary Figure 6b: f3 statistic values across different Bantu African references for the Betsimisaraka](../results/s06_c_f3_map/f3_bantu_pops_Betsimisaraka.jpg)
+![Supplementary Figure 6: African ancestry proportion for each Malagasy population derived from supervised admixture at K = 2.](../results/s05_b_supervised/Afr_anc_violin_all_pops.jpg)
 
-![Supplementary Figure 6c: f3 statistic values across different Bantu African references for Diego](../results/s06_c_f3_map/f3_bantu_pops_Diego.jpg)
+![Supplementary Figure 7: African ancestry proportion for Merina individuals derived from supervised admixture at K = 2, showing the bimodal distribution of ancestry among Merina individuals..](../results/s05_b_supervised/Afr_anc_hist_merina.jpg)
 
-![Supplementary Figure 6d: f3 statistic values across different Bantu African references for the Merina](../results/s06_c_f3_map/f3_bantu_pops_Merina.jpg)
+![Supplementary Figure 8: Estimated admixture dates for Malagasy populations using MALDER (Pickrell et al., 2014), with Borneo as an Asian source population and varied African source populations. Horizontal bar indicates estimated date of admixture, vertical bars represent standard error from leave-one-chromosome-out jackknifing.](../results/s07_MALDER/varied_african_pops.jpg)
 
-![Supplementary Figure 6e: f3 statistic values across different Bantu African references for the Mikea](../results/s06_c_f3_map/f3_bantu_pops_Mikea.jpg)
-
-![Supplementary Figure 6f: f3 statistic values across different Bantu African references for the Sakalava and Tsimihety](../results/s06_c_f3_map/f3_bantu_pops_Sakalava%20Tsimihety.jpg)
-
-![Supplementary Figure 6g: f3 statistic values across different Bantu African references for the Temoro](../results/s06_c_f3_map/f3_bantu_pops_Temoro.jpg)
-
-![Supplementary Figure 6h: f3 statistic values across different Bantu African references for the Vezo](../results/s06_c_f3_map/f3_bantu_pops_Vezo.jpg)
-
-![Supplementary Figure 7: African ancestry proportion for each Malagasy population derived from supervised admixture at K = 2.](../results/s05_b_supervised/Afr_anc_violin_all_pops.jpg)
-
-![Supplementary Figure 8: African ancestry proportion for Merina individuals derived from supervised admixture at K = 2, showing the bimodal distribution of ancestry among Merina individuals..](../results/s05_b_supervised/Afr_anc_hist_merina.jpg)
-
-![Supplementary Figure 9: Estimated admixture dates for Malagasy populations using MALDER (Pickrell et al., 2014), with Borneo as an Asian source population and varied African source populations. Horizontal bar indicates estimated date of admixture, vertical bars represent standard error from leave-one-chromosome-out jackknifing.](../results/s07_MALDER/varied_african_pops.jpg)
-
-![Supplementary Figure 10: Estimated admixture dates for Malagasy populations using MALDER (Pickrell et al., 2014), with Mozambique as an African source population and varied Asian source populations. Horizontal bar indicates estimated date of admixture, vertical bars represent standard error from leave-one-chromosome-out jackknifing.](../results/s07_MALDER/varied_asian_pops.jpg)
-
-# Supplementary Tables
+![Supplementary Figure 9: Estimated admixture dates for Malagasy populations using MALDER (Pickrell et al., 2014), with Mozambique as an African source population and varied Asian source populations. Horizontal bar indicates estimated date of admixture, vertical bars represent standard error from leave-one-chromosome-out jackknifing.](../results/s07_MALDER/varied_asian_pops.jpg)
 
 \clearpage
 
