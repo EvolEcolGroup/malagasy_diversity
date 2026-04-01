@@ -179,7 +179,7 @@ Pairwise F~st~ distances between Malagasy populations were calculated in tidypop
 
 ![Supplementary Figure 7: African ancestry proportion for each Malagasy population derived from supervised admixture at K = 2.](../results/s05_b_supervised/Afr_anc_violin_all_pops.jpg)
 
-![Supplementary Figure 8: African ancestry proportion for Merina individuals derived from supervised admixture at K = 2, showing the bimodal distribution of ancestry among Merina individuals..](../results/s05_b_supervised/Afr_anc_violin_merina.jpg)
+![Supplementary Figure 8: African ancestry proportion for Merina individuals derived from supervised admixture at K = 2, showing the bimodal distribution of ancestry among Merina individuals..](../results/s05_b_supervised/Afr_anc_hist_merina.jpg)
 
 ![Supplementary Figure 9: Estimated admixture dates for Malagasy populations using MALDER (Pickrell et al., 2014), with Borneo as an Asian source population and varied African source populations. Horizontal bar indicates estimated date of admixture, vertical bars represent standard error from leave-one-chromosome-out jackknifing.](../results/s07_MALDER/varied_african_pops.jpg)
 

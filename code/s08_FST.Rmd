@@ -15,6 +15,7 @@ library(ggplot2)
 library(gridExtra)
 library(viridis)
 library(pheatmap)
+library(tidyr)
 ```
 
 
@@ -26,7 +27,9 @@ res_dir <- "../results/s08_FST/"
 
 ```{r}
 mad_bor_g1000_sum <-
-  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_imputed.gt")
+  gt_load(
+    "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_imputed.gt"
+  )
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
 ```
 
@@ -152,9 +155,29 @@ mad_bor_g1000_sum_sub <- augment(get_q_matrix(qmats, k = 2, run = 1),
 )
 # filter to merina
 merina <- mad_bor_g1000_sum_sub %>% filter(population == "Merina")
+
+# find which .Q column represents Asian ancestry
+asian_ancestry_q <- mad_bor_g1000_sum_sub %>%
+  filter(population == "Borneo") %>%
+  # Get median value of Q1 and Q2
+  summarise(.Q1 = median(.Q1), .Q2 = median(.Q2)) %>%
+  # Pivot in order to subset
+  pivot_longer(
+    cols = c(".Q1", ".Q2"),
+    names_to = "column_name",
+    values_to = "median_val"
+  ) %>%
+  # Find the row with the max value
+  slice_max(median_val, n = 1) %>%
+  # get the column name
+  pull(column_name)
+
+
 # split groups
-# .Q3 representing Asian ancestry and .Q2 representing African ancestry
-merina$population <- ifelse(merina$.Q1 > 0.5, "Merina A", "Merina B")
+merina$population <- ifelse(merina %>% select(all_of(asian_ancestry_q)) > 0.5,
+  "Merina A",
+  "Merina B"
+)
 merina <- merina[, c("id", "population")]
 
 # match V2 and merina$id and replace the population column in merina_fam with
@@ -181,10 +204,13 @@ cat(
 # Pairwise Fst
 
 ```{r}
-# rename "Sakalava_Tsimihety" to "Sakalava/Tsimihety"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Sakalava_Tsimihety"] <- "Sakalava/Tsimihety"
-# rename mad_bor_g1000_sum$population "Diego" to "Diego Mixed"
-mad_bor_g1000_sum$population[mad_bor_g1000_sum$population == "Diego"] <- "Diego Mixed"
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(population = case_when(
+    population == "Sakalava_Tsimihety" ~ "Sakalava/Tsimihety",
+    population == "Diego" ~ "Diego Mixed",
+    TRUE ~ population
+  ))
+
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
   filter(population %in% c(
     "Betsimisaraka", "Merina A", "Merina B", "Diego Mixed",
@@ -208,8 +234,9 @@ write.csv(fst_matrix, paste0(res_dir, "fst_matrix_full.txt"),
 
 # Pairwise Fst heatmap with dendrogram and Merina split
 
+https://bioinformatics.ccr.cancer.gov/docs/data-visualization-with-r/Lesson5_intro_to_ggplot/
+
 ```{r}
-# https://bioinformatics.ccr.cancer.gov/docs/data-visualization-with-r/Lesson5_intro_to_ggplot/
 pheatmap(fst_matrix,
   color = viridis(256),
   angle_col = 45,
@@ -220,6 +247,9 @@ pheatmap(fst_matrix,
 
 # Other heatmap versions
 
+https://stackoverflow.com/questions/38727324/adding-a-dendrogram-to-a-ggplot2-heatmap
+https://yunuuuu.github.io/ggalign-book/complexheatmap-single-heatmap.html
+
 ```{r}
 heatmap(fst_matrix, col = viridis(256)) +
   theme(axis.text.x = element_text(angle = -60, hjust = 0))
@@ -227,10 +257,6 @@ heatmap(fst_matrix, col = viridis(256)) +
 ggheatmap(fst_matrix) +
   scale_fill_viridis_c(name = expression("F"[st])) +
   theme(axis.text.x = element_text(angle = -60, hjust = 0))
-
-
-# https://stackoverflow.com/questions/38727324/adding-a-dendrogram-to-a-ggplot2-heatmap
-# https://yunuuuu.github.io/ggalign-book/complexheatmap-single-heatmap.html
 
 ggheatmap(fst_matrix) +
   scale_fill_viridis_c(name = expression("F"[st])) +
@@ -263,8 +289,7 @@ ggsave(paste0(res_dir, "fst_merina_split.jpg"),
 )
 ```
 
-
-***
+------------------------------------------------------------------------
 
 ```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 filename_rmd <- "s08_FST.Rmd"

@@ -7,7 +7,8 @@ s01_qc_merge.Rmd: Quality control and merging of all SNP datasets
 s02_qc_merge_genetic_dist: Quality control and merging of SNP datasets, checking genetic distance
 s03_malagasy_pca: PCA of Malagasy samples
 s04_full_pca: PCA of Malagasy samples with African and Asian references
-s05_admixture: ADMIXTURE analysis of global samples
+s05_admixture: Unsupervised ADMIXTURE analysis of global samples
+s05_admixture_supervised.sh: Shell script for supervised ADMIXTURE
 s05_b_supervised: Supervised ADMIXTURE analysis of Malagasy samples
 s06_a_chimpanzee_ref: preparation for f4 ratio statistics
 s06_b_f_stats: f3 and f4 statistics

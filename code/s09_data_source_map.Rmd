@@ -319,7 +319,8 @@ ggsave(paste0(res_dir, "data_source_map.jpg"),
 )
 ```
 
-***
+------------------------------------------------------------------------
+
 
 ```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 filename_rmd <- "s09_data_source_map.Rmd"

@@ -234,8 +234,7 @@ ggsave(paste0(res_dir, "malder_dates_gradient_single_site.jpg"),
 )
 ```
 
-
-***
+------------------------------------------------------------------------
 
 ```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 filename_rmd <- "s07_b_MALDER_map.Rmd"
