@@ -1,0 +1,791 @@
+---
+title: "Merge script"
+date: "2025-03-24"
+knit: resrepo::knit_to_results
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(tidypopgen)
+library(grid)
+library(tidyr)
+```
+
+```{r set-directories}
+res_dir <- "../results/s01_qc_merge/"
+```
+
+This script merges our data with additional data from Madagascar, Borneo, Sumba, and 1000 Genomes Project, creating two datasets: one Malagasy only and another including Malagasy alongside all additional populations.
+
+## Build of each dataset
+
+Madagascar_full: GRC37 (hg19)
+1000_Genomes_b37_clean: GRC37 (hg19)
+NEO_full: GRC37 (hg19) - build noted in metadata
+Pierron_Malagasy: GRC37 (hg19) - verified using `bigsnpr::snp_modifyBuild()`
+Borneo_raw_data: GRC37 (hg19) - verified using `bigsnpr::snp_modifyBuild()`
+GSE76645_INDONESIA_SUMBA_TIMOR: GRC37 (hg19) - verified using `bigsnpr::snp_modifyBuild()`
+
+Note: `snp_modifyBuild` calls LiftOver from UCSC (downloaded at https://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/liftOver) to perform the build conversion. For datasets where build is not verified, this function is used to check chromosome, position, and rsID against data with known build.
+
+# Generate gen tibble
+
+```{r}
+if (file.exists("../data/raw/data_input/Madagascar_full.gt")) {
+  madagascar <- gt_load("../data/raw/data_input/Madagascar_full.gt")
+} else {
+  madagascar <- gen_tibble("../data/raw/data_input/Madagascar_full.bed",
+    quiet = TRUE,
+    valid_alleles = c("T", "G", "A", "C", "I"),
+    allow_duplicates = TRUE
+  )
+}
+
+cat("Number of individuals:", nrow(madagascar), "\n")
+cat("Number of loci:", count_loci(madagascar))
+```
+
+
+```{r}
+if (file.exists("../data/raw/data_input/Madagascar_full_v2.bk")) {
+  file.remove("../data/raw/data_input/Madagascar_full_v2.gt")
+  file.remove("../data/raw/data_input/Madagascar_full_v2.bk")
+  file.remove("../data/raw/data_input/Madagascar_full_v2.rds")
+}
+```
+
+Our raw dataset has 713014 SNPs and 192 individuals
+
+# Add metadata
+
+```{r}
+# Read in Pierron Malagasy metadata
+pop_table <- read.table("../data/raw/data_input/Madagascar_Borneo.poptable",
+  sep = "\t", fill = TRUE
+)
+colnames(pop_table) <- c("IID", "V2", "FID", "Population", "V5", "V6", "V7")
+
+# Add "RR" to pop_table$IID
+pop_table$IID <- paste0(pop_table$IID, "RR")
+
+# Find Malagasy entries
+pop_table_sub <-
+  subset(
+    pop_table,
+    pop_table$IID %in% madagascar$id & pop_table$V5 == "Madagascar"
+  )
+
+# match up the ID's with pop table metadata
+matching_m <- match(madagascar$id, pop_table_sub$IID)
+
+madagascar$population <-
+  ifelse(!is.na(matching_m),
+    pop_table_sub$Population[matching_m], madagascar$population
+  )
+```
+
+# Remove the "I" loci
+
+```{r}
+remove <- which(show_loci(madagascar)$allele_ref == "I")
+madagascar <- madagascar %>% select_loci(-all_of(c(remove)))
+count_loci(madagascar)
+```
+
+# Subset to autosomes only
+
+```{r}
+madagascar <-
+  madagascar %>% select_loci_if(show_loci(genotypes)$chromosome %in% c(1:22))
+count_loci(madagascar)
+```
+
+# Find and remove duplicates
+
+```{r}
+dups <- find_duplicated_loci(madagascar)
+madagascar <- madagascar %>% select_loci(-all_of(dups))
+count_loci(madagascar)
+
+# remove entries with genetic distance == 0
+no_dist <- which(show_loci(madagascar)$genetic_dist == 0)
+madagascar <- madagascar %>% select_loci(-all_of(no_dist))
+count_loci(madagascar)
+```
+
+# Malagasy Pierron data
+
+```{r}
+if (file.exists("../data/raw/data_input/Pierron_Malagasy.gt")) {
+  madagascar_p <- gt_load("../data/raw/data_input/Pierron_Malagasy.gt")
+} else {
+  madagascar_p <-
+    gen_tibble("../data/raw/data_input/Pierron_Malagasy.bed",
+      quiet = TRUE,
+      allow_duplicates = TRUE
+    )
+}
+
+cat("Number of individuals:", nrow(madagascar_p), "\n")
+cat("Number of loci:", count_loci(madagascar_p))
+```
+
+# Append population info
+
+```{r}
+pop_table <- read.table("../data/raw/data_input/Madagascar_Borneo.poptable",
+  sep = "\t", fill = TRUE
+)
+colnames(pop_table) <- c("IID", "V2", "FID", "Population", "V5", "V6", "V7")
+
+pop_table_sub <-
+  subset(
+    pop_table,
+    pop_table$IID %in% madagascar_p$id & pop_table$V5 == "Madagascar"
+  )
+
+matching_m <- match(madagascar_p$id, pop_table_sub$IID)
+madagascar_p$population <- ifelse(!is.na(matching_m),
+  pop_table_sub$Population[matching_m],
+  madagascar_p$population
+)
+```
+
+# Find and remove duplicates
+
+```{r}
+dups <- find_duplicated_loci(madagascar_p)
+madagascar_p <- madagascar_p %>% select_loci(-all_of(dups))
+
+# remove entries with no allele_ref & no allele_alt
+no_allele <- which(is.na(show_loci(madagascar_p)$allele_ref) & is.na(show_loci(madagascar_p)$allele_alt))
+madagascar_p <- madagascar_p %>% select_loci(-all_of(no_allele))
+count_loci(madagascar_p)
+```
+
+```{r}
+if (file.exists("../data/intermediate/rbind_data/malagasy_merge.gt")) {
+  file.remove("../data/intermediate/rbind_data/malagasy_merge.gt")
+  file.remove("../data/intermediate/rbind_data/malagasy_merge.bk")
+  file.remove("../data/intermediate/rbind_data/malagasy_merge.rds")
+}
+```
+
+# Merge the two datasets
+
+```{r}
+malagasy_merged <- rbind(madagascar, madagascar_p,
+  as_is = FALSE, flip_strand = TRUE, use_position = FALSE,
+  quiet = FALSE, backingfile = "../data/intermediate/rbind_data/malagasy_merge"
+)
+```
+
+```{r}
+if (file.exists("../data/intermediate/rbind_data/malagasy_merge_v2.bk")) {
+  file.remove("../data/intermediate/rbind_data/malagasy_merge_v2.bk")
+  file.remove("../data/intermediate/rbind_data/malagasy_merge_v2.rds")
+}
+```
+
+# Sort the order
+```{r}
+# reorder the loci
+malagasy_merged <- gt_order_loci(malagasy_merged,
+  use_current_table = FALSE,
+  ignore_genetic_dist = TRUE
+)
+```
+
+
+# Quality control on the merged dataset
+
+First we create a gt 'malagasy_merge_clean_no_maf_1st_degree' for ROH analysis,
+this data will include all but first degree relatives and is not MAF filtered.
+
+```{r}
+malagasy_merged <- malagasy_merged %>% group_by(population)
+loci_report_m <- qc_report_loci(malagasy_merged)
+malagasy_merged <- malagasy_merged %>% ungroup()
+```
+
+# Check HWE Merina vs other groups
+
+```{r}
+malagasy_merged <- malagasy_merged %>% group_by(population)
+hwe_res <- loci_hwe(malagasy_merged)
+
+hwe_dist_per_pop <- hwe_res %>% pivot_wider(names_from = group, values_from = value)
+merina <- as.data.frame(hwe_dist_per_pop$Merina)
+colnames(merina) <- "Value"
+
+merina_hwe <- ggplot(merina, aes(x = Value)) +
+  geom_density() +
+  labs(title = "Merina HWE")
+
+betsimisaraka <- as.data.frame(hwe_dist_per_pop$Betsimisaraka)
+colnames(betsimisaraka) <- "Value"
+
+betsimisaraka_hwe <- ggplot(betsimisaraka, aes(x = Value)) +
+  geom_density() +
+  labs(title = "Betsimisaraka HWE")
+
+diego <- as.data.frame(hwe_dist_per_pop$Diego)
+colnames(diego) <- "Value"
+
+diego_hwe <- ggplot(diego, aes(x = Value)) +
+  geom_density() +
+  labs(title = "Diego HWE")
+
+gridExtra::grid.arrange(merina_hwe, betsimisaraka_hwe, diego_hwe, ncol = 2, nrow = 2)
+```
+
+Shape of distribution of HWE p-values looks similar across groups.
+
+```{r}
+min_vals <- hwe_res %>%
+  mutate(value = value * length(unique(group))) %>% # correction
+  group_by(loci) %>%
+  slice_min(value, n = 1)
+
+ggplot(min_vals, aes(x = group, fill = group)) +
+  geom_bar() +
+  theme(axis.text.x = element_blank()) +
+  labs(x = "Ethnic group", fill = "Ethnic group", y = "Count") +
+  scale_fill_brewer(palette = "Dark2")
+```
+
+Minimum p-values are distributed evenly across groups.
+
+```{r}
+min_vals <- hwe_res %>%
+  mutate(value = value * length(unique(group))) %>% # correction
+  filter(value < 0.01)
+
+ggplot(min_vals, aes(x = group, fill = group)) +
+  geom_bar() +
+  theme(axis.text.x = element_blank()) +
+  labs(x = "Ethnic group", fill = "Ethnic group", y = "Count") +
+  scale_fill_brewer(palette = "Dark2")
+```
+
+P-values < 0.01 are not elevated in the Merina.
+
+# Filter loci
+
+```{r}
+to_keep <- which(loci_report_m$hwe_p > 0.01)
+malagasy_merged <- malagasy_merged %>% select_loci(all_of(to_keep))
+count_loci(malagasy_merged)
+malagasy_merged <-
+  malagasy_merged %>% select_loci_if(loci_missingness(genotypes) < 0.05)
+count_loci(malagasy_merged)
+```
+
+# Filter individuals
+
+```{r}
+malagasy_merged <- malagasy_merged %>% group_by(population)
+individual_report_m <- qc_report_indiv(malagasy_merged, kings_threshold = 0.177)
+malagasy_merged <- malagasy_merged %>% ungroup()
+malagasy_merged <-
+  malagasy_merged %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
+malagasy_merged <-
+  malagasy_merged %>% filter(indiv_missingness(genotypes) < 0.1)
+```
+
+# Loci and sample count
+
+```{r}
+nrow(malagasy_merged)
+count_loci(malagasy_merged)
+```
+
+```{r}
+if (file.exists("../data/intermediate/rbind_data/malagasy_merge_clean_no_maf_1st_degree.gt")) {
+  file.remove("../data/intermediate/rbind_data/malagasy_merge_clean_no_maf_1st_degree.gt")
+  file.remove("../data/intermediate/rbind_data/malagasy_merge_clean_no_maf_1st_degree.bk")
+  file.remove("../data/intermediate/rbind_data/malagasy_merge_clean_no_maf_1st_degree.rds")
+}
+```
+
+```{r}
+gt_update_backingfile(malagasy_merged,
+  backingfile = "../data/intermediate/rbind_data/malagasy_merge_clean_no_maf_1st_degree"
+)
+```
+
+Next we add MAF filtering and remove second degree relatives to create gt 
+'malagasy_merge_clean' for other analysis. 
+
+# Add MAF filtering
+
+```{r}
+malagasy_merged <-
+  malagasy_merged %>% select_loci_if(loci_maf(genotypes) > 0.025)
+count_loci(malagasy_merged)
+```
+
+# Add second degree relatedness filtering
+
+```{r}
+malagasy_merged <- malagasy_merged %>% group_by(population)
+individual_report_m <-
+  qc_report_indiv(malagasy_merged, kings_threshold = 0.0884)
+malagasy_merged <- malagasy_merged %>% ungroup()
+malagasy_merged <-
+  malagasy_merged %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
+nrow(malagasy_merged)
+```
+
+
+```{r}
+if (file.exists("../data/intermediate/rbind_data/malagasy_merge_clean.gt")) {
+  file.remove("../data/intermediate/rbind_data/malagasy_merge_clean.gt")
+  file.remove("../data/intermediate/rbind_data/malagasy_merge_clean.bk")
+  file.remove("../data/intermediate/rbind_data/malagasy_merge_clean.rds")
+}
+```
+
+```{r}
+malagasy_merged <-
+  gt_update_backingfile(malagasy_merged,
+    backingfile = "../data/intermediate/rbind_data/malagasy_merge_clean"
+  )
+```
+
+# Impute
+
+```{r}
+malagasy_merged <- gt_impute_simple(malagasy_merged, method = "mean")
+```
+
+# LD clumping
+
+```{r}
+to_keep_LD <- loci_ld_clump(malagasy_merged,
+  thr_r2 = 0.2, size = 100,
+  return_id = TRUE, use_positions = TRUE
+)
+malagasy_merged_ld <- malagasy_merged %>% select_loci(all_of(to_keep_LD))
+```
+
+# Loci and sample count
+
+```{r}
+nrow(malagasy_merged_ld)
+count_loci(malagasy_merged_ld)
+```
+
+```{r}
+if (file.exists("../data/intermediate/rbind_data/malagasy_merge_clean_ld.gt")) {
+  file.remove("../data/intermediate/rbind_data/malagasy_merge_clean_ld.gt")
+  file.remove("../data/intermediate/rbind_data/malagasy_merge_clean_ld.bk")
+  file.remove("../data/intermediate/rbind_data/malagasy_merge_clean_ld.rds")
+}
+```
+
+# Save imputed LD filtered dataset
+
+```{r}
+malagasy_merged <-
+  gt_update_backingfile(malagasy_merged_ld,
+    backingfile = "../data/intermediate/rbind_data/malagasy_merge_clean_ld"
+  )
+```
+
+# Load Borneo data
+
+```{r}
+if (file.exists("../data/raw/data_input/Borneo_raw_data.gt")) {
+  borneo <- gt_load("../data/raw/data_input/Borneo_raw_data.gt")
+} else {
+  borneo <-
+    gen_tibble("../data/raw/data_input/Borneo_raw_data.bed",
+      valid_alleles = c("A", "T", "C", "G", "I", "N"),
+      quiet = TRUE,
+      allow_duplicates = TRUE
+    )
+}
+
+borneo$population <- "Borneo"
+```
+
+# Find and remove duplicates
+
+```{r}
+dups <- find_duplicated_loci(borneo)
+borneo <- borneo %>% select_loci(-all_of(dups))
+```
+
+```{r}
+if (file.exists("../data/intermediate/rbind_data/malagasy_borneo.gt")) {
+  file.remove("../data/intermediate/rbind_data/malagasy_borneo.gt")
+  file.remove("../data/intermediate/rbind_data/malagasy_borneo.bk")
+  file.remove("../data/intermediate/rbind_data/malagasy_borneo.rds")
+}
+```
+
+# Merge
+
+```{r}
+malagasy_merged <-
+  gt_load("../data/intermediate/rbind_data/malagasy_merge_clean.gt")
+malagasy_borneo <- rbind(malagasy_merged, borneo,
+  as_is = FALSE, flip_strand = TRUE, use_position = FALSE,
+  quiet = FALSE, backingfile = "../data/intermediate/rbind_data/malagasy_borneo"
+)
+```
+
+
+# Load 1000 Genomes data 
+
+Cutting down to populations of interest
+
+```{r}
+if (file.exists("../data/raw/data_input/1000_Genomes_b37_clean.gt")) {
+  g1000 <- gt_load("../data/raw/data_input/1000_Genomes_b37_clean.gt")
+} else {
+  g1000 <-
+    gen_tibble("../data/raw/data_input/1000_Genomes_b37_clean.bed",
+      quiet = TRUE,
+      allow_duplicates = TRUE
+    )
+}
+
+# append population info
+pop_table <- read.table("../data/raw/data_input/Madagascar_Borneo.poptable",
+  sep = "\t", fill = TRUE
+)
+colnames(pop_table) <- c("IID", "V2", "FID", "Population", "V5", "V6", "V7")
+
+pop_table_sub <- subset(pop_table, pop_table$IID %in% g1000$id)
+
+matching_m <- match(g1000$id, pop_table_sub$IID)
+g1000$population <- ifelse(!is.na(matching_m),
+  pop_table_sub$V2[matching_m],
+  g1000$population
+)
+
+pop <- c("KHV", "BEB", "YRI", "PJL", "GWD", "MSL", "ESN", "LWK", "CHS")
+#- Kinh in Ho Chi Minh City, Vietnam
+#- Bengali in Bangladesh
+#- Han Chinese South
+#- Luhya in Webuye, Kenya
+#- Yoruba in Ibadan, Nigeria
+#- Punjabi in Lahore, Pakistan
+#- Gambian in Western Division, The Gambia - Mandinka
+#- Mende in Sierra Leone
+#- Esan in Nigeria
+
+g1000 <- g1000 %>% filter(population %in% pop)
+
+count_loci(g1000)
+nrow(g1000)
+```
+
+# Find and remove duplicates
+
+```{r}
+dups <- find_duplicated_loci(g1000)
+g1000 <- g1000 %>% select_loci(-all_of(dups))
+```
+
+# Merge
+
+```{r}
+if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000.gt")) {
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000.gt")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000.bk")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000.rds")
+}
+
+mad_bor_g1000 <- rbind(malagasy_borneo, g1000,
+  as_is = FALSE, flip_strand = TRUE, use_position = FALSE,
+  quiet = FALSE, backingfile = "../data/intermediate/rbind_data/mad_bor_g1000"
+)
+```
+
+
+# Load Sumba data
+
+```{r}
+if (file.exists("../data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.gt")) {
+  sumba <- gt_load("../data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.gt")
+} else {
+  sumba <-
+    gen_tibble("../data/raw/data_input/GSE76645_INDONESIA_SUMBA_TIMOR.bed",
+      quiet = TRUE,
+      allow_duplicates = TRUE
+    )
+}
+
+sumba$population <- "Sumba"
+
+timor <- read.table("../data/raw/data_input/timor")
+timor$population <- "Timor"
+
+matching_m <- match(sumba$id, timor$V2)
+sumba$population <- ifelse(!is.na(matching_m),
+  timor$population[matching_m],
+  sumba$population
+)
+
+count_loci(sumba)
+nrow(sumba)
+
+set.seed(1)
+
+subsample <- function(x) {
+  if (nrow(x) <= 30) {
+    return(x)
+  } else {
+    sample_n(x, size = 30)
+  }
+}
+
+sumba_only <- sumba %>%
+  group_by(population) %>%
+  group_modify(~ subsample(.x)) %>%
+  ungroup()
+
+sumba <- sumba %>% filter(id %in% sumba_only$id)
+
+nrow(sumba)
+```
+
+# Find and remove duplicates
+
+```{r}
+dups <- find_duplicated_loci(sumba)
+sumba <- sumba %>% select_loci(-all_of(dups))
+```
+
+# Merge
+
+```{r}
+if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum.gt")) {
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum.gt")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum.bk")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum.rds")
+}
+
+mad_bor_g1000_sum <- rbind(mad_bor_g1000, sumba,
+  as_is = FALSE,
+  flip_strand = TRUE,
+  quiet = FALSE,
+  use_position = FALSE,
+  backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum"
+)
+```
+
+# Load NEO data
+
+```{r}
+if (file.exists("../data/intermediate/rbind_data/NEO_full.gt")) {
+  NEO_full <- gt_load("../data/intermediate/rbind_data/NEO_full.gt")
+} else {
+  NEO_full <-
+    gen_tibble("../data/raw/data_input/NEO_full.bed",
+      quiet = TRUE,
+      allow_duplicates = TRUE
+    )
+}
+```
+
+# Find and remove duplicates
+
+```{r}
+dups <- find_duplicated_loci(NEO_full)
+NEO_full <- NEO_full %>% select_loci(-all_of(dups))
+```
+
+# Merge 
+
+```{r}
+if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo.gt")) {
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo.gt")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo.bk")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo.rds")
+}
+
+mad_bor_g1000_sum_neo <- rbind(mad_bor_g1000_sum, NEO_full,
+  as_is = FALSE,
+  flip_strand = TRUE,
+  quiet = FALSE,
+  use_position = TRUE,
+  backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo"
+)
+```
+
+# Quality control on the merged dataset
+
+```{r}
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% group_by(population)
+loci_report_m <- qc_report_loci(mad_bor_g1000_sum_neo)
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% ungroup()
+```
+
+# Filter loci
+
+```{r}
+to_keep <- which(loci_report_m$hwe_p > 0.01)
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% select_loci(all_of(to_keep))
+count_loci(mad_bor_g1000_sum_neo)
+mad_bor_g1000_sum_neo <-
+  mad_bor_g1000_sum_neo %>% select_loci_if(loci_missingness(genotypes) < 0.05)
+count_loci(mad_bor_g1000_sum_neo)
+mad_bor_g1000_sum_neo <-
+  mad_bor_g1000_sum_neo %>% select_loci_if(loci_maf(genotypes) > 0.025)
+count_loci(mad_bor_g1000_sum_neo)
+```
+
+# Filter indiv
+
+```{r}
+# temporarily remove all populations with only one individual
+pop_tbl <- table(mad_bor_g1000_sum_neo$population)
+to_remove <- which(pop_tbl == 1)
+to_remove_pops <- names(to_remove) # this removes a lot of DRC samples and some Mozambique samples (relevant)
+
+removed_pops <- mad_bor_g1000_sum_neo %>%
+  filter(population %in% to_remove_pops)
+
+mad_bor_g1000_sum_neo <-
+  mad_bor_g1000_sum_neo %>% filter(!population %in% to_remove_pops)
+
+
+# filter indivs
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% group_by(population)
+individual_report_m <-
+  qc_report_indiv(mad_bor_g1000_sum_neo, kings_threshold = 0.0884)
+mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% ungroup()
+mad_bor_g1000_sum_neo <-
+  mad_bor_g1000_sum_neo %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
+
+if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_rebind.bk")) {
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_rebind.gt")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_rebind.bk")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_rebind.rds")
+}
+
+# bind them together again
+mad_bor_g1000_sum_neo <- rbind(mad_bor_g1000_sum_neo, removed_pops, backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_rebind")
+
+NEO_full <-
+  NEO_full %>% filter(indiv_missingness(genotypes) < 0.1)
+
+# remove all populations with only one individual
+# pop_tbl <- table(mad_bor_g1000_sum_neo$population)
+# to_remove <- which(pop_tbl == 1)
+# to_remove_pops <- names(to_remove) # this removes a lot of DRC samples and some Mozambique samples (relevant)
+# mad_bor_g1000_sum_neo <-
+#   mad_bor_g1000_sum_neo %>% filter(!population %in% to_remove_pops)
+
+# run filtering
+# mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% group_by(population)
+# individual_report_m <-
+#   qc_report_indiv(mad_bor_g1000_sum_neo, kings_threshold = 0.0884)
+# mad_bor_g1000_sum_neo <- mad_bor_g1000_sum_neo %>% ungroup()
+# mad_bor_g1000_sum_neo <-
+#   mad_bor_g1000_sum_neo %>% filter(id %in% individual_report_m$id & individual_report_m$to_keep == TRUE)
+mad_bor_g1000_sum_neo <-
+  mad_bor_g1000_sum_neo %>% filter(indiv_missingness(genotypes) < 0.1)
+```
+
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum_neo)
+count_loci(mad_bor_g1000_sum_neo)
+```
+
+# Save
+
+```{r}
+if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.gt")) {
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.gt")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.bk")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean.rds")
+}
+mad_bor_g1000_sum_neo <-
+  gt_update_backingfile(mad_bor_g1000_sum_neo,
+    backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean"
+  )
+```
+
+# Impute
+
+```{r}
+mad_bor_g1000_sum_neo <- gt_impute_simple(mad_bor_g1000_sum_neo,
+  method = "mean"
+)
+```
+
+# LD clumping
+
+```{r, error=TRUE}
+if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")) {
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.bk")
+  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.rds")
+}
+```
+
+```{r}
+to_keep_LD <- loci_ld_clump(mad_bor_g1000_sum_neo,
+  thr_r2 = 0.2, size = 100,
+  return_id = TRUE, use_positions = TRUE
+)
+
+mad_bor_g1000_sum_neo_ld <- mad_bor_g1000_sum_neo %>% select_loci(all_of(to_keep_LD))
+```
+
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum_neo_ld)
+count_loci(mad_bor_g1000_sum_neo_ld)
+```
+
+# Save LD filtered dataset
+
+```{r}
+mad_bor_g1000_sum_neo_ld <-
+  gt_update_backingfile(mad_bor_g1000_sum_neo_ld,
+    backingfile = "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld"
+  )
+```
+
+```{r}
+```
+
+***
+
+## Recording R environment
+
+Part of ensuring our workflow is reproducible is to keep track of the R environment.
+We will automatically save our R environment into a file called `r_environment.json`.
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s01_qc_merge.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+```
+
+
+# Methods
+
+Genetic and phenotypic data collected by the team of Dr George Perry at Pennsylvania State University with the University of Antananarivo. Dr Jason Hodgson and Dr Rindra Rakotoarivony led this data collection in 2015. These data comprise of `r nrow(madagascar)` individuals from five regions: Merina people from the Central Highlands, Betsileo people from the southern Highlands, Sakalava and Tsimihety people from the northwestern coast, Betsimisaraka people from the eastern coast, and people of various ethnic groups from the extreme north in the town of Diego. Samples were collected from married couples, and ~690,000 SNPs were typed using the Illumina HumanOmniExpress-24 array. 
+
+Two main datasets were created, a Malagasy only dataset and a global dataset combining Malagasy samples with comparative data. The Malagasy dataset was created by merging the data from this study with Malagasy data from Pierron et al. (2014) (n = `r nrow(madagascar_p)`). For a comparative global dataset, this data was combined with data from southeast Asian and African populations in the 1000 Genomes Project Consortium (2015) dataset (n = `r nrow(g1000)`), individuals from Borneo from Brucato et al. (2016) (n = `r nrow(borneo)`), and individuals from the islands of Sumba (n = 30, subsampled at random from `r nrow(sumba)`) and Timor (n = `r nrow(timor)`) from Cox et al. (2016).
+
+Data were cleaned and merged in R with package tidypopgen (Carter and Manica, 2025). Only autosomal SNPs were analysed. All SNPs with a missingness rate above 0.01 across all samples were removed. All individuals with a genotype call rate less than 0.9 (missingness exceeding 0.1) were removed. All SNPs with minor allele frequency below a threshold of 0.025 were removed. All SNPs with a Hardy-Weinberg equilibrium test p-value below 0.01 were removed. Close relatives were removed using the KING robust kinship coefficient (Manichaikul et al., 2010), implemented in tidypopgen. One individual was removed from each pair with a kinship coefficient greater than 0.0884, equivalent to removing relatives up to the second degree. After this filtering, the Malagasy dataset consisted of `r nrow(malagasy_merged)` individuals and `r count_loci(malagasy_merged)` SNPs, and the global dataset consisted of `r nrow(mad_bor_g1000_sum_neo)` individuals and `r count_loci(mad_bor_g1000_sum_neo)` SNPs.
+
+SNPs in linkage were then removed by LD clumping (Privé et al., 2018), using tidypopgen. Those with an r2 value greater than 0.2 in a sliding window of 100 kilobases were removed. After pruning, the Malagasy dataset consisted of `r count_loci(malagasy_merged_ld)` SNPs and the global dataset consisted of `r count_loci(mad_bor_g1000_sum_neo_ld)` SNPs.

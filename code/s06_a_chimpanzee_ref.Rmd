@@ -1,0 +1,203 @@
+---
+title: "Chimpanzee reference for f4 ratio"
+date: "2025-12-02"
+knit: resrepo::knit_to_results
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidypopgen)
+library(bigsnpr)
+library(httr)
+library(parallel)
+
+# Set cores
+n_cores <- 15
+data.table::setDTthreads(n_cores)
+bigparallelr::set_blas_ncores(n_cores)
+```
+
+```{r set-directories}
+res_dir <- "../results/s06_a_chimpanzee_ref/"
+```
+
+```{r}
+mad_bor_g1000_sum <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
+```
+
+# Use liftOver to lift hg19 snps to PanTro3.0
+
+Aligned using overchain https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToPanTro5.over.chain.gz (2017-05-04) to Pan_tro_3.0 (GCA_000001515.5) from UCSC Genome Browser (Kent et al., 2002).
+
+NOTE: chainfile https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToPanTro3.over.chain.gz (2011-02-22) aligns to the 2011 assembly of PanTro3 (GCA_000001515.3) which is older than the 2016 assembly (GCA_000001515.5) used by Ensembl REST API below. This is noted at https://hgdownload.soe.ucsc.edu/goldenPath/panTro5/bigZips/ which states 'This directory contains the May 2016 (Pan_tro 3.0/panTro5) assembly of the chimp genome (panTro5, Chimpanzee Sequencing and Analysis Consortium), as well as repeat annotations and GenBank sequences.' Therefore we use the newer PanTro5 chainfile in the bigsnpr command.
+
+```{r}
+bim <- show_loci(mad_bor_g1000_sum)[, c(
+  "chr_int", "name", "genetic_dist",
+  "position", "allele_ref", "allele_alt"
+)]
+
+names(bim) <- c("chr", "name", "genetic_dist", "pos", "a1", "a0")
+
+pan_bim <- snp_modifyBuild(
+  info_snp = bim,
+  liftOver = "/usr/local/bin/liftOver",
+  from = "hg19",
+  to = "PanTro5",
+  check_reverse = FALSE,
+  local_chain = NULL,
+  base_url = "https://hgdownload.soe.ucsc.edu/goldenPath/"
+)
+
+pan_bim <- na.omit(pan_bim)
+```
+
+# Get chimp reference base for each SNP
+
+Ensembl REST endpoint found here: https://rest.ensembl.org/documentation/info/sequence_region 
+Ensembl uses Pan_tro_3.0 (GCA_000001515.5) 2016/05/03 here https://www.ensembl.org/Pan_troglodytes/Info/Annotation and here https://www.ensembl.org/Pan_troglodytes/Info/Index 
+
+```{r}
+get_chimp_base <- function(chr, pos, sleep_time = 0.15) {
+  # Build region string (example: "1:123456-123456")
+  region <- paste0(chr, ":", pos, "-", pos)
+
+  # Ensembl species name for chimp
+  species <- "pan_troglodytes"
+
+  # Use the main Ensembl REST API
+  url <- paste0(
+    "https://rest.ensembl.org/sequence/region/",
+    species, "/", region,
+    "?content-type=text/plain"
+  )
+
+  # Pause briefly to avoid hitting rate limits
+  Sys.sleep(sleep_time)
+
+  # Query the API
+  r <- GET(url)
+
+  # Check for failure
+  if (status_code(r) != 200) {
+    warning(paste("Query failed for", chr, pos))
+    return(NA)
+  }
+
+  # Return the sequence (single base for SNP)
+  return(content(r, "text", encoding = "UTF-8"))
+}
+```
+
+```{r}
+chimp_rds <- "../results/s06_a_chimpanzee_ref/mad_bor_g1000_sum_snps_with_chimp.rds"
+if (file.exists(chimp_rds)) {
+  pan_bim <- readRDS(chimp_rds)
+} else {
+  tictoc::tic()
+
+  pan_bim$chimp_base <- mcmapply(
+    get_chimp_base,
+    chr = pan_bim$chr,
+    pos = pan_bim$pos,
+    mc.cores = 4
+  )
+  tictoc::toc()
+  # Save chimp reference data
+  colnames(pan_bim) <- c(
+    "chr_int", "name", "genetic_dist", "position",
+    "allele_ref", "allele_alt", "chimp_ref_base"
+  )
+  saveRDS(pan_bim, chimp_rds)
+}
+```
+
+# Clean up chimp reference data
+
+```{r}
+# remove NAs
+pan_bim_no_na <- na.omit(pan_bim)
+pan_bim$triallelic <- NA
+remove_triallelic <- function(pan_bim) {
+  three_alleles <- c(
+    pan_bim["allele_ref"],
+    pan_bim["allele_alt"],
+    pan_bim["chimp_ref_base"]
+  )
+  if (length(unique(three_alleles)) == 3) {
+    pan_bim["triallelic"] <- TRUE
+  } else {
+    pan_bim["triallelic"] <- FALSE
+  }
+}
+
+pan_bim_no_na$triallelic <- apply(pan_bim_no_na, 1, remove_triallelic)
+
+# filter out triallelics
+pan_bim_filtered <- pan_bim_no_na[pan_bim_no_na$triallelic == FALSE, ]
+```
+
+```{r}
+nrow(pan_bim_filtered)
+```
+
+# Subset original hg19 gt to only those in chimp reference
+
+```{r}
+mad_bor_g1000_sum_chimp <- mad_bor_g1000_sum %>%
+  select_loci_if(loci_names(genotypes) %in% pan_bim_filtered$name)
+```
+
+# Save
+
+```{r}
+chimp_gt <-
+  "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_chimp.gt"
+if (file.exists(chimp_gt)) {
+  file.remove(chimp_gt)
+}
+```
+
+```{r}
+gt_save(
+  mad_bor_g1000_sum_chimp,
+  "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_chimp.gt"
+)
+```
+
+# Create a gen_tibble of the chimp reference alleles
+
+```{r}
+if (file.exists("../data/intermediate/pan_tro_liftover/chimp_ref.gt")) {
+  file.remove("../data/intermediate/pan_tro_liftover/chimp_ref.gt")
+  file.remove("../data/intermediate/pan_tro_liftover/chimp_ref.bk")
+  file.remove("../data/intermediate/pan_tro_liftover/chimp_ref.rds")
+}
+```
+
+```{r}
+loci <- show_loci(mad_bor_g1000_sum_chimp)
+indiv_meta <- data.frame(id = "chimp_ref", population = "chimp_ref")
+genotypes <- matrix(rep(1, nrow(loci)), nrow = 1, ncol = nrow(loci))
+
+chimp <- gen_tibble(
+  loci = loci,
+  indiv_meta = indiv_meta,
+  x = genotypes,
+  backingfile = "../data/intermediate/pan_tro_liftover/chimp_ref"
+)
+```
+
+------------------------------------------------------------------------
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s06_a_chimpanzee_ref.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+```

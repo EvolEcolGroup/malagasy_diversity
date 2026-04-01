@@ -1,0 +1,256 @@
+---
+title: "Supervised Admixture"
+date: "2026-01-23"
+knit: resrepo::knit_to_results
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidypopgen)
+library(tidygenclust)
+library(resrepo)
+library(ggplot2)
+library(mclust)
+```
+
+```{r set-directories}
+res_dir <- "../results/s05_b_supervised/"
+```
+
+This script uses supervised ADMIXTURE @alexanderFastModelbasedEstimation2009 to estimate ancestry proportions in Malagasy populations, using Borneo and Mozambique as reference populations.
+
+# Load gt
+
+```{r}
+mad_bor_g1000_sum <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt",
+    reattach_to = "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld"
+  )
+```
+
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum)
+count_loci(mad_bor_g1000_sum)
+```
+
+# Subset mad_bor_g1000_sum
+
+```{r}
+moz_pop <- unique(grep("^Mozambique",
+  mad_bor_g1000_sum$population,
+  value = TRUE
+))
+
+pops <- c(
+  "Borneo", moz_pop, "Betsimisaraka", "Merina", "Diego",
+  "Sakalava_Tsimihety", "Betsileo", "Vezo", "Mikea", "Temoro"
+)
+
+mad_bor_g1000_sum_sub <- mad_bor_g1000_sum %>% filter(population %in% pops)
+
+mad_bor_g1000_sum_sub <- mad_bor_g1000_sum_sub %>% group_by(population)
+```
+
+# Write plink files
+
+```{r}
+gt_as_plink(mad_bor_g1000_sum_sub,
+  file = "../data/intermediate/admixture/admixture_supervised_subset",
+  overwrite = TRUE
+)
+```
+
+# Write .pop file 
+
+```{r}
+mad_bor_g1000_sum_sub <- mad_bor_g1000_sum_sub %>%
+  mutate(Region = "-")
+mad_bor_g1000_sum_sub <- mad_bor_g1000_sum_sub %>%
+  mutate(Region = case_when(
+    population %in% c("Borneo", "Sumba", "Timor") ~ "Asian",
+    population %in% moz_pop ~ "African",
+    TRUE ~ "-"
+  ))
+
+write.table(mad_bor_g1000_sum_sub$Region,
+  file = "../data/intermediate/admixture/admixture_supervised_subset.pop",
+  row.names = FALSE, col.names = FALSE, quote = FALSE
+)
+```
+
+# Run admixture
+
+```{bash}
+cd ~/Git/malagasy_diversity/code
+bash s05_admixture_supervised.sh
+```
+
+# Read output
+
+```{r}
+predicted_q <- read_q_files("../data/intermediate/admixture")
+```
+
+# Plot
+
+```{r}
+# rename populations
+mad_bor_g1000_sum_sub$population <-
+  ifelse(mad_bor_g1000_sum_sub$population %in% moz_pop,
+    "Mozambique", mad_bor_g1000_sum_sub$population
+  )
+
+# rename "Sakalava Tsimihety" and "Diego"
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(population = case_when(
+    population == "Sakalava_Tsimihety" ~ "Sakalava/Tsimihety",
+    population == "Diego" ~ "Diego Mixed",
+    TRUE ~ population
+  ))
+
+autoplot(get_q_matrix(predicted_q, k = 2, run = 1),
+  data = mad_bor_g1000_sum_sub,
+  annotate_group = TRUE, arrange_by_group = TRUE,
+  arrange_by_indiv = TRUE, reorder_within_groups = TRUE
+) +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "black")
+
+ggsave(paste0(res_dir, "Admixture_supervised_malagasy.jpg"),
+  width = 7, height = 6, dpi = 300
+)
+```
+
+```{r}
+q_tibble <- augment(
+  get_q_matrix(predicted_q, k = 2, run = 1),
+  mad_bor_g1000_sum_sub
+)
+q_tibble <- q_tibble %>% filter(!population %in% c("Borneo", "Mozambique"))
+
+p1 <- ggplot(
+  q_tibble,
+  aes(
+    x = .Q2, y = population,
+    fill = population, colour = population
+  )
+) +
+  geom_violin(alpha = 0.5, trim = FALSE) +
+  labs(
+    fill = "Population", colour = "Population",
+    x = "African ancestry Proportion (.Q1)", y = NULL
+  ) +
+  geom_jitter(width = 0, height = 0.05, alpha = 0.5) +
+  theme_minimal() +
+  theme(
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white"),
+    legend.position.inside = c(0.15, 0.75),
+    legend.text = element_text(size = 8),
+    legend.title = element_text(size = 10),
+    legend.key.size = unit(0.8, "lines"),
+    axis.text.y = element_blank()
+  ) +
+  scale_colour_manual(
+    values = c(
+      "Betsileo" = "#1B9E77",
+      "Betsimisaraka" = "#D95F02",
+      "Diego Mixed" = "#7570B3",
+      "Merina" = "#E7298A",
+      "Mikea" = "#66A61E",
+      "Sakalava/Tsimihety" = "#E6AB02",
+      "Temoro" = "#A6761D",
+      "Vezo" = "#666666"
+    )
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Betsileo" = "#1B9E77",
+      "Betsimisaraka" = "#D95F02",
+      "Diego Mixed" = "#7570B3",
+      "Merina" = "#E7298A",
+      "Mikea" = "#66A61E",
+      "Sakalava/Tsimihety" = "#E6AB02",
+      "Temoro" = "#A6761D",
+      "Vezo" = "#666666"
+    )
+  )
+p1
+
+ggsave(paste0(res_dir, "Afr_anc_violin_all_pops.jpg"),
+  width = 7, height = 6, dpi = 300
+)
+```
+
+```{r}
+q_tibble_merina <- q_tibble %>% filter(population == "Merina")
+
+p2 <- ggplot(
+  q_tibble_merina,
+  aes(
+    x = .Q2,
+    fill = population, colour = population
+  )
+) +
+  geom_histogram(alpha = 0.5) +
+  labs(
+    fill = "Population", colour = "Population",
+    x = "African ancestry Proportion (.Q1)", y = NULL
+  ) +
+  theme_minimal() +
+  scale_colour_manual(
+    values = c(
+      "Merina" = "#E7298A"
+    )
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Merina" = "#E7298A"
+    )
+  ) +
+  theme(
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white"),
+    legend.position.inside = c(0.9, 0.9),
+    legend.text = element_text(size = 8),
+    legend.title = element_text(size = 10),
+    legend.key.size = unit(0.8, "lines")
+  )
+p2
+
+ggsave(paste0(res_dir, "Afr_anc_hist_merina.jpg"),
+  width = 7, height = 6, dpi = 300
+)
+```
+
+# mclust to confirm optimum number of clusters
+
+```{r}
+classes_optimum <- Mclust(
+  data = q_tibble_merina$.Q2,
+  modelNames = "V"
+)
+
+clust_classes <- clustCombi(object = classes_optimum, q_tibble_merina$.Q2)
+
+optimum <- clustCombiOptim(clust_classes)
+optimum$numClusters.combi
+```
+
+------------------------------------------------------------------------
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s05_b_supervised.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+```

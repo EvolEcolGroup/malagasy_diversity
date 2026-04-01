@@ -1,0 +1,498 @@
+---
+title: "Full dataset PCA"
+date: "2024-11-06"
+knit: resrepo::knit_to_results
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidypopgen)
+library(dplyr)
+```
+
+```{r set-directories, include=FALSE}
+res_dir <- "../results/s04_full_pca/"
+```
+
+# Load gt
+
+```{r}
+mad_bor_g1000_sum <-
+  gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
+```
+
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum)
+count_loci(mad_bor_g1000_sum)
+```
+
+# Count individuals from each group 
+
+```{r}
+malagasy_data <- subset(
+  mad_bor_g1000_sum,
+  mad_bor_g1000_sum$population %in% c(
+    "Mikea", "Vezo",
+    "Temoro", "Diego",
+    "Merina",
+    "Betsimisaraka",
+    "Sakalava_Tsimihety",
+    "Betsileo"
+  )
+)
+nrow(malagasy_data)
+```
+
+# Impute
+
+```{r}
+mad_bor_g1000_sum <- gt_impute_simple(mad_bor_g1000_sum, method = "mean")
+gt_set_imputed(mad_bor_g1000_sum, TRUE)
+gt_save(
+  mad_bor_g1000_sum,
+  "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld_imputed.gt"
+)
+```
+
+# Compute PCA
+
+```{r}
+random_pca <- gt_pca_autoSVD(mad_bor_g1000_sum)
+pcs <- as.data.frame(random_pca$u)
+variance <- tidy(random_pca)
+```
+
+# Add population metadata
+
+```{r}
+pop_names <-
+  read.csv("../data/raw/data_input/igsr-1000-genomes-phase-3-release.tsv",
+    sep = "\t"
+  )
+
+# find matching id in pop_names Sample.name and mad_bor_g1000_sum id
+# for the matches, replace the population with the population in pop_names
+for (i in seq_len(nrow(pop_names))) {
+  if (pop_names$Sample.name[i] %in% mad_bor_g1000_sum$id) {
+    mad_bor_g1000_sum[mad_bor_g1000_sum$id == pop_names$Sample.name[i], "population"] <- pop_names$Population.name[i]
+  }
+}
+
+# replace "Luhya,Luhya" with "Luhya"
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(population = case_when(
+    population == "Luhya,Luhya" ~ "Luhya",
+    population == "Esan,Esan" ~ "Esan",
+    population == "Gambian Mandinka,Gambian" ~ "Gambian Mandinka",
+    population == "Mende,Mende" ~ "Mende",
+    population == "Kinh,Kinh Vietnamese" ~ "Kinh Vietnamese",
+    population == "Punjabi,Punjabi" ~ "Punjabi",
+    population == "Bengali,Bengali" ~ "Bengali",
+    TRUE ~ population
+  ))
+
+
+# replace any _ with a space
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(population = gsub("_", " ", population))
+```
+
+# Plot PCA
+
+```{r}
+# create a new factor column with Malagasy populations as 1 and others as 0
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(malagasy = 0)
+
+# rename "Sakalava Tsimihety" and "Diego"
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(population = case_when(
+    population == "Sakalava Tsimihety" ~ "Sakalava/Tsimihety",
+    population == "Diego" ~ "Diego Mixed",
+    TRUE ~ population
+  ))
+
+all_malagasy <- subset(
+  mad_bor_g1000_sum,
+  population %in% c(
+    "Betsimisaraka", "Merina", "Diego Mixed",
+    "Sakalava/Tsimihety", "Betsileo",
+    "Vezo", "Mikea", "Temoro"
+  )
+)
+
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(malagasy = ifelse(id %in% all_malagasy$id, 1, 0))
+
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(Region = "Other")
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(Region = case_when(
+    population %in% c("Borneo", "Sumba", "Timor") ~ "Island southeast Asia",
+    population %in% c("Bengali", "Punjabi") ~ "South Asia",
+    population %in% c("Southern Han Chinese", "Kinh Vietnamese") ~ "East Asia",
+    population %in% c(
+      "Esan",
+      "Gambian Mandinka",
+      "Luhya",
+      "Mende",
+      "Yoruba"
+    ) ~ "Africa",
+    malagasy == 1 ~ population,
+    TRUE ~ "Other"
+  ))
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(Region = case_when(
+    Region == "Other" ~ "Africa",
+    TRUE ~ Region
+  ))
+
+
+ggplot(pcs, aes(x = V1, y = V2, colour = mad_bor_g1000_sum$Region)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = NULL,
+    x = paste0("PC 1 (", round(variance$percent[1], 2), "%)"),
+    y = paste0("PC 2 (", round(variance$percent[2], 2), "%)"),
+    colour = "Population"
+  ) +
+  guides(colour = guide_legend(ncol = 2, byrow = TRUE, size = 2)) +
+  theme_minimal() +
+  theme(
+    legend.text = element_text(size = 5),
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white")
+  )
+```
+
+This PCA uses the KING relatedness filtering of 0.088, equivalent to second degree relatives, filtered within each population. 
+
+Unbalanced sample sizes will cause bias in the dimensions of this first plot. To explore how this might be affecting the PCA, the next dataset will randomly subsample populations with more individuals down to equivalent sizes.
+
+# Create a dataset with broadly equal sample sizes
+
+```{r}
+set.seed(1)
+
+subsample <- function(x) {
+  if (nrow(x) <= 30) {
+    return(x$id)
+  } else {
+    x <- sample_n(x, size = 30)
+    return(x$id)
+  }
+}
+
+keep <- mad_bor_g1000_sum %>%
+  group_by(population) %>%
+  group_map(~ {
+    if (!(.y$population %in% c(
+      "Betsimisaraka", "Merina", "Diego Mixed",
+      "Sakalava/Tsimihety", "Betsileo",
+      "Vezo", "Mikea", "Temoro"
+    ))) {
+      subsample(.x)
+    } else {
+      .x$id
+    }
+  })
+
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>% filter(id %in% unlist(keep))
+
+gt <-
+  "../data/intermediate/rbind_data/mad_bor_g1000_sum_clean_neo_ld_subsampled.gt"
+
+if (file.exists(gt)) {
+  file.remove(gt)
+}
+gt_save(
+  mad_bor_g1000_sum,
+  "../data/intermediate/rbind_data/mad_bor_g1000_sum_clean_neo_ld_subsampled.gt"
+)
+```
+
+# Loci and sample count
+
+```{r}
+nrow(mad_bor_g1000_sum)
+count_loci(mad_bor_g1000_sum)
+```
+
+# Count individuals from each group 
+
+```{r}
+malagasy_data <- subset(
+  mad_bor_g1000_sum,
+  mad_bor_g1000_sum$population %in% c(
+    "Mikea", "Vezo",
+    "Temoro", "Diego Mixed",
+    "Merina",
+    "Betsimisaraka",
+    "Sakalava_Tsimihety",
+    "Betsileo"
+  )
+)
+
+nrow(mad_bor_g1000_sum) - nrow(malagasy_data)
+```
+
+# Compute PCA
+
+```{r}
+sub_pca <- gt_pca_randomSVD(mad_bor_g1000_sum)
+pcs <- as.data.frame(sub_pca$u)
+variance <- tidy(sub_pca)
+```
+
+# Plot PCA
+
+```{r}
+# create a new factor column with Malagasy populations as 1 and others as 0
+mad_bor_g1000_sum$malagasy <- 0
+all_malagasy <- subset(
+  mad_bor_g1000_sum,
+  population %in% c(
+    "Betsimisaraka", "Merina", "Diego Mixed",
+    "Sakalava/Tsimihety", "Betsileo",
+    "Vezo", "Mikea", "Temoro"
+  )
+)
+mad_bor_g1000_sum[mad_bor_g1000_sum$id %in% all_malagasy$id, "malagasy"] <- 1
+```
+
+# Plot PCA
+
+```{r}
+# create a new factor column with Malagasy populations as 1 and others as 0
+mad_bor_g1000_sum$mad_vs_global <- "Other"
+
+fill <- function(x) {
+  if (x["malagasy"] == 1) {
+    x["mad_vs_global"] <- "Malagasy"
+  } else {
+    x["mad_vs_global"] <- x["population"]
+  }
+}
+
+mad_bor_g1000_sum$mad_vs_global <- apply(mad_bor_g1000_sum, 1, FUN = fill)
+```
+
+```{r}
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(Region = "Other")
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(Region = case_when(
+    population %in% c("Borneo", "Sumba", "Timor") ~ "Island southeast Asia",
+    population %in% c("Bengali", "Punjabi") ~ "South Asia",
+    population %in% c("Southern Han Chinese", "Kinh Vietnamese") ~ "East Asia",
+    population %in% c(
+      "Esan",
+      "Gambian Mandinka",
+      "Luhya",
+      "Mende",
+      "Yoruba"
+    ) ~ "Africa",
+    malagasy == 1 ~ population,
+    TRUE ~ "Other"
+  ))
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(Region = case_when(
+    Region == "Other" ~ "Africa",
+    TRUE ~ Region
+  ))
+
+ggplot(pcs, aes(
+  x = V1, y = V2,
+  colour = mad_bor_g1000_sum$Region,
+  shape = as.factor(mad_bor_g1000_sum$malagasy)
+)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = NULL,
+    x = paste0("PC 1 (", round(variance$percent[1], 2), "%)"),
+    y = paste0("PC 2 (", round(variance$percent[2], 2), "%)"),
+    colour = NULL, shape = "none"
+  ) +
+  theme(legend.position = "right") +
+  guides(
+    shape = "none"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16),
+    axis.text = element_text(size = 13),
+    legend.text = element_text(size = 11),
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white")
+  )
+
+ggsave(paste0(res_dir, "pca_subsampled_regions_together.jpg"),
+  width = 7, height = 7, dpi = 300
+)
+```
+
+Altering the sample sizes reduces the explained variance of both principal components and increases the dispersion of the data.
+
+```{r}
+mad_bor_g1000_sum$Region <-
+  factor(mad_bor_g1000_sum$Region,
+    levels = c(
+      "Africa", "Island southeast Asia", "South Asia",
+      "East Asia", "Betsileo", "Betsimisaraka", "Diego Mixed",
+      "Merina", "Mikea", "Sakalava/Tsimihety", "Temoro", "Vezo"
+    )
+  )
+
+ggplot(pcs, aes(
+  x = V1, y = V2,
+  colour = mad_bor_g1000_sum$Region,
+  shape = as.factor(mad_bor_g1000_sum$malagasy)
+)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = NULL,
+    x = paste0("PC 1 (", round(variance$percent[1], 2), "%)"),
+    y = paste0("PC 2 (", round(variance$percent[2], 2), "%)"),
+    colour = NULL, shape = "none"
+  ) +
+  theme(legend.position = "right") +
+  guides(
+    shape = "none",
+    colour = guide_legend(override.aes = list(
+      shape = c(
+        16, 16, 16, 16,
+        17, 17, 17, 17,
+        17, 17, 17, 17
+      ),
+      size = 2
+    ))
+  ) +
+  scale_colour_manual(
+    values = c(
+      "Africa" = "#F8766D",
+      "East Asia" = "#00BA38",
+      "South Asia" = "#C77CFF",
+      "Island southeast Asia" = "#00C08B",
+      "Betsileo" = "#DE8C00",
+      "Betsimisaraka" = "#B79F00",
+      "Diego Mixed" = "#7CAE00",
+      "Merina" = "#00BFC4",
+      "Mikea" = "#00B4F0",
+      "Sakalava/Tsimihety" = "#619CFF",
+      "Temoro" = "#F564E3",
+      "Vezo" = "#FF64B0"
+    )
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16),
+    axis.text = element_text(size = 13),
+    legend.text = element_text(size = 11),
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white")
+  )
+
+
+ggsave(paste0(res_dir, "pca_subsampled_regions_together_large_legend.jpg"),
+  width = 7, height = 5, dpi = 300
+)
+```
+
+
+```{r}
+# if $malagasy is 1, then it becomes $population, otherwise it becomes "Other"
+mad_bor_g1000_sum$shape <- ifelse(
+  mad_bor_g1000_sum$malagasy == 1,
+  mad_bor_g1000_sum$population,
+  "Other"
+)
+
+p2 <- ggplot(pcs, aes(
+  x = V1, y = V2,
+  colour = mad_bor_g1000_sum$Region,
+  shape = as.factor(mad_bor_g1000_sum$shape)
+)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = NULL,
+    x = paste0("PC 1 (", round(variance$percent[1], 2), "%)"),
+    y = paste0("PC 2 (", round(variance$percent[2], 2), "%)"),
+    colour = NULL, shape = "none"
+  ) +
+  theme(legend.position = "right") +
+  guides(
+    shape = "none",
+    colour = guide_legend(override.aes = list(
+      shape = c(
+        16, 16, 16, 16,
+        1, 3, 7, 15, 17, 19, 21, 23
+      ),
+      size = 2
+    ))
+  ) +
+  scale_colour_manual(
+    values = c(
+      "Africa" = "#F8766D",
+      "East Asia" = "#00BA38",
+      "South Asia" = "#C77CFF",
+      "Island southeast Asia" = "#FFD8A8",
+      "Betsileo" = "#1B9E77",
+      "Betsimisaraka" = "#D95F02",
+      "Diego Mixed" = "#7570B3",
+      "Merina" = "#E7298A",
+      "Mikea" = "#66A61E",
+      "Sakalava/Tsimihety" = "#E6AB02",
+      "Temoro" = "#A6761D",
+      "Vezo" = "#666666"
+    )
+  ) +
+  scale_shape_manual(values = c(
+    "Other" = 16,
+    "Betsileo" = 1,
+    "Betsimisaraka" = 3,
+    "Diego Mixed" = 7,
+    "Merina" = 15,
+    "Mikea" = 17,
+    "Sakalava/Tsimihety" = 19,
+    "Temoro" = 21,
+    "Vezo" = 23
+  )) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16),
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white"),
+    legend.position = c(0.15, 0.37)
+  )
+
+p2
+
+ggsave(paste0(res_dir, "pca_subsampled_regions_together_internal_legend.jpg"),
+  width = 7, height = 5, dpi = 300
+)
+```
+
+
+------------------------------------------------------------------------
+
+```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+filename_rmd <- "s04_full_pca.Rmd"
+filename_renv <- paste0(
+  res_dir, "/renv_",
+  tools::file_path_sans_ext(basename(filename_rmd)),
+  ".json"
+)
+renv::lockfile_write(renv::lockfile_create(), file = filename_renv)
+```
