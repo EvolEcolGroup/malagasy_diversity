@@ -12,6 +12,8 @@ library(admixtools)
 library(tidypopgen)
 library(bigsnpr)
 library(knitr)
+library(tidyr)
+library(ggrepel)
 ```
 
 ```{r set-directories, include=FALSE}
@@ -32,7 +34,7 @@ nrow(mad_bor_g1000_sum)
 count_loci(mad_bor_g1000_sum)
 ```
 
-This script uses admixtools @maierAdmixtoolsInferringDemographic2024 to calculate F3 and F4 statistics, using the full global dataset, comprising of `r nrow(mad_bor_g1000_sum)` individuals and `r ncol(mad_bor_g1000_sum)` loci.
+This script uses admixtools @maierAdmixtoolsInferringDemographic2024 to calculate F3 and F4 statistics, using the full global dataset, comprising of `r nrow(mad_bor_g1000_sum)` individuals and `r count_loci(mad_bor_g1000_sum)` loci.
 
 # Remove all populations with only one individual
 
@@ -68,7 +70,7 @@ if (dir.exists("../data/intermediate/f2")) {
 
 # Read in precomputed f2's
 
-```{r}
+```{r, warning = FALSE}
 f2_blocks <- f2_from_precomp(f2_dir,
   afprod = FALSE
 )
@@ -135,6 +137,63 @@ print(test)
 ```
 
 Admixture f3 statistics were used in the configuration f3(Malagasy; Asian, African) to examine which comparative African and Asian populations show the greatest similarity to the ‘source’ populations of the Malagasy.
+
+```{r}
+write.table(test,
+  file = paste0(res_dir, "f3_results_all_combinations"),
+  row.names = FALSE, quote = FALSE, sep = "\t"
+)
+```
+
+# Examine cases where f3 value is not negative
+
+```{r}
+test <- read.table(paste0(res_dir, "f3_results_all_combinations"),
+  header = TRUE, sep = "\t"
+)
+fail <- which(test$est > 0)
+test_fail <- test[fail, ]
+
+test_fail$poor_fit <- NA
+
+check_refs <- function(test_fail) {
+  poor_fit_asian_pop <- c("Punjabi, Pakistan", "Bengali, Bengal")
+
+  # check if this row contains any of the poor fit populations
+  if (any(test_fail["Asian"] %in% poor_fit_asian_pop) || any(grepl("SouthAfrica", test_fail["African"]))) {
+    # add "Yes" to the poor_fit column
+    test_fail["poor_fit"] <- "Yes"
+  } else {
+    # add "No" to the poor_fit column
+    test_fail["poor_fit"] <- "No"
+  }
+}
+test_fail$poor_fit <- apply(test_fail, check_refs, MARGIN = 1)
+any(test_fail$poor_fit == "No")
+```
+
+All use either Punjabi, Pakistan or Bengali, Bengal as the Asian reference population, or a mixed ancestry South African population as the African reference population, which are likely to be poor fits for the source populations of the Malagasy.
+
+```{r}
+failz <- which(test$z > -2)
+test_failz <- test[failz, ]
+test_failz$poor_fit <- NA
+check_refs <- function(test_failz) {
+  poor_fit_asian_pop <- c("Punjabi, Pakistan", "Bengali, Bengal")
+
+  # check if this row contains any of the poor fit populations
+  if (any(test_failz["Asian"] %in% poor_fit_asian_pop) || any(grepl("SouthAfrica", test_failz["African"]))) {
+    # add "Yes" to the poor_fit column
+    test_failz["poor_fit"] <- "Yes"
+  } else {
+    # add "No" to the poor_fit column
+    test_failz["poor_fit"] <- "No"
+  }
+}
+test_failz$poor_fit <- apply(test_failz, check_refs, MARGIN = 1)
+any(test_failz$poor_fit == "No")
+```
+
 
 # Examine min F3 values for each Malagasy popualtion
 
@@ -339,8 +398,10 @@ There are many African popualtions in the dataset, here we will focus on the one
 ```{r}
 adm_f3 <- test %>%
   filter(Asian == "Borneo") %>%
-  filter(African %in% c("Mozambique_Chopi", "Mozambique_Ronga", "Mozambique_Tswa",
-                        "DRC_Shi", "DRC_Ngwi", "Yoruba, Nigeria", "Esan, Nigeria")) %>%
+  filter(African %in% c(
+    "Mozambique_Chopi", "Mozambique_Ronga", "Mozambique_Tswa",
+    "DRC_Shi", "DRC_Ngwi", "Yoruba, Nigeria", "Esan, Nigeria"
+  )) %>%
   reframe(est = est, se = se, z, Malagasy, African)
 
 plt <- adm_f3 %>%
@@ -350,7 +411,7 @@ plt <- adm_f3 %>%
   geom_point() +
   labs(
     x = "f3 (Malagasy; Borneo, African reference)", y = NULL,
-    colour = "Asian population"
+    colour = "African population"
   ) +
   theme_minimal() +
   theme(
@@ -376,8 +437,10 @@ Also check z-scores
 ```{r}
 adm_f3 <- test %>%
   filter(Asian == "Borneo") %>%
-  filter(African %in% c("Mozambique_Chopi", "Mozambique_Ronga", "Mozambique_Tswa",
-                        "DRC_Shi", "DRC_Ngwi", "Yoruba, Nigeria", "Esan, Nigeria")) %>%
+  filter(African %in% c(
+    "Mozambique_Chopi", "Mozambique_Ronga", "Mozambique_Tswa",
+    "DRC_Shi", "DRC_Ngwi", "Yoruba, Nigeria", "Esan, Nigeria"
+  )) %>%
   select(est, se, z, Malagasy, African) %>%
   reframe(est = est, se = se, z, Malagasy, African)
 
@@ -387,7 +450,8 @@ plt <- adm_f3 %>%
   arrange(desc(z)) %>%
   ggplot(aes(x = z, y = reorder(Malagasy, z), colour = African)) +
   geom_point() +
-  labs(x = "z-score", y = NULL,
+  labs(
+    x = "z-score", y = NULL,
     colour = "African population"
   ) +
   theme_minimal() +
@@ -412,6 +476,7 @@ ggsave(
 Minimum z-scores were observed using the DRC_Shi or DRC_Ngwi populations (n = 129 and n = 67 respectively), likely due to their much larger sample size in comparison to the Mozambique populations (Mozambique_Ronga, n = 2; Mozambique_Chopi, n = 4; Mozambique_Tswa, n = 4).
 
 ```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+rm(f2_blocks)
 gc()
 ```
 
@@ -464,9 +529,27 @@ merina <- mad_bor_g1000_sum_sub %>% filter(population == "Merina")
 # save output
 saveRDS(merina, file = paste0(res_dir, "merina_qmats.rds"))
 
+# find which .Q column represents Asian ancestry
+asian_ancestry_q <- mad_bor_g1000_sum_sub %>%
+  filter(population == "Borneo") %>%
+  # Get median value of Q1 and Q2
+  summarise(.Q1 = median(.Q1), .Q2 = median(.Q2)) %>%
+  # Pivot in order to subset
+  pivot_longer(
+    cols = c(".Q1", ".Q2"),
+    names_to = "column_name",
+    values_to = "median_val"
+  ) %>%
+  # Find the row with the max value
+  slice_max(median_val, n = 1) %>%
+  # get the column name
+  pull(column_name)
+
 # split groups
-# .Q3 representing Asian ancestry and .Q2 representing African ancestry
-merina$population <- ifelse(merina$.Q1 > 0.5, "MerinaA", "MerinaB")
+merina$population <- ifelse(merina %>% select(all_of(asian_ancestry_q)) > 0.5,
+  "MerinaA",
+  "MerinaB"
+)
 merina <- merina[, c("id", "population")]
 
 # match V2 and merina$id and replace the population column in merina_fam with
@@ -507,7 +590,7 @@ mad_bor_g1000_sum <- mad_bor_g1000_sum %>% group_by(population)
 
 ```{r}
 mad_bor_g1000_sum <- mad_bor_g1000_sum %>% ungroup()
-chimp <- gt_load("../data/intermediate/pan_tro_liftover/chimp_ref_v2.gt")
+chimp <- gt_load("../data/intermediate/pan_tro_liftover/chimp_ref.gt")
 f4_merged_data <- rbind(mad_bor_g1000_sum, chimp,
   as_is = FALSE, flip_strand = TRUE,
   quiet = FALSE, use_position = FALSE,
@@ -562,6 +645,11 @@ if (dir.exists("../data/intermediate/f2_outgroup")) {
     outdir = "../data/intermediate/f2_outgroup"
   )
 }
+```
+
+```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+Sys.sleep(5)
+gc()
 ```
 
 # Read in precomputed f2's
@@ -661,6 +749,129 @@ ggsave(
 ```
 
 
+```{r}
+ggplot(
+  qp4_african_p,
+  aes(
+    x = alpha, y = pop3, colour = pop3,
+    fill = pop3, shape = pop3
+  )
+) +
+  geom_point() +
+  labs(
+    x = paste("Admixture proportion \u03b1"), y = NULL,
+    colour = NULL, fill = NULL, shape = NULL
+  ) +
+  guides() +
+  theme_minimal() +
+  theme(
+    legend.position.inside = c(0.15, 0.35),
+    axis.text.y = element_blank(),
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white")
+  ) +
+  scale_colour_manual(
+    values = c(
+      "Betsileo" = "#1B9E77",
+      "Betsimisaraka" = "#D95F02",
+      "Diego Mixed" = "#7570B3",
+      "Merina A" = "#E7298A",
+      "Merina B" = "#C77CFF",
+      "Mikea" = "#66A61E",
+      "Sakalava/Tsimihety" = "#E6AB02",
+      "Temoro" = "#A6761D",
+      "Vezo" = "#666666"
+    )
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Betsileo" = "#1B9E77",
+      "Betsimisaraka" = "#D95F02",
+      "Diego Mixed" = "#7570B3",
+      "Merina A" = "#E7298A",
+      "Merina B" = "#C77CFF",
+      "Mikea" = "#66A61E",
+      "Sakalava/Tsimihety" = "#E6AB02",
+      "Temoro" = "#A6761D",
+      "Vezo" = "#666666"
+    )
+  ) +
+  scale_shape_manual(values = c(1, 3, 7, 15, 25, 17, 19, 21, 23))
+
+
+
+ggplot(
+  qp4_african_p,
+  aes(
+    x = alpha, y = pop3, colour = pop3,
+    fill = pop3, shape = pop3
+  )
+) +
+  geom_point() +
+  labs(
+    x = paste("Admixture proportion \u03b1"), y = NULL,
+    colour = NULL, fill = NULL, shape = NULL
+  ) +
+  guides() +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text.y = element_blank(),
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white")
+  ) +
+  scale_shape_manual(values = c(1, 3, 7, 15, 25, 17, 19, 21, 23)) +
+  geom_label_repel(
+    data = qp4_african_p,
+    aes(
+      x = alpha, y = pop3, label = pop3,
+      fill = NULL, colour = NULL, shape = NULL
+    ),
+    segment.color = "transparent", nudge_x = 0.06,
+    nudge_y = 0, show.legend = FALSE
+  )
+```
+
+
+
+```{r}
+qp4_african_p$lower <- qp4_african_p$alpha - qp4_african_p$se
+qp4_african_p$upper <- qp4_african_p$alpha + qp4_african_p$se
+
+
+ggplot(qp4_african_p, aes(x = alpha, y = pop3, colour = pop3, fill = pop3)) +
+  geom_point() +
+  labs(
+    x = paste("Admixture proportion \u03b1"), y = NULL,
+    colour = "Malagasy population", fill = "Malagasy population"
+  ) +
+  guides(colour = "none", fill = "none") +
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white")
+  ) +
+  geom_errorbar(aes(xmin = lower, xmax = upper),
+    width = 0.2
+  )
+ggsave(
+  filename = paste0(res_dir, "F4_African_source_error_bar.jpg"),
+  width = 7, height = 5, units = "in", dpi = 300
+)
+
+
+qp4_african_p$region <- c(rep("coastal", 6), rep("highland", 3))
+```
+
+
+
 Merina is lowest, as expected.
 
 ```{r}
@@ -672,7 +883,7 @@ qp4_asian_p <- qpf4ratio(f2_blocks, pop_matrix)
 qp4_asian_p$pop3 <- factor(
   qp4_asian_p$pop3,
   c(
-    "Betsimisaraka", "Merina", "Diego",
+    "Betsimisaraka", "MerinaA", "MerinaB", "Diego",
     "Sakalava_Tsimihety", "Betsileo", "Temoro",
     "Vezo", "Mikea"
   )
@@ -687,23 +898,23 @@ Merina and Betsileo are highest, as expected.
 
 ```{r}
 # update labels
-# rename qp4_african_p$pop3 "Sakalava Tsimihety" to "Sakalava/Tsimihety"
-qp4_african_p <- qp4_african_p %>% mutate(pop3 = case_when(
+# rename qp4_asian_p$pop3 "Sakalava Tsimihety" to "Sakalava/Tsimihety"
+qp4_asian_p <- qp4_asian_p %>% mutate(pop3 = case_when(
   pop3 == "Sakalava_Tsimihety" ~ "Sakalava/Tsimihety",
   TRUE ~ pop3
 ))
-# rename qp4_african_p$pop3 "Diego" to "Diego Mixed"
-qp4_african_p <- qp4_african_p %>% mutate(pop3 = case_when(
+# rename qp4_asian_p$pop3 "Diego" to "Diego Mixed"
+qp4_asian_p <- qp4_asian_p %>% mutate(pop3 = case_when(
   pop3 == "Diego" ~ "Diego Mixed",
   TRUE ~ pop3
 ))
-# rename qp4_african_p$pop3 "MerinaA" to "Merina A"
-qp4_african_p <- qp4_african_p %>% mutate(pop3 = case_when(
+# rename qp4_asian_p$pop3 "MerinaA" to "Merina A"
+qp4_asian_p <- qp4_asian_p %>% mutate(pop3 = case_when(
   pop3 == "MerinaA" ~ "Merina A",
   TRUE ~ pop3
 ))
-# rename qp4_african_p$pop3 "MerinaB" to "Merina B"
-qp4_african_p <- qp4_african_p %>% mutate(pop3 = case_when(
+# rename qp4_asian_p$pop3 "MerinaB" to "Merina B"
+qp4_asian_p <- qp4_asian_p %>% mutate(pop3 = case_when(
   pop3 == "MerinaB" ~ "Merina B",
   TRUE ~ pop3
 ))
@@ -721,7 +932,6 @@ ggplot(qp4_asian_p, aes(x = alpha, y = pop3, colour = pop3, fill = pop3)) +
   guides(colour = "none", fill = "none") +
   theme_minimal() +
   theme(
-    # axis.text.x = element_blank(),
     axis.text.y = element_text(size = 7),
     legend.position = "right",
     axis.line = element_blank(),
