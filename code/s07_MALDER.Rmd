@@ -11,6 +11,7 @@ library(tidypopgen)
 library(admixtools)
 library(ggplot2)
 library(testthat)
+library(tidyr)
 ```
 
 ```{r set-directories}
@@ -52,10 +53,20 @@ g1000$population <- ifelse(!is.na(matching_m),
 
 cdx <- g1000 %>% filter(population == "CDX")
 
-if (file.exists("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_no_ld_cdx.gt")) {
-  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_no_ld_cdx.gt")
-  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_no_ld_cdx.bk")
-  file.remove("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_no_ld_cdx.rds")
+if (
+  file.exists(
+    "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_no_ld_cdx.gt"
+  )
+) {
+  file.remove(
+    "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_no_ld_cdx.gt"
+  )
+  file.remove(
+    "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_no_ld_cdx.bk"
+  )
+  file.remove(
+    "../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_no_ld_cdx.rds"
+  )
 }
 
 mad_bor_g1000_sum_neo <- rbind(
@@ -95,10 +106,19 @@ is_loci_table_ordered(mad_bor_g1000_sum_neo,
 # Remove existing plink .bed files and write .bed
 
 ```{r rm_plink}
-if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.bed")) {
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.bed")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.bim")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.fam")
+if (
+  file.exists(
+    "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.bed"
+  )) {
+  file.remove(
+    "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.bed"
+  )
+  file.remove(
+    "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.bim"
+  )
+  file.remove(
+    "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.fam"
+  )
 }
 
 gt_as_plink(
@@ -150,18 +170,18 @@ mad_bor_g1000_sum_neo_fam$population <- ifelse(!is.na(matching_m),
   mad_bor_g1000_sum_neo_fam$population
 )
 
-NEO_full <- gt_load("../data/intermediate/rbind_data/NEO_full.gt",
+neo_full <- gt_load("../data/intermediate/rbind_data/NEO_full.gt",
   reattach_to = "../data/intermediate/rbind_data/NEO_full"
 )
 
-matching_m <- match(mad_bor_g1000_sum_neo_fam$id, NEO_full$id)
+matching_m <- match(mad_bor_g1000_sum_neo_fam$id, neo_full$id)
 
 mad_bor_g1000_sum_neo_fam$population <- ifelse(!is.na(matching_m),
-  NEO_full$population[matching_m],
+  neo_full$population[matching_m],
   mad_bor_g1000_sum_neo_fam$population
 )
 
-rm(NEO_full)
+rm(neo_full)
 
 # replace any " " in $populaiton with a "_"
 mad_bor_g1000_sum_neo_fam$population <- gsub(
@@ -182,10 +202,19 @@ write.table(mad_bor_g1000_sum_neo_fam,
 ```
 
 ```{r rm_geno}
-if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno")) {
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.ind")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.snp")
+if (
+  file.exists(
+    "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno"
+  )) {
+  file.remove(
+    "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno"
+  )
+  file.remove(
+    "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.ind"
+  )
+  file.remove(
+    "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.snp"
+  )
 }
 ```
 
@@ -225,15 +254,34 @@ mad_bor_g1000_sum_sub <- mad_bor_g1000_sum %>%
 mad_bor_g1000_sum_sub <- augment(get_q_matrix(qmats, k = 2, run = 1),
   data = mad_bor_g1000_sum_sub
 )
+
 # filter to merina
 merina <- mad_bor_g1000_sum_sub %>% filter(population == "Merina")
 
-# split groups
-# .Q3 representing Asian ancestry and .Q2 representing African ancestry
-merina$population <- ifelse(merina$.Q1 > 0.5, "MerinaA", "MerinaB")
-merina <- merina[, c("id", "population")]
+# find which .Q column represents Asian ancestry
+asian_ancestry_q <- mad_bor_g1000_sum_sub %>%
+  filter(population == "Borneo") %>%
+  # Get median value of Q1 and Q2
+  summarise(.Q1 = median(.Q1), .Q2 = median(.Q2)) %>%
+  # Pivot in order to subset
+  pivot_longer(
+    cols = c(".Q1", ".Q2"),
+    names_to = "column_name",
+    values_to = "median_val"
+  ) %>%
+  # Find the row with the max value
+  slice_max(median_val, n = 1) %>%
+  # get the column name
+  pull(column_name)
 
-# merina <- readRDS("../results/s06_b_f_stats/merina_qmats.rds")
+
+# split groups
+# split groups
+merina$population <- ifelse(merina %>% select(all_of(asian_ancestry_q)) > 0.5,
+  "MerinaA",
+  "MerinaB"
+)
+merina <- merina[, c("id", "population")]
 merina$id <- sub("RR.*", "", merina$id)
 
 # match mad_bor_g1000_sum_neo_fam$id and merina$id and replace the population
@@ -244,14 +292,18 @@ mad_bor_g1000_sum_neo_fam$population <- ifelse(!is.na(matching_m),
 )
 
 # count number of MerinaA
-cat("Merina group > 0.5", length(which(mad_bor_g1000_sum_neo_fam$population == "MerinaA")))
-cat("Merina group < 0.5", length(which(mad_bor_g1000_sum_neo_fam$population == "MerinaB")))
+cat(
+  "Merina group > 0.5",
+  length(which(mad_bor_g1000_sum_neo_fam$population == "MerinaA"))
+)
+cat(
+  "Merina group < 0.5",
+  length(which(mad_bor_g1000_sum_neo_fam$population == "MerinaB"))
+)
 
-# mad_bor_g1000_sum_neo_fam$id <- as.numeric(rownames(mad_bor_g1000_sum_neo_fam))
 mad_bor_g1000_sum_neo_fam$population <-
   as.factor(mad_bor_g1000_sum_neo_fam$population)
 
-# mad_bor_g1000_sum_neo_fam$V6 <- mad_bor_g1000_sum_neo_fam$population
 write.table(mad_bor_g1000_sum_neo_fam,
   "../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.fam",
   row.names = FALSE, col.names = FALSE, sep = " ", quote = FALSE
@@ -270,10 +322,19 @@ file.copy(
 ```
 
 ```{r rm_geno2, message = FALSE}
-if (file.exists("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.geno")) {
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.geno")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.ind")
-  file.remove("../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.snp")
+path <- "../data/intermediate/rbind_data/rbind_sort_dist/"
+if (file.exists(
+  paste0(path, "mad_bor_g1000_sum_neo_sep.geno")
+)) {
+  file.remove(
+    paste0(path, "mad_bor_g1000_sum_neo_sep.geno")
+  )
+  file.remove(
+    paste0(path, "mad_bor_g1000_sum_neo_sep.ind")
+  )
+  file.remove(
+    paste0(path, "mad_bor_g1000_sum_neo_sep.snp")
+  )
 }
 ```
 
@@ -300,9 +361,12 @@ admix_list <- c(
 )
 
 # Fixed parameters
-geno <- "../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno"
-snp <- "../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.snp"
-ind <- "../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.ind"
+geno <-
+  "../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.geno"
+snp <-
+  "../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.snp"
+ind <-
+  "../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo.ind"
 ref_str <- list("Borneo;Sumba;Dai;Esan;Yoruba;Mozambique_Chopi")
 
 # Root output directory (do NOT modify inside the loop)
@@ -316,14 +380,9 @@ write_par_files <- function(base_root,
                             ind) {
   # for (refset in refpop_list) {
   for (admix in admix_list) {
-    # folder <- paste(ref_str)
 
     # Final output directory for this refpop set
     base_out <- file.path(getwd(), base_root) # , folder
-
-    # if (!dir.exists(base_out)) {
-    #  dir.create(base_out, recursive = TRUE)
-    # }
 
     # Filename for the .par file
     outfile <- sprintf(
@@ -331,9 +390,6 @@ write_par_files <- function(base_root,
       base_out, tolower(admix)
     )
     file.create(outfile)
-
-    # Build the refpop string
-    # ref_str <- paste(refset, collapse = ";")
 
     # Write the .par file content
     par_text <- paste0(
@@ -366,9 +422,13 @@ write_par_files(
 )
 
 # And then for split Merina
-geno <- "../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.geno"
-snp <- "../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.snp"
-ind <- "../../data/intermediate/rbind_data/rbind_sort_dist/mad_bor_g1000_sum_neo_sep.ind"
+path <- "../../data/intermediate/rbind_data/rbind_sort_dist/"
+geno <-
+  paste0(path, "mad_bor_g1000_sum_neo_sep.geno")
+snp <-
+  paste0(path, "mad_bor_g1000_sum_neo_sep.snp")
+ind <-
+  paste0(path, "mad_bor_g1000_sum_neo_sep.ind")
 
 admix_list <- c("MerinaA", "MerinaB")
 
@@ -463,7 +523,8 @@ malder README at https://github.com/joepickrell/malder states: 'The output will 
 Therefore, a RESULT_2 across log files indicates a single wave is best fit, while RESULT_3 indicates multiple waves.
 
 ```{r}
-# check for any 'RESULT_3' in the log files - this would indicate multiple admixture events
+# check for any 'RESULT_3' in the log files
+# this would indicate multiple admixture events
 res_folders <- list.dirs("../results/s07_MALDER",
   full.names = TRUE,
   recursive = FALSE
@@ -534,7 +595,11 @@ result <- as.data.frame(result, stringsAsFactors = FALSE)
 # remove first column
 result <- result[, -1]
 
-colnames(result) <- c("test_res", "p_value", "test_pop", "ref A", "ref B", "2-ref z-score", "2-ref decay", "2-ref amp_exp")
+colnames(result) <- c(
+  "test_res", "p_value", "test_pop",
+  "ref A", "ref B", "2-ref z-score",
+  "2-ref decay", "2-ref amp_exp"
+)
 
 # # split $`2-ref decay` into 2 columns
 split_dates <- do.call(rbind, strsplit(result$`2-ref decay`, " "))
@@ -578,7 +643,8 @@ log_text <- function(log) {
 
   for (k in seq_along(header_index)) {
     start <- header_index[k]
-    end <- if (k < length(header_index)) header_index[k + 1] - 1 else length(log)
+    end <-
+      if (k < length(header_index)) header_index[k + 1] - 1 else length(log)
 
     block <- log[start:end]
 
@@ -600,7 +666,8 @@ log_text <- function(log) {
       )
     }
 
-    # find the two population names after "Computing 2-ref weighted LD with weights..."
+    # find the two population names after
+    # "Computing 2-ref weighted LD with weights..."
     refs <- sub(".*weights", "", log[header_index][k])
 
     out[[k]] <- data.frame(
@@ -647,7 +714,7 @@ result$test_pop <- factor(result$test_pop,
 )
 
 # # save result
-saveRDS(result, "../results/s07_MALDER/malder_results_all.RData")
+saveRDS(result, "../results/s07_MALDER/malder_results_all.RDS")
 ```
 
 'Also note that we do not use the jackknife to
@@ -656,7 +723,14 @@ saveRDS(result, "../results/s07_MALDER/malder_results_all.RData")
    error obtained from the jackknife.' README file for MALDER
 
 ```{r}
-result <- readRDS("../results/s07_MALDER/malder_results_all.RData")
+result <- readRDS("../results/s07_MALDER/malder_results_all.RDS")
+# save as a table
+write.table(result,
+  "../results/s07_MALDER/malder_results_all",
+  row.names = FALSE, quote = FALSE
+)
+
+
 # subset result to only MerinaA and merinaB, not merina together
 result <- subset(
   result,
@@ -689,7 +763,10 @@ result <- subset(
 ```{r plot_afr_pops}
 borneo_res <- subset(result, result$`ref A` == "Borneo")
 
-p1 <- ggplot(borneo_res, aes(x = `ref B`, y = admixture_date, colour = `ref B`)) +
+p1 <- ggplot(
+  borneo_res,
+  aes(x = `ref B`, y = admixture_date, colour = `ref B`)
+) +
   geom_boxplot() +
   facet_wrap(~test_pop) +
   scale_y_continuous(
@@ -711,8 +788,6 @@ p1 <- ggplot(borneo_res, aes(x = `ref B`, y = admixture_date, colour = `ref B`))
   theme(
     axis.text.x = element_blank(),
     legend.position = "right",
-    # legend.position = "inside",
-    # legend.position.inside = c(0.8, 0.15),
     axis.title = element_text(size = 14),
     legend.title = element_text(size = 14),
     legend.text = element_text(size = 12),
@@ -733,7 +808,10 @@ ggsave("../results/s07_MALDER/varied_african_pops.jpg",
 ```{r plot_asn_pops}
 mozambique_res <- subset(result, result$`ref B` == "Mozambique_Chopi")
 
-p2 <- ggplot(mozambique_res, aes(x = `ref A`, y = admixture_date, colour = `ref A`)) +
+p2 <- ggplot(
+  mozambique_res,
+  aes(x = `ref A`, y = admixture_date, colour = `ref A`)
+) +
   geom_boxplot() +
   facet_wrap(~test_pop) +
   scale_y_continuous(
@@ -755,8 +833,6 @@ p2 <- ggplot(mozambique_res, aes(x = `ref A`, y = admixture_date, colour = `ref 
   theme(
     axis.text.x = element_blank(),
     legend.position = "right",
-    # legend.position = "inside",
-    # legend.position.inside = c(0.8, 0.15),
     axis.title = element_text(size = 14),
     legend.title = element_text(size = 14),
     legend.text = element_text(size = 12),
@@ -772,78 +848,6 @@ ggsave("../results/s07_MALDER/varied_asian_pops.jpg",
 )
 ```
 
-# Compare results with and without mindis parameter set
-
-```{r}
-# result_no_mindis <- readRDS("../results/s07_MALDER/malder_results_all.RData")
-#
-# result_with_mindis <- readRDS("~/Downloads/malder_results_all.RData")
-#
-# result_no_mindis$combined_arg <- paste0(
-#   result_no_mindis$`ref A`, "_",
-#   result_no_mindis$`ref B`, "_",
-#   result_no_mindis$test_pop
-# )
-#
-# result_with_mindis$combined_arg <- paste0(
-#   result_with_mindis$`ref A`, "_",
-#   result_with_mindis$`ref B`, "_",
-#   result_with_mindis$test_pop
-# )
-#
-# # subset result with mindis to only those `combined_arg` in result_no_mindis
-# result_with_mindis <- subset(
-#   result_with_mindis,
-#   result_with_mindis$combined_arg %in% result_no_mindis$combined_arg
-# )
-#
-# # order result_no_mindis to same order as result_with_mindis
-# result_no_mindis <- result_no_mindis[match(
-#   result_with_mindis$combined_arg,
-#   result_no_mindis$combined_arg
-# ), ]
-
-# result_dai_esan_no_mindis <- subset(
-#   result,
-#   result$`ref A` == "Dai" & result$`ref B` == "Esan"
-# )
-#
-# write.csv(
-#   result_dai_esan_no_mindis,
-#   "../results/s07_MALDER/dai_esan_malder_results_with_mindis.csv",
-#   row.names = FALSE
-# )
-
-# dai_esan_no_mindis <- read.csv("../results/s07_MALDER/dai_esan_malder_results_no_mindis.csv")
-# dai_esan_with_mindis <- read.csv("../results/s07_MALDER/dai_esan_malder_results_with_mindis.csv")
-#
-# dai_esan_no_mindis$mindis <- "no_mindis"
-# dai_esan_with_mindis$mindis <- "with_mindis"
-# dai_esan_no_mindis <- dai_esan_no_mindis[, -which(names(dai_esan_no_mindis) == "combined_arg")]
-# all_combos <- rbind(dai_esan_no_mindis, dai_esan_with_mindis)
-#
-# all_combos <- as_tibble(all_combos)
-# all_combos <- all_combos %>%
-#   arrange(desc(admixture_date)) %>%
-#   group_by(test.pop)
-# # all_combos <- all_combos %>% mutate(test.pop = factor(test.pop, levels = unique(test.pop)))
-#
-# ggplot(all_combos, aes(x = test.pop, y = admixture_date)) +
-#   geom_point(aes(color = mindis), position = position_dodge(width = 0.5)) +
-#   # add ci as an error bar +/-
-#   geom_errorbar(
-#     aes(
-#       ymin = admixture_date - CI,
-#       ymax = admixture_date + CI,
-#       color = mindis
-#     ),
-#     width = 0.2,
-#     position = position_dodge(width = 0.5)
-#   ) +
-#   # makes labels 45 degrees
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
 
 # Example LD curve plots
 
@@ -857,20 +861,22 @@ with heterogeneous amounts α—now a random variable—of mixed ancestry,
 our equations for the curves take the form' (Loh et al 2013)
 
 $$
-E[\alpha(d)] = M e^{-nd} + K
+E[a(d)] = M e^{-nd} + K
 $$
 
 'We fit discretized weighted LD curves as from Equation 9, using
 least-squares to find best-fit parameters.' (Loh et al 2013)
 
+'the affine term K...arises from the presence of subpopulations with differing ancestry percentages'. 
+
 The following plotting code is adapted from
 <https://comppopgenworkshop2019.readthedocs.io/en/latest/contents/06_alder/alder.html>
 Which describes as: E[Y] = M times e \ ^-nd + K
 
-Adjusting the parameters refA and refB will print all LD curves for this combination.
+Adjusting the parameters ref_a and ref_b will print all LD curves for this combination.
 
 ```{r plot_curves}
-result <- readRDS("../results/s07_MALDER/malder_results_all.RData")
+result <- readRDS("../results/s07_MALDER/malder_results_all.RDS")
 
 files <- list.files("../code/s07_MALDER_par_files",
   pattern = ".txt",
@@ -879,14 +885,13 @@ files <- list.files("../code/s07_MALDER_par_files",
 )
 
 
-############
-plot_curves <- function(refA, refB, files, result) {
+plot_curves <- function(ref_a, ref_b, files, result) {
   result_sub <- subset(
     result,
-    result$`ref A` == refA & result$`ref B` == refB
+    result$`ref A` == ref_a & result$`ref B` == ref_b
   )
 
-  ref_combo <- paste0(refA, ";", refB)
+  ref_combo <- paste0(ref_a, ";", ref_b)
 
   counter <- 1
   plot_list <- list()
@@ -896,25 +901,34 @@ plot_curves <- function(refA, refB, files, result) {
     colnames(d1) <- d1[1, ]
     d1 <- d1[-1, ]
 
-    n <- result_sub[counter, ]$admixture_date ## decay - estimated admixture date
-    M <- result_sub[counter, ]$amp_exp ## amp_exp -
-    K <- result_sub[counter, ]$amp_aff ## amp_aff -
+    n <- result_sub[counter, ]$admixture_date # decay - estimated admixture date
+    M <- result_sub[counter, ]$amp_exp # amp_exp -
+    K <- result_sub[counter, ]$amp_aff # amp_aff -
 
-    # colnames(d1) <- c("Dist", "weightedLD", "npairs")
-    xv <- 100 * as.numeric(d1$d) ## distance between SNP bins (cM) - genetic distance
+    # xv is distance between SNP bins (cM) - genetic distance
+    xv <- 100 * as.numeric(d1$d)
     weightedLD_col <- which(colnames(d1) == ref_combo)
 
     names(d1)[weightedLD_col] <- "weightedLD"
 
     prdv <- M * exp(-1 * n * xv / 100) + K # E[Y] = M times e^-nd + K
 
-    this_plot <- ggplot(d1, aes(x = d, y = as.numeric(weightedLD), group = counter)) +
+    this_plot <- ggplot(
+      d1,
+      aes(
+        x = d, y = as.numeric(weightedLD),
+        group = counter
+      )
+    ) +
       geom_point(color = "blue", shape = 4) +
       geom_line(aes(y = prdv), color = "red", linewidth = 1) +
       labs(
         x = "Genetic distance (cM)",
         y = "Weighted LD",
-        title = paste("Weighted LD decay curve for", result_sub[counter, ]$test_pop)
+        title = paste(
+          "Weighted LD decay curve for",
+          result_sub[counter, ]$test_pop
+        )
       ) +
       theme_minimal()
 
@@ -925,9 +939,9 @@ plot_curves <- function(refA, refB, files, result) {
 }
 
 # # Run the function
-refA <- "Borneo"
-refB <- "Mozambique_Chopi"
-res <- plot_curves(refA, refB, files, result)
+ref_a <- "Borneo"
+ref_b <- "Mozambique_Chopi"
+res <- plot_curves(ref_a, ref_b, files, result)
 #
 for (p in res) print(p)
 ```

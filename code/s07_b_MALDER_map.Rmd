@@ -22,7 +22,7 @@ res_dir <- "../results/s07_b_MALDER_map/"
 # Load data
 
 ```{r}
-dates_full <- readRDS("../results/s07_MALDER/malder_results_all.RData")
+dates_full <- readRDS("../results/s07_MALDER/malder_results_all.RDS")
 ```
 
 This script will create a map showing admixture timing with Mozambique as an African source population and Borneo as an Asian source population.
@@ -177,8 +177,8 @@ ggplot() +
     panel.background = element_rect(fill = "#F0F8FF", color = NA)
   ) +
   labs(
-    colour = "Admixture Date (BP)",
-    fill = "Admixture Date (BP)",
+    colour = "Admixture Date",
+    fill = "Admixture Date",
     x = NULL, y = NULL
   ) +
   geom_label_repel(
@@ -192,13 +192,15 @@ ggsave(paste0(res_dir, "malder_dates_gradient.jpg"),
 )
 ```
 
+# Plot dates on base map - single point for Mikea
 
 ```{r}
 kml_data_single_site <- kml_data %>%
-  group_by(Name) %>% 
-  summarize(geometry = st_union(geometry)) %>% 
+  group_by(Name) %>%
+  summarize(geometry = st_union(geometry)) %>%
   st_centroid()
-kml_data_single_site$yrs <- kml_data$yrs[match(kml_data_single_site$Name, kml_data$Name)]
+kml_data_single_site$yrs <-
+  kml_data$yrs[match(kml_data_single_site$Name, kml_data$Name)]
 
 ggplot() +
   geom_sf(data = madagascar_dissolved) +
@@ -217,8 +219,8 @@ ggplot() +
     panel.background = element_rect(fill = "#F0F8FF", color = NA)
   ) +
   labs(
-    colour = "Admixture Date (BP)",
-    fill = "Admixture Date (BP)",
+    colour = "Admixture Date",
+    fill = "Admixture Date",
     x = NULL, y = NULL
   ) +
   geom_label_repel(
@@ -234,11 +236,6 @@ ggsave(paste0(res_dir, "malder_dates_gradient_single_site.jpg"),
 
 
 ***
-
-## Recording R environment
-
-Part of ensuring our workflow is reproducible is to keep track of the R environment.
-We will automatically save our R environment into a file called `r_environment.json`.
 
 ```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 filename_rmd <- "s07_b_MALDER_map.Rmd"

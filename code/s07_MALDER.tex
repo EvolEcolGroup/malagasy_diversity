@@ -170,10 +170,20 @@
 
 \NormalTok{cdx }\OtherTok{\textless{}{-}}\NormalTok{ g1000 }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(population }\SpecialCharTok{==} \StringTok{"CDX"}\NormalTok{)}
 
-\ControlFlowTok{if}\NormalTok{ (}\FunctionTok{file.exists}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/mad\_bor\_g1000\_sum\_neo\_clean\_no\_ld\_cdx.gt"}\NormalTok{)) \{}
-  \FunctionTok{file.remove}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/mad\_bor\_g1000\_sum\_neo\_clean\_no\_ld\_cdx.gt"}\NormalTok{)}
-  \FunctionTok{file.remove}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/mad\_bor\_g1000\_sum\_neo\_clean\_no\_ld\_cdx.bk"}\NormalTok{)}
-  \FunctionTok{file.remove}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/mad\_bor\_g1000\_sum\_neo\_clean\_no\_ld\_cdx.rds"}\NormalTok{)}
+\ControlFlowTok{if}\NormalTok{ (}
+  \FunctionTok{file.exists}\NormalTok{(}
+    \StringTok{"../data/intermediate/rbind\_data/mad\_bor\_g1000\_sum\_neo\_clean\_no\_ld\_cdx.gt"}
+\NormalTok{  )}
+\NormalTok{) \{}
+  \FunctionTok{file.remove}\NormalTok{(}
+    \StringTok{"../data/intermediate/rbind\_data/mad\_bor\_g1000\_sum\_neo\_clean\_no\_ld\_cdx.gt"}
+\NormalTok{  )}
+  \FunctionTok{file.remove}\NormalTok{(}
+    \StringTok{"../data/intermediate/rbind\_data/mad\_bor\_g1000\_sum\_neo\_clean\_no\_ld\_cdx.bk"}
+\NormalTok{  )}
+  \FunctionTok{file.remove}\NormalTok{(}
+    \StringTok{"../data/intermediate/rbind\_data/mad\_bor\_g1000\_sum\_neo\_clean\_no\_ld\_cdx.rds"}
+\NormalTok{  )}
 \NormalTok{\}}
 \end{Highlighting}
 \end{Shaded}
@@ -285,10 +295,19 @@
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\ControlFlowTok{if}\NormalTok{ (}\FunctionTok{file.exists}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.bed"}\NormalTok{)) \{}
-  \FunctionTok{file.remove}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.bed"}\NormalTok{)}
-  \FunctionTok{file.remove}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.bim"}\NormalTok{)}
-  \FunctionTok{file.remove}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.fam"}\NormalTok{)}
+\ControlFlowTok{if}\NormalTok{ (}
+  \FunctionTok{file.exists}\NormalTok{(}
+    \StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.bed"}
+\NormalTok{  )) \{}
+  \FunctionTok{file.remove}\NormalTok{(}
+    \StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.bed"}
+\NormalTok{  )}
+  \FunctionTok{file.remove}\NormalTok{(}
+    \StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.bim"}
+\NormalTok{  )}
+  \FunctionTok{file.remove}\NormalTok{(}
+    \StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.fam"}
+\NormalTok{  )}
 \NormalTok{\}}
 \end{Highlighting}
 \end{Shaded}
@@ -351,18 +370,18 @@ Remove any snps without a map position
 \NormalTok{  mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{population}
 \NormalTok{)}
 
-\NormalTok{NEO\_full }\OtherTok{\textless{}{-}} \FunctionTok{gt\_load}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/NEO\_full.gt"}\NormalTok{,}
+\NormalTok{neo\_full }\OtherTok{\textless{}{-}} \FunctionTok{gt\_load}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/NEO\_full.gt"}\NormalTok{,}
   \AttributeTok{reattach\_to =} \StringTok{"../data/intermediate/rbind\_data/NEO\_full"}
 \NormalTok{)}
 
-\NormalTok{matching\_m }\OtherTok{\textless{}{-}} \FunctionTok{match}\NormalTok{(mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{id, NEO\_full}\SpecialCharTok{$}\NormalTok{id)}
+\NormalTok{matching\_m }\OtherTok{\textless{}{-}} \FunctionTok{match}\NormalTok{(mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{id, neo\_full}\SpecialCharTok{$}\NormalTok{id)}
 
 \NormalTok{mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{population }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(matching\_m),}
-\NormalTok{  NEO\_full}\SpecialCharTok{$}\NormalTok{population[matching\_m],}
+\NormalTok{  neo\_full}\SpecialCharTok{$}\NormalTok{population[matching\_m],}
 \NormalTok{  mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{population}
 \NormalTok{)}
 
-\FunctionTok{rm}\NormalTok{(NEO\_full)}
+\FunctionTok{rm}\NormalTok{(neo\_full)}
 
 \CommentTok{\# replace any " " in $populaiton with a "\_"}
 \NormalTok{mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{population }\OtherTok{\textless{}{-}} \FunctionTok{gsub}\NormalTok{(}
@@ -385,10 +404,19 @@ Remove any snps without a map position
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\ControlFlowTok{if}\NormalTok{ (}\FunctionTok{file.exists}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.geno"}\NormalTok{)) \{}
-  \FunctionTok{file.remove}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.geno"}\NormalTok{)}
-  \FunctionTok{file.remove}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.ind"}\NormalTok{)}
-  \FunctionTok{file.remove}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.snp"}\NormalTok{)}
+\ControlFlowTok{if}\NormalTok{ (}
+  \FunctionTok{file.exists}\NormalTok{(}
+    \StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.geno"}
+\NormalTok{  )) \{}
+  \FunctionTok{file.remove}\NormalTok{(}
+    \StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.geno"}
+\NormalTok{  )}
+  \FunctionTok{file.remove}\NormalTok{(}
+    \StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.ind"}
+\NormalTok{  )}
+  \FunctionTok{file.remove}\NormalTok{(}
+    \StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.snp"}
+\NormalTok{  )}
 \NormalTok{\}}
 \end{Highlighting}
 \end{Shaded}
@@ -431,15 +459,34 @@ separately}\label{create-a-second-dataset-with-merina-labelled-separately}
 \NormalTok{mad\_bor\_g1000\_sum\_sub }\OtherTok{\textless{}{-}} \FunctionTok{augment}\NormalTok{(}\FunctionTok{get\_q\_matrix}\NormalTok{(qmats, }\AttributeTok{k =} \DecValTok{2}\NormalTok{, }\AttributeTok{run =} \DecValTok{1}\NormalTok{),}
   \AttributeTok{data =}\NormalTok{ mad\_bor\_g1000\_sum\_sub}
 \NormalTok{)}
+
 \CommentTok{\# filter to merina}
 \NormalTok{merina }\OtherTok{\textless{}{-}}\NormalTok{ mad\_bor\_g1000\_sum\_sub }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(population }\SpecialCharTok{==} \StringTok{"Merina"}\NormalTok{)}
 
-\CommentTok{\# split groups}
-\CommentTok{\# .Q3 representing Asian ancestry and .Q2 representing African ancestry}
-\NormalTok{merina}\SpecialCharTok{$}\NormalTok{population }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(merina}\SpecialCharTok{$}\NormalTok{.Q1 }\SpecialCharTok{\textgreater{}} \FloatTok{0.5}\NormalTok{, }\StringTok{"MerinaA"}\NormalTok{, }\StringTok{"MerinaB"}\NormalTok{)}
-\NormalTok{merina }\OtherTok{\textless{}{-}}\NormalTok{ merina[, }\FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"population"}\NormalTok{)]}
+\CommentTok{\# find which .Q column represents Asian ancestry}
+\NormalTok{asian\_ancestry\_q }\OtherTok{\textless{}{-}}\NormalTok{ mad\_bor\_g1000\_sum\_sub }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(population }\SpecialCharTok{==} \StringTok{"Borneo"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \CommentTok{\# Get median value of Q1 and Q2}
+  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{.Q1 =} \FunctionTok{median}\NormalTok{(.Q1), }\AttributeTok{.Q2 =} \FunctionTok{median}\NormalTok{(.Q2)) }\SpecialCharTok{\%\textgreater{}\%}
+  \CommentTok{\# Pivot in order to subset}
+  \FunctionTok{pivot\_longer}\NormalTok{(}
+    \AttributeTok{cols =} \FunctionTok{c}\NormalTok{(}\StringTok{".Q1"}\NormalTok{, }\StringTok{".Q2"}\NormalTok{),}
+    \AttributeTok{names\_to =} \StringTok{"column\_name"}\NormalTok{,}
+    \AttributeTok{values\_to =} \StringTok{"median\_val"}
+\NormalTok{  ) }\SpecialCharTok{\%\textgreater{}\%}
+  \CommentTok{\# Find the row with the max value}
+  \FunctionTok{slice\_max}\NormalTok{(median\_val, }\AttributeTok{n =} \DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \CommentTok{\# get the column name}
+  \FunctionTok{pull}\NormalTok{(column\_name)}
 
-\CommentTok{\# merina \textless{}{-} readRDS("../results/s06\_b\_f\_stats/merina\_qmats.rds")}
+
+\CommentTok{\# split groups}
+\CommentTok{\# split groups}
+\NormalTok{merina}\SpecialCharTok{$}\NormalTok{population }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(merina }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(}\FunctionTok{all\_of}\NormalTok{(asian\_ancestry\_q)) }\SpecialCharTok{\textgreater{}} \FloatTok{0.5}\NormalTok{,}
+  \StringTok{"MerinaA"}\NormalTok{,}
+  \StringTok{"MerinaB"}
+\NormalTok{)}
+\NormalTok{merina }\OtherTok{\textless{}{-}}\NormalTok{ merina[, }\FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"population"}\NormalTok{)]}
 \NormalTok{merina}\SpecialCharTok{$}\NormalTok{id }\OtherTok{\textless{}{-}} \FunctionTok{sub}\NormalTok{(}\StringTok{"RR.*"}\NormalTok{, }\StringTok{""}\NormalTok{, merina}\SpecialCharTok{$}\NormalTok{id)}
 
 \CommentTok{\# match mad\_bor\_g1000\_sum\_neo\_fam$id and merina$id and replace the population}
@@ -450,7 +497,10 @@ separately}\label{create-a-second-dataset-with-merina-labelled-separately}
 \NormalTok{)}
 
 \CommentTok{\# count number of MerinaA}
-\FunctionTok{cat}\NormalTok{(}\StringTok{"Merina group \textgreater{} 0.5"}\NormalTok{, }\FunctionTok{length}\NormalTok{(}\FunctionTok{which}\NormalTok{(mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{population }\SpecialCharTok{==} \StringTok{"MerinaA"}\NormalTok{)))}
+\FunctionTok{cat}\NormalTok{(}
+  \StringTok{"Merina group \textgreater{} 0.5"}\NormalTok{,}
+  \FunctionTok{length}\NormalTok{(}\FunctionTok{which}\NormalTok{(mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{population }\SpecialCharTok{==} \StringTok{"MerinaA"}\NormalTok{))}
+\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -460,7 +510,10 @@ separately}\label{create-a-second-dataset-with-merina-labelled-separately}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{cat}\NormalTok{(}\StringTok{"Merina group \textless{} 0.5"}\NormalTok{, }\FunctionTok{length}\NormalTok{(}\FunctionTok{which}\NormalTok{(mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{population }\SpecialCharTok{==} \StringTok{"MerinaB"}\NormalTok{)))}
+\FunctionTok{cat}\NormalTok{(}
+  \StringTok{"Merina group \textless{} 0.5"}\NormalTok{,}
+  \FunctionTok{length}\NormalTok{(}\FunctionTok{which}\NormalTok{(mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{population }\SpecialCharTok{==} \StringTok{"MerinaB"}\NormalTok{))}
+\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -470,11 +523,9 @@ separately}\label{create-a-second-dataset-with-merina-labelled-separately}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{\# mad\_bor\_g1000\_sum\_neo\_fam$id \textless{}{-} as.numeric(rownames(mad\_bor\_g1000\_sum\_neo\_fam))}
 \NormalTok{mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{population }\OtherTok{\textless{}{-}}
   \FunctionTok{as.factor}\NormalTok{(mad\_bor\_g1000\_sum\_neo\_fam}\SpecialCharTok{$}\NormalTok{population)}
 
-\CommentTok{\# mad\_bor\_g1000\_sum\_neo\_fam$V6 \textless{}{-} mad\_bor\_g1000\_sum\_neo\_fam$population}
 \FunctionTok{write.table}\NormalTok{(mad\_bor\_g1000\_sum\_neo\_fam,}
   \StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo\_sep.fam"}\NormalTok{,}
   \AttributeTok{row.names =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{col.names =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{sep =} \StringTok{" "}\NormalTok{, }\AttributeTok{quote =} \ConstantTok{FALSE}
@@ -508,10 +559,19 @@ separately}\label{create-a-second-dataset-with-merina-labelled-separately}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\ControlFlowTok{if}\NormalTok{ (}\FunctionTok{file.exists}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo\_sep.geno"}\NormalTok{)) \{}
-  \FunctionTok{file.remove}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo\_sep.geno"}\NormalTok{)}
-  \FunctionTok{file.remove}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo\_sep.ind"}\NormalTok{)}
-  \FunctionTok{file.remove}\NormalTok{(}\StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo\_sep.snp"}\NormalTok{)}
+\NormalTok{path }\OtherTok{\textless{}{-}} \StringTok{"../data/intermediate/rbind\_data/rbind\_sort\_dist/"}
+\ControlFlowTok{if}\NormalTok{ (}\FunctionTok{file.exists}\NormalTok{(}
+  \FunctionTok{paste0}\NormalTok{(path, }\StringTok{"mad\_bor\_g1000\_sum\_neo\_sep.geno"}\NormalTok{)}
+\NormalTok{)) \{}
+  \FunctionTok{file.remove}\NormalTok{(}
+    \FunctionTok{paste0}\NormalTok{(path, }\StringTok{"mad\_bor\_g1000\_sum\_neo\_sep.geno"}\NormalTok{)}
+\NormalTok{  )}
+  \FunctionTok{file.remove}\NormalTok{(}
+    \FunctionTok{paste0}\NormalTok{(path, }\StringTok{"mad\_bor\_g1000\_sum\_neo\_sep.ind"}\NormalTok{)}
+\NormalTok{  )}
+  \FunctionTok{file.remove}\NormalTok{(}
+    \FunctionTok{paste0}\NormalTok{(path, }\StringTok{"mad\_bor\_g1000\_sum\_neo\_sep.snp"}\NormalTok{)}
+\NormalTok{  )}
 \NormalTok{\}}
 \end{Highlighting}
 \end{Shaded}
@@ -541,9 +601,12 @@ here}\label{population-to-status-column-as-described-here}
 \NormalTok{)}
 
 \CommentTok{\# Fixed parameters}
-\NormalTok{geno }\OtherTok{\textless{}{-}} \StringTok{"../../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.geno"}
-\NormalTok{snp }\OtherTok{\textless{}{-}} \StringTok{"../../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.snp"}
-\NormalTok{ind }\OtherTok{\textless{}{-}} \StringTok{"../../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.ind"}
+\NormalTok{geno }\OtherTok{\textless{}{-}}
+  \StringTok{"../../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.geno"}
+\NormalTok{snp }\OtherTok{\textless{}{-}}
+  \StringTok{"../../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.snp"}
+\NormalTok{ind }\OtherTok{\textless{}{-}}
+  \StringTok{"../../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo.ind"}
 \NormalTok{ref\_str }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}\StringTok{"Borneo;Sumba;Dai;Esan;Yoruba;Mozambique\_Chopi"}\NormalTok{)}
 
 \CommentTok{\# Root output directory (do NOT modify inside the loop)}
@@ -557,14 +620,9 @@ here}\label{population-to-status-column-as-described-here}
 \NormalTok{                            ind) \{}
   \CommentTok{\# for (refset in refpop\_list) \{}
   \ControlFlowTok{for}\NormalTok{ (admix }\ControlFlowTok{in}\NormalTok{ admix\_list) \{}
-    \CommentTok{\# folder \textless{}{-} paste(ref\_str)}
 
     \CommentTok{\# Final output directory for this refpop set}
 \NormalTok{    base\_out }\OtherTok{\textless{}{-}} \FunctionTok{file.path}\NormalTok{(}\FunctionTok{getwd}\NormalTok{(), base\_root) }\CommentTok{\# , folder}
-
-    \CommentTok{\# if (!dir.exists(base\_out)) \{}
-    \CommentTok{\#  dir.create(base\_out, recursive = TRUE)}
-    \CommentTok{\# \}}
 
     \CommentTok{\# Filename for the .par file}
 \NormalTok{    outfile }\OtherTok{\textless{}{-}} \FunctionTok{sprintf}\NormalTok{(}
@@ -572,9 +630,6 @@ here}\label{population-to-status-column-as-described-here}
 \NormalTok{      base\_out, }\FunctionTok{tolower}\NormalTok{(admix)}
 \NormalTok{    )}
     \FunctionTok{file.create}\NormalTok{(outfile)}
-
-    \CommentTok{\# Build the refpop string}
-    \CommentTok{\# ref\_str \textless{}{-} paste(refset, collapse = ";")}
 
     \CommentTok{\# Write the .par file content}
 \NormalTok{    par\_text }\OtherTok{\textless{}{-}} \FunctionTok{paste0}\NormalTok{(}
@@ -607,9 +662,13 @@ here}\label{population-to-status-column-as-described-here}
 \NormalTok{)}
 
 \CommentTok{\# And then for split Merina}
-\NormalTok{geno }\OtherTok{\textless{}{-}} \StringTok{"../../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo\_sep.geno"}
-\NormalTok{snp }\OtherTok{\textless{}{-}} \StringTok{"../../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo\_sep.snp"}
-\NormalTok{ind }\OtherTok{\textless{}{-}} \StringTok{"../../data/intermediate/rbind\_data/rbind\_sort\_dist/mad\_bor\_g1000\_sum\_neo\_sep.ind"}
+\NormalTok{path }\OtherTok{\textless{}{-}} \StringTok{"../../data/intermediate/rbind\_data/rbind\_sort\_dist/"}
+\NormalTok{geno }\OtherTok{\textless{}{-}}
+  \FunctionTok{paste0}\NormalTok{(path, }\StringTok{"mad\_bor\_g1000\_sum\_neo\_sep.geno"}\NormalTok{)}
+\NormalTok{snp }\OtherTok{\textless{}{-}}
+  \FunctionTok{paste0}\NormalTok{(path, }\StringTok{"mad\_bor\_g1000\_sum\_neo\_sep.snp"}\NormalTok{)}
+\NormalTok{ind }\OtherTok{\textless{}{-}}
+  \FunctionTok{paste0}\NormalTok{(path, }\StringTok{"mad\_bor\_g1000\_sum\_neo\_sep.ind"}\NormalTok{)}
 
 \NormalTok{admix\_list }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"MerinaA"}\NormalTok{, }\StringTok{"MerinaB"}\NormalTok{)}
 
@@ -684,7 +743,8 @@ fit, while RESULT\_3 indicates multiple waves.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{\# check for any \textquotesingle{}RESULT\_3\textquotesingle{} in the log files {-} this would indicate multiple admixture events}
+\CommentTok{\# check for any \textquotesingle{}RESULT\_3\textquotesingle{} in the log files}
+\CommentTok{\# this would indicate multiple admixture events}
 \NormalTok{res\_folders }\OtherTok{\textless{}{-}} \FunctionTok{list.dirs}\NormalTok{(}\StringTok{"../results/s07\_MALDER"}\NormalTok{,}
   \AttributeTok{full.names =} \ConstantTok{TRUE}\NormalTok{,}
   \AttributeTok{recursive =} \ConstantTok{FALSE}
@@ -761,7 +821,11 @@ fit, while RESULT\_3 indicates multiple waves.
 \CommentTok{\# remove first column}
 \NormalTok{result }\OtherTok{\textless{}{-}}\NormalTok{ result[, }\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{]}
 
-\FunctionTok{colnames}\NormalTok{(result) }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"test\_res"}\NormalTok{, }\StringTok{"p\_value"}\NormalTok{, }\StringTok{"test\_pop"}\NormalTok{, }\StringTok{"ref A"}\NormalTok{, }\StringTok{"ref B"}\NormalTok{, }\StringTok{"2{-}ref z{-}score"}\NormalTok{, }\StringTok{"2{-}ref decay"}\NormalTok{, }\StringTok{"2{-}ref amp\_exp"}\NormalTok{)}
+\FunctionTok{colnames}\NormalTok{(result) }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}
+  \StringTok{"test\_res"}\NormalTok{, }\StringTok{"p\_value"}\NormalTok{, }\StringTok{"test\_pop"}\NormalTok{,}
+  \StringTok{"ref A"}\NormalTok{, }\StringTok{"ref B"}\NormalTok{, }\StringTok{"2{-}ref z{-}score"}\NormalTok{,}
+  \StringTok{"2{-}ref decay"}\NormalTok{, }\StringTok{"2{-}ref amp\_exp"}
+\NormalTok{)}
 
 \CommentTok{\# \# split $\textasciigrave{}2{-}ref decay\textasciigrave{} into 2 columns}
 \NormalTok{split\_dates }\OtherTok{\textless{}{-}} \FunctionTok{do.call}\NormalTok{(rbind, }\FunctionTok{strsplit}\NormalTok{(result}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{2{-}ref decay}\StringTok{\textasciigrave{}}\NormalTok{, }\StringTok{" "}\NormalTok{))}
@@ -805,7 +869,8 @@ fit, while RESULT\_3 indicates multiple waves.
 
   \ControlFlowTok{for}\NormalTok{ (k }\ControlFlowTok{in} \FunctionTok{seq\_along}\NormalTok{(header\_index)) \{}
 \NormalTok{    start }\OtherTok{\textless{}{-}}\NormalTok{ header\_index[k]}
-\NormalTok{    end }\OtherTok{\textless{}{-}} \ControlFlowTok{if}\NormalTok{ (k }\SpecialCharTok{\textless{}} \FunctionTok{length}\NormalTok{(header\_index)) header\_index[k }\SpecialCharTok{+} \DecValTok{1}\NormalTok{] }\SpecialCharTok{{-}} \DecValTok{1} \ControlFlowTok{else} \FunctionTok{length}\NormalTok{(log)}
+\NormalTok{    end }\OtherTok{\textless{}{-}}
+      \ControlFlowTok{if}\NormalTok{ (k }\SpecialCharTok{\textless{}} \FunctionTok{length}\NormalTok{(header\_index)) header\_index[k }\SpecialCharTok{+} \DecValTok{1}\NormalTok{] }\SpecialCharTok{{-}} \DecValTok{1} \ControlFlowTok{else} \FunctionTok{length}\NormalTok{(log)}
 
 \NormalTok{    block }\OtherTok{\textless{}{-}}\NormalTok{ log[start}\SpecialCharTok{:}\NormalTok{end]}
 
@@ -827,7 +892,8 @@ fit, while RESULT\_3 indicates multiple waves.
 \NormalTok{      )}
 \NormalTok{    \}}
 
-    \CommentTok{\# find the two population names after "Computing 2{-}ref weighted LD with weights..."}
+    \CommentTok{\# find the two population names after}
+    \CommentTok{\# "Computing 2{-}ref weighted LD with weights..."}
 \NormalTok{    refs }\OtherTok{\textless{}{-}} \FunctionTok{sub}\NormalTok{(}\StringTok{".*weights"}\NormalTok{, }\StringTok{""}\NormalTok{, log[header\_index][k])}
 
 \NormalTok{    out[[k]] }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}
@@ -874,7 +940,7 @@ fit, while RESULT\_3 indicates multiple waves.
 \NormalTok{)}
 
 \CommentTok{\# \# save result}
-\FunctionTok{saveRDS}\NormalTok{(result, }\StringTok{"../results/s07\_MALDER/malder\_results\_all.RData"}\NormalTok{)}
+\FunctionTok{saveRDS}\NormalTok{(result, }\StringTok{"../results/s07\_MALDER/malder\_results\_all.RDS"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -885,7 +951,14 @@ README file for MALDER
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{result }\OtherTok{\textless{}{-}} \FunctionTok{readRDS}\NormalTok{(}\StringTok{"../results/s07\_MALDER/malder\_results\_all.RData"}\NormalTok{)}
+\NormalTok{result }\OtherTok{\textless{}{-}} \FunctionTok{readRDS}\NormalTok{(}\StringTok{"../results/s07\_MALDER/malder\_results\_all.RDS"}\NormalTok{)}
+\CommentTok{\# save as a table}
+\FunctionTok{write.table}\NormalTok{(result,}
+  \StringTok{"../results/s07\_MALDER/malder\_results\_all"}\NormalTok{,}
+  \AttributeTok{row.names =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{quote =} \ConstantTok{FALSE}
+\NormalTok{)}
+
+
 \CommentTok{\# subset result to only MerinaA and merinaB, not merina together}
 \NormalTok{result }\OtherTok{\textless{}{-}} \FunctionTok{subset}\NormalTok{(}
 \NormalTok{  result,}
@@ -923,7 +996,10 @@ Borneo}\label{different-african-populations-using-borneo}
 \begin{Highlighting}[]
 \NormalTok{borneo\_res }\OtherTok{\textless{}{-}} \FunctionTok{subset}\NormalTok{(result, result}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{ref A}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \StringTok{"Borneo"}\NormalTok{)}
 
-\NormalTok{p1 }\OtherTok{\textless{}{-}} \FunctionTok{ggplot}\NormalTok{(borneo\_res, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \StringTok{\textasciigrave{}}\AttributeTok{ref B}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{y =}\NormalTok{ admixture\_date, }\AttributeTok{colour =} \StringTok{\textasciigrave{}}\AttributeTok{ref B}\StringTok{\textasciigrave{}}\NormalTok{)) }\SpecialCharTok{+}
+\NormalTok{p1 }\OtherTok{\textless{}{-}} \FunctionTok{ggplot}\NormalTok{(}
+\NormalTok{  borneo\_res,}
+  \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \StringTok{\textasciigrave{}}\AttributeTok{ref B}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{y =}\NormalTok{ admixture\_date, }\AttributeTok{colour =} \StringTok{\textasciigrave{}}\AttributeTok{ref B}\StringTok{\textasciigrave{}}\NormalTok{)}
+\NormalTok{) }\SpecialCharTok{+}
   \FunctionTok{geom\_boxplot}\NormalTok{() }\SpecialCharTok{+}
   \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{test\_pop) }\SpecialCharTok{+}
   \FunctionTok{scale\_y\_continuous}\NormalTok{(}
@@ -945,8 +1021,6 @@ Borneo}\label{different-african-populations-using-borneo}
   \FunctionTok{theme}\NormalTok{(}
     \AttributeTok{axis.text.x =} \FunctionTok{element\_blank}\NormalTok{(),}
     \AttributeTok{legend.position =} \StringTok{"right"}\NormalTok{,}
-    \CommentTok{\# legend.position = "inside",}
-    \CommentTok{\# legend.position.inside = c(0.8, 0.15),}
     \AttributeTok{axis.title =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{size =} \DecValTok{14}\NormalTok{),}
     \AttributeTok{legend.title =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{size =} \DecValTok{14}\NormalTok{),}
     \AttributeTok{legend.text =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{size =} \DecValTok{12}\NormalTok{),}
@@ -976,7 +1050,10 @@ Mozambique\_Chopi}\label{different-asian-populations-using-mozambique_chopi}
 \begin{Highlighting}[]
 \NormalTok{mozambique\_res }\OtherTok{\textless{}{-}} \FunctionTok{subset}\NormalTok{(result, result}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{ref B}\StringTok{\textasciigrave{}} \SpecialCharTok{==} \StringTok{"Mozambique\_Chopi"}\NormalTok{)}
 
-\NormalTok{p2 }\OtherTok{\textless{}{-}} \FunctionTok{ggplot}\NormalTok{(mozambique\_res, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \StringTok{\textasciigrave{}}\AttributeTok{ref A}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{y =}\NormalTok{ admixture\_date, }\AttributeTok{colour =} \StringTok{\textasciigrave{}}\AttributeTok{ref A}\StringTok{\textasciigrave{}}\NormalTok{)) }\SpecialCharTok{+}
+\NormalTok{p2 }\OtherTok{\textless{}{-}} \FunctionTok{ggplot}\NormalTok{(}
+\NormalTok{  mozambique\_res,}
+  \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \StringTok{\textasciigrave{}}\AttributeTok{ref A}\StringTok{\textasciigrave{}}\NormalTok{, }\AttributeTok{y =}\NormalTok{ admixture\_date, }\AttributeTok{colour =} \StringTok{\textasciigrave{}}\AttributeTok{ref A}\StringTok{\textasciigrave{}}\NormalTok{)}
+\NormalTok{) }\SpecialCharTok{+}
   \FunctionTok{geom\_boxplot}\NormalTok{() }\SpecialCharTok{+}
   \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{test\_pop) }\SpecialCharTok{+}
   \FunctionTok{scale\_y\_continuous}\NormalTok{(}
@@ -998,8 +1075,6 @@ Mozambique\_Chopi}\label{different-asian-populations-using-mozambique_chopi}
   \FunctionTok{theme}\NormalTok{(}
     \AttributeTok{axis.text.x =} \FunctionTok{element\_blank}\NormalTok{(),}
     \AttributeTok{legend.position =} \StringTok{"right"}\NormalTok{,}
-    \CommentTok{\# legend.position = "inside",}
-    \CommentTok{\# legend.position.inside = c(0.8, 0.15),}
     \AttributeTok{axis.title =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{size =} \DecValTok{14}\NormalTok{),}
     \AttributeTok{legend.title =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{size =} \DecValTok{14}\NormalTok{),}
     \AttributeTok{legend.text =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{size =} \DecValTok{12}\NormalTok{),}
@@ -1022,81 +1097,6 @@ Mozambique\_Chopi}\label{different-asian-populations-using-mozambique_chopi}
 \end{Highlighting}
 \end{Shaded}
 
-\section{Compare results with and without mindis parameter
-set}\label{compare-results-with-and-without-mindis-parameter-set}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# result\_no\_mindis \textless{}{-} readRDS("../results/s07\_MALDER/malder\_results\_all.RData")}
-\CommentTok{\#}
-\CommentTok{\# result\_with\_mindis \textless{}{-} readRDS("\textasciitilde{}/Downloads/malder\_results\_all.RData")}
-\CommentTok{\#}
-\CommentTok{\# result\_no\_mindis$combined\_arg \textless{}{-} paste0(}
-\CommentTok{\#   result\_no\_mindis$\textasciigrave{}ref A\textasciigrave{}, "\_",}
-\CommentTok{\#   result\_no\_mindis$\textasciigrave{}ref B\textasciigrave{}, "\_",}
-\CommentTok{\#   result\_no\_mindis$test\_pop}
-\CommentTok{\# )}
-\CommentTok{\#}
-\CommentTok{\# result\_with\_mindis$combined\_arg \textless{}{-} paste0(}
-\CommentTok{\#   result\_with\_mindis$\textasciigrave{}ref A\textasciigrave{}, "\_",}
-\CommentTok{\#   result\_with\_mindis$\textasciigrave{}ref B\textasciigrave{}, "\_",}
-\CommentTok{\#   result\_with\_mindis$test\_pop}
-\CommentTok{\# )}
-\CommentTok{\#}
-\CommentTok{\# \# subset result with mindis to only those \textasciigrave{}combined\_arg\textasciigrave{} in result\_no\_mindis}
-\CommentTok{\# result\_with\_mindis \textless{}{-} subset(}
-\CommentTok{\#   result\_with\_mindis,}
-\CommentTok{\#   result\_with\_mindis$combined\_arg \%in\% result\_no\_mindis$combined\_arg}
-\CommentTok{\# )}
-\CommentTok{\#}
-\CommentTok{\# \# order result\_no\_mindis to same order as result\_with\_mindis}
-\CommentTok{\# result\_no\_mindis \textless{}{-} result\_no\_mindis[match(}
-\CommentTok{\#   result\_with\_mindis$combined\_arg,}
-\CommentTok{\#   result\_no\_mindis$combined\_arg}
-\CommentTok{\# ), ]}
-
-\CommentTok{\# result\_dai\_esan\_no\_mindis \textless{}{-} subset(}
-\CommentTok{\#   result,}
-\CommentTok{\#   result$\textasciigrave{}ref A\textasciigrave{} == "Dai" \& result$\textasciigrave{}ref B\textasciigrave{} == "Esan"}
-\CommentTok{\# )}
-\CommentTok{\#}
-\CommentTok{\# write.csv(}
-\CommentTok{\#   result\_dai\_esan\_no\_mindis,}
-\CommentTok{\#   "../results/s07\_MALDER/dai\_esan\_malder\_results\_with\_mindis.csv",}
-\CommentTok{\#   row.names = FALSE}
-\CommentTok{\# )}
-
-\CommentTok{\# dai\_esan\_no\_mindis \textless{}{-} read.csv("../results/s07\_MALDER/dai\_esan\_malder\_results\_no\_mindis.csv")}
-\CommentTok{\# dai\_esan\_with\_mindis \textless{}{-} read.csv("../results/s07\_MALDER/dai\_esan\_malder\_results\_with\_mindis.csv")}
-\CommentTok{\#}
-\CommentTok{\# dai\_esan\_no\_mindis$mindis \textless{}{-} "no\_mindis"}
-\CommentTok{\# dai\_esan\_with\_mindis$mindis \textless{}{-} "with\_mindis"}
-\CommentTok{\# dai\_esan\_no\_mindis \textless{}{-} dai\_esan\_no\_mindis[, {-}which(names(dai\_esan\_no\_mindis) == "combined\_arg")]}
-\CommentTok{\# all\_combos \textless{}{-} rbind(dai\_esan\_no\_mindis, dai\_esan\_with\_mindis)}
-\CommentTok{\#}
-\CommentTok{\# all\_combos \textless{}{-} as\_tibble(all\_combos)}
-\CommentTok{\# all\_combos \textless{}{-} all\_combos \%\textgreater{}\%}
-\CommentTok{\#   arrange(desc(admixture\_date)) \%\textgreater{}\%}
-\CommentTok{\#   group\_by(test.pop)}
-\CommentTok{\# \# all\_combos \textless{}{-} all\_combos \%\textgreater{}\% mutate(test.pop = factor(test.pop, levels = unique(test.pop)))}
-\CommentTok{\#}
-\CommentTok{\# ggplot(all\_combos, aes(x = test.pop, y = admixture\_date)) +}
-\CommentTok{\#   geom\_point(aes(color = mindis), position = position\_dodge(width = 0.5)) +}
-\CommentTok{\#   \# add ci as an error bar +/{-}}
-\CommentTok{\#   geom\_errorbar(}
-\CommentTok{\#     aes(}
-\CommentTok{\#       ymin = admixture\_date {-} CI,}
-\CommentTok{\#       ymax = admixture\_date + CI,}
-\CommentTok{\#       color = mindis}
-\CommentTok{\#     ),}
-\CommentTok{\#     width = 0.2,}
-\CommentTok{\#     position = position\_dodge(width = 0.5)}
-\CommentTok{\#   ) +}
-\CommentTok{\#   \# makes labels 45 degrees}
-\CommentTok{\#   theme(axis.text.x = element\_text(angle = 45, hjust = 1))}
-\end{Highlighting}
-\end{Shaded}
-
 \section{Example LD curve plots}\label{example-ld-curve-plots}
 
 `Weighted LD curves computed on real populations often exhibit a nonzero
@@ -1109,22 +1109,25 @@ with heterogeneous amounts α---now a random variable---of mixed
 ancestry, our equations for the curves take the form' (Loh et al 2013)
 
 \[
-E[\alpha(d)] = M e^{-nd} + K
+E[a(d)] = M e^{-nd} + K
 \]
 
 `We fit discretized weighted LD curves as from Equation 9, using
 least-squares to find best-fit parameters.' (Loh et al 2013)
 
+`the affine term K\ldots arises from the presence of subpopulations with
+differing ancestry percentages'.
+
 The following plotting code is adapted from
 \url{https://comppopgenworkshop2019.readthedocs.io/en/latest/contents/06_alder/alder.html}
 Which describes as: E{[}Y{]} = M times e ~\^{}-nd + K
 
-Adjusting the parameters refA and refB will print all LD curves for this
-combination.
+Adjusting the parameters ref\_a and ref\_b will print all LD curves for
+this combination.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{result }\OtherTok{\textless{}{-}} \FunctionTok{readRDS}\NormalTok{(}\StringTok{"../results/s07\_MALDER/malder\_results\_all.RData"}\NormalTok{)}
+\NormalTok{result }\OtherTok{\textless{}{-}} \FunctionTok{readRDS}\NormalTok{(}\StringTok{"../results/s07\_MALDER/malder\_results\_all.RDS"}\NormalTok{)}
 
 \NormalTok{files }\OtherTok{\textless{}{-}} \FunctionTok{list.files}\NormalTok{(}\StringTok{"../code/s07\_MALDER\_par\_files"}\NormalTok{,}
   \AttributeTok{pattern =} \StringTok{".txt"}\NormalTok{,}
@@ -1133,14 +1136,13 @@ combination.
 \NormalTok{)}
 
 
-\DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#}
-\NormalTok{plot\_curves }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(refA, refB, files, result) \{}
+\NormalTok{plot\_curves }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(ref\_a, ref\_b, files, result) \{}
 \NormalTok{  result\_sub }\OtherTok{\textless{}{-}} \FunctionTok{subset}\NormalTok{(}
 \NormalTok{    result,}
-\NormalTok{    result}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{ref A}\StringTok{\textasciigrave{}} \SpecialCharTok{==}\NormalTok{ refA }\SpecialCharTok{\&}\NormalTok{ result}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{ref B}\StringTok{\textasciigrave{}} \SpecialCharTok{==}\NormalTok{ refB}
+\NormalTok{    result}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{ref A}\StringTok{\textasciigrave{}} \SpecialCharTok{==}\NormalTok{ ref\_a }\SpecialCharTok{\&}\NormalTok{ result}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{ref B}\StringTok{\textasciigrave{}} \SpecialCharTok{==}\NormalTok{ ref\_b}
 \NormalTok{  )}
 
-\NormalTok{  ref\_combo }\OtherTok{\textless{}{-}} \FunctionTok{paste0}\NormalTok{(refA, }\StringTok{";"}\NormalTok{, refB)}
+\NormalTok{  ref\_combo }\OtherTok{\textless{}{-}} \FunctionTok{paste0}\NormalTok{(ref\_a, }\StringTok{";"}\NormalTok{, ref\_b)}
 
 \NormalTok{  counter }\OtherTok{\textless{}{-}} \DecValTok{1}
 \NormalTok{  plot\_list }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{()}
@@ -1150,25 +1152,34 @@ combination.
     \FunctionTok{colnames}\NormalTok{(d1) }\OtherTok{\textless{}{-}}\NormalTok{ d1[}\DecValTok{1}\NormalTok{, ]}
 \NormalTok{    d1 }\OtherTok{\textless{}{-}}\NormalTok{ d1[}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{, ]}
 
-\NormalTok{    n }\OtherTok{\textless{}{-}}\NormalTok{ result\_sub[counter, ]}\SpecialCharTok{$}\NormalTok{admixture\_date }\DocumentationTok{\#\# decay {-} estimated admixture date}
-\NormalTok{    M }\OtherTok{\textless{}{-}}\NormalTok{ result\_sub[counter, ]}\SpecialCharTok{$}\NormalTok{amp\_exp }\DocumentationTok{\#\# amp\_exp {-}}
-\NormalTok{    K }\OtherTok{\textless{}{-}}\NormalTok{ result\_sub[counter, ]}\SpecialCharTok{$}\NormalTok{amp\_aff }\DocumentationTok{\#\# amp\_aff {-}}
+\NormalTok{    n }\OtherTok{\textless{}{-}}\NormalTok{ result\_sub[counter, ]}\SpecialCharTok{$}\NormalTok{admixture\_date }\CommentTok{\# decay {-} estimated admixture date}
+\NormalTok{    M }\OtherTok{\textless{}{-}}\NormalTok{ result\_sub[counter, ]}\SpecialCharTok{$}\NormalTok{amp\_exp }\CommentTok{\# amp\_exp {-}}
+\NormalTok{    K }\OtherTok{\textless{}{-}}\NormalTok{ result\_sub[counter, ]}\SpecialCharTok{$}\NormalTok{amp\_aff }\CommentTok{\# amp\_aff {-}}
 
-    \CommentTok{\# colnames(d1) \textless{}{-} c("Dist", "weightedLD", "npairs")}
-\NormalTok{    xv }\OtherTok{\textless{}{-}} \DecValTok{100} \SpecialCharTok{*} \FunctionTok{as.numeric}\NormalTok{(d1}\SpecialCharTok{$}\NormalTok{d) }\DocumentationTok{\#\# distance between SNP bins (cM) {-} genetic distance}
+    \CommentTok{\# xv is distance between SNP bins (cM) {-} genetic distance}
+\NormalTok{    xv }\OtherTok{\textless{}{-}} \DecValTok{100} \SpecialCharTok{*} \FunctionTok{as.numeric}\NormalTok{(d1}\SpecialCharTok{$}\NormalTok{d)}
 \NormalTok{    weightedLD\_col }\OtherTok{\textless{}{-}} \FunctionTok{which}\NormalTok{(}\FunctionTok{colnames}\NormalTok{(d1) }\SpecialCharTok{==}\NormalTok{ ref\_combo)}
 
     \FunctionTok{names}\NormalTok{(d1)[weightedLD\_col] }\OtherTok{\textless{}{-}} \StringTok{"weightedLD"}
 
 \NormalTok{    prdv }\OtherTok{\textless{}{-}}\NormalTok{ M }\SpecialCharTok{*} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{1} \SpecialCharTok{*}\NormalTok{ n }\SpecialCharTok{*}\NormalTok{ xv }\SpecialCharTok{/} \DecValTok{100}\NormalTok{) }\SpecialCharTok{+}\NormalTok{ K }\CommentTok{\# E[Y] = M times e\^{}{-}nd + K}
 
-\NormalTok{    this\_plot }\OtherTok{\textless{}{-}} \FunctionTok{ggplot}\NormalTok{(d1, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ d, }\AttributeTok{y =} \FunctionTok{as.numeric}\NormalTok{(weightedLD), }\AttributeTok{group =}\NormalTok{ counter)) }\SpecialCharTok{+}
+\NormalTok{    this\_plot }\OtherTok{\textless{}{-}} \FunctionTok{ggplot}\NormalTok{(}
+\NormalTok{      d1,}
+      \FunctionTok{aes}\NormalTok{(}
+        \AttributeTok{x =}\NormalTok{ d, }\AttributeTok{y =} \FunctionTok{as.numeric}\NormalTok{(weightedLD),}
+        \AttributeTok{group =}\NormalTok{ counter}
+\NormalTok{      )}
+\NormalTok{    ) }\SpecialCharTok{+}
       \FunctionTok{geom\_point}\NormalTok{(}\AttributeTok{color =} \StringTok{"blue"}\NormalTok{, }\AttributeTok{shape =} \DecValTok{4}\NormalTok{) }\SpecialCharTok{+}
       \FunctionTok{geom\_line}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ prdv), }\AttributeTok{color =} \StringTok{"red"}\NormalTok{, }\AttributeTok{linewidth =} \DecValTok{1}\NormalTok{) }\SpecialCharTok{+}
       \FunctionTok{labs}\NormalTok{(}
         \AttributeTok{x =} \StringTok{"Genetic distance (cM)"}\NormalTok{,}
         \AttributeTok{y =} \StringTok{"Weighted LD"}\NormalTok{,}
-        \AttributeTok{title =} \FunctionTok{paste}\NormalTok{(}\StringTok{"Weighted LD decay curve for"}\NormalTok{, result\_sub[counter, ]}\SpecialCharTok{$}\NormalTok{test\_pop)}
+        \AttributeTok{title =} \FunctionTok{paste}\NormalTok{(}
+          \StringTok{"Weighted LD decay curve for"}\NormalTok{,}
+\NormalTok{          result\_sub[counter, ]}\SpecialCharTok{$}\NormalTok{test\_pop}
+\NormalTok{        )}
 \NormalTok{      ) }\SpecialCharTok{+}
       \FunctionTok{theme\_minimal}\NormalTok{()}
 
@@ -1179,9 +1190,9 @@ combination.
 \NormalTok{\}}
 
 \CommentTok{\# \# Run the function}
-\NormalTok{refA }\OtherTok{\textless{}{-}} \StringTok{"Borneo"}
-\NormalTok{refB }\OtherTok{\textless{}{-}} \StringTok{"Mozambique\_Chopi"}
-\NormalTok{res }\OtherTok{\textless{}{-}} \FunctionTok{plot\_curves}\NormalTok{(refA, refB, files, result)}
+\NormalTok{ref\_a }\OtherTok{\textless{}{-}} \StringTok{"Borneo"}
+\NormalTok{ref\_b }\OtherTok{\textless{}{-}} \StringTok{"Mozambique\_Chopi"}
+\NormalTok{res }\OtherTok{\textless{}{-}} \FunctionTok{plot\_curves}\NormalTok{(ref\_a, ref\_b, files, result)}
 \CommentTok{\#}
 \ControlFlowTok{for}\NormalTok{ (p }\ControlFlowTok{in}\NormalTok{ res) }\FunctionTok{print}\NormalTok{(p)}
 \end{Highlighting}
