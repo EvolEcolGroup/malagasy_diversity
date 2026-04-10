@@ -60,9 +60,9 @@ if (file.exists(adm_res)) {
   k <- c(2:10)
   qmats <- gt_admixture(mad_bor_g1000_sum,
     k,
-    n_runs = 25,
+    n_runs = 1,
     crossval = TRUE,
-    seed = c(1:25),
+    seed = 1,
     n_cores = n_cores
   )
   saveRDS(qmats, "../data/intermediate/admixture/unsupervised/admixture_m.RDS")
