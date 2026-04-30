@@ -339,6 +339,16 @@ ggsave(paste0(res_dir, "admixture_k2_malagasy_named.jpg"),
 ```
 
 ```{r}
+tidyq <- tidy(get_q_matrix(qmats, k = 2, run = 1), mad_bor_g1000_sum)
+# Min and max percentage of .Q2 in group 2 (Malagasy)
+tidyq %>%
+  filter(group == 2) %>%
+  filter(q == ".Q2") %>%
+  reframe(range = range(percentage))
+```
+
+
+```{r}
 # find samples of interest within gt_admix object `qmats`
 malagasy_index <- which(qmats$group %in% c(
   "Betsimisaraka", "Merina", "Diego Mixed",

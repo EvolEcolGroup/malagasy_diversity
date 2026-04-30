@@ -226,9 +226,7 @@ fst_matrix <- mad_bor_g1000_sum %>%
   pairwise_pop_fst(by_locus = FALSE, method = "WC84", type = "pairwise")
 
 write.csv(fst_matrix, paste0(res_dir, "fst_matrix_full.txt"),
-  sep = ",",
-  row.names = TRUE,
-  col.names = TRUE
+  row.names = TRUE
 )
 ```
 
@@ -288,6 +286,79 @@ ggsave(paste0(res_dir, "fst_merina_split.jpg"),
   width = 7, height = 5, dpi = 300
 )
 ```
+
+# Compare Fst to difference in African ancestry proportion between populations
+
+```{r}
+f4_ratios <- read.table("../results/s06_b_f_stats/f4_ratio_african_admixture",
+  header = TRUE, sep = "\t"
+)
+f4_ratios <- f4_ratios %>%
+  mutate(pop3 = case_when(
+    pop3 == "MerinaA" ~ "Merina A",
+    pop3 == "MerinaB" ~ "Merina B",
+    pop3 == "Sakalava_Tsimihety" ~ "Sakalava/Tsimihety",
+    pop3 == "Diego" ~ "Diego Mixed",
+    TRUE ~ pop3
+  ))
+
+
+fst_matrix_tidy <- mad_bor_g1000_sum %>%
+  pairwise_pop_fst(by_locus = FALSE, method = "WC84", type = "tidy")
+
+
+fst_matrix_tidy <- fst_matrix_tidy %>%
+  mutate(
+    anc_pop_1 = f4_ratios[match(fst_matrix_tidy$population_1, f4_ratios$pop3), "alpha"],
+    anc_pop_2 = f4_ratios[match(fst_matrix_tidy$population_2, f4_ratios$pop3), "alpha"]
+  )
+
+fst_matrix_tidy <- fst_matrix_tidy %>%
+  mutate(
+    diff = abs(anc_pop_1 - anc_pop_2),
+    pops = paste(population_1, population_2, sep = "_")
+  )
+
+ggplot(fst_matrix_tidy, aes(x = diff, y = value)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(
+    x = "Difference in African Ancestry Proportion",
+    y = expression("F"[st])
+  ) +
+  theme_minimal()
+
+ggsave(paste0(res_dir, "fst_vs_ancestry_diff.jpg"),
+  width = 7, height = 5, dpi = 300
+)
+
+# get proportion of Fst variance explained by ancestry
+model <- lm(value ~ diff, data = fst_matrix_tidy)
+summary(model)
+```
+
+# Check spatial distribution of Merina A and Merina B
+
+```{r}
+samples <-
+  read.csv("../data/raw/data_input/Malagasy_pop_gen_sample_sheet_2015_cleaned.csv")
+samples <- samples %>%
+  mutate(Sample.ID = paste0(Sample.ID, "RR"))
+
+mad_bor_g1000_sum_samples <- mad_bor_g1000_sum %>%
+  left_join(samples, by = c("id" = "Sample.ID"))
+
+spatial_dist <- mad_bor_g1000_sum_samples %>%
+  filter(population %in% c("Merina A", "Merina B")) %>%
+  select(Village, population)
+
+ggplot(spatial_dist, aes(x = Village, fill = population)) +
+  geom_bar(position = "dodge") +
+  labs(x = "Village", y = "Count", fill = "Population") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = -60, hjust = 0))
+```
+
 
 ------------------------------------------------------------------------
 
