@@ -307,7 +307,7 @@ mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
     TRUE ~ Region
   ))
 
-ggplot(pcs, aes(
+plt <- ggplot(pcs, aes(
   x = V1, y = V2,
   colour = mad_bor_g1000_sum$Region,
   shape = as.factor(mad_bor_g1000_sum$malagasy)
@@ -333,10 +333,18 @@ ggplot(pcs, aes(
     panel.grid.minor = element_blank(),
     panel.background = element_rect(fill = "white")
   )
+plt
 
 ggsave(paste0(res_dir, "pca_subsampled_regions_together.jpg"),
   width = 7, height = 7, dpi = 300
 )
+```
+
+```{r}
+pdf(paste0(res_dir, "pca_subsampled_regions_together.pdf"),
+    width = 7, height = 7, useDingbats = FALSE)
+plt
+dev.off()
 ```
 
 Altering the sample sizes reduces the explained variance of both principal components and increases the dispersion of the data.
@@ -351,7 +359,7 @@ mad_bor_g1000_sum$Region <-
     )
   )
 
-ggplot(pcs, aes(
+plt <- ggplot(pcs, aes(
   x = V1, y = V2,
   colour = mad_bor_g1000_sum$Region,
   shape = as.factor(mad_bor_g1000_sum$malagasy)
@@ -401,11 +409,20 @@ ggplot(pcs, aes(
     panel.grid.minor = element_blank(),
     panel.background = element_rect(fill = "white")
   )
+plt
 
 
 ggsave(paste0(res_dir, "pca_subsampled_regions_together_large_legend.jpg"),
   width = 7, height = 5, dpi = 300
 )
+```
+
+
+```{r}
+pdf(paste0(res_dir, "pca_subsampled_regions_together_large_legend.pdf"),
+    width = 7, height = 5, useDingbats = FALSE)
+plt
+dev.off()
 ```
 
 
@@ -484,6 +501,12 @@ ggsave(paste0(res_dir, "pca_subsampled_regions_together_internal_legend.jpg"),
 )
 ```
 
+```{r}
+pdf(paste0(res_dir, "pca_subsampled_regions_together_internal_legend.pdf"),
+    width = 7, height = 5, useDingbats = FALSE)
+p2
+dev.off()
+```
 
 ------------------------------------------------------------------------
 

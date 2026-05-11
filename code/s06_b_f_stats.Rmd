@@ -860,7 +860,7 @@ qp4_african_p$lower <- qp4_african_p$alpha - qp4_african_p$se
 qp4_african_p$upper <- qp4_african_p$alpha + qp4_african_p$se
 
 
-ggplot(qp4_african_p, aes(x = alpha, y = pop3, colour = pop3, fill = pop3)) +
+plt <- ggplot(qp4_african_p, aes(x = alpha, y = pop3, colour = pop3, fill = pop3)) +
   geom_point() +
   labs(
     x = paste("Admixture proportion \u03b1"), y = NULL,
@@ -878,10 +878,17 @@ ggplot(qp4_african_p, aes(x = alpha, y = pop3, colour = pop3, fill = pop3)) +
   geom_errorbar(aes(xmin = lower, xmax = upper),
     width = 0.2
   )
+plt
+
 ggsave(
   filename = paste0(res_dir, "F4_African_source_error_bar.jpg"),
   width = 7, height = 5, units = "in", dpi = 300
 )
+
+pdf(paste0(res_dir, "F4_African_source_error_bar.pdf"),
+    width = 7, height = 5, useDingbats = FALSE)
+plt
+dev.off()
 
 
 qp4_african_p$region <- c(rep("coastal", 6), rep("highland", 3))

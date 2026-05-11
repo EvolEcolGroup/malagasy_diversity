@@ -724,6 +724,13 @@ for (p in res_afr) {
   )
 }
 
+for (p in res_afr) {
+  pdf(paste0(res_dir, "f3_all_african_pops_", p$labels$title, ".pdf"),
+      width = 10, height = 5, useDingbats = FALSE)
+  print(p)
+  dev.off()
+}
+
 bet_all_afr <- res_afr[[1]]
 ```
 
@@ -843,6 +850,13 @@ for (p in res_bantu) {
   ggsave(paste0(res_dir, "f3_bantu_pops_", p$labels$title, ".jpg"),
     width = 6, height = 4, dpi = 300
   )
+}
+
+for (p in res_afr) {
+  pdf(paste0(res_dir, "f3_bantu_pops_", p$labels$title, ".pdf"),
+      width = 6, height = 4, useDingbats = FALSE)
+  print(p)
+  dev.off()
 }
 
 bet_bantu_afr <- res_bantu[[1]]

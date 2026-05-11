@@ -202,7 +202,7 @@ kml_data_single_site <- kml_data %>%
 kml_data_single_site$yrs <-
   kml_data$yrs[match(kml_data_single_site$Name, kml_data$Name)]
 
-ggplot() +
+plt <- ggplot() +
   geom_sf(data = madagascar_dissolved) +
   geom_sf(
     data = sf::st_as_sf(kml_data_single_site),
@@ -229,9 +229,16 @@ ggplot() +
     size = 3, segment.color = "transparent"
   ) +
   guides()
+plt
 ggsave(paste0(res_dir, "malder_dates_gradient_single_site.jpg"),
   width = 7, height = 4, dpi = 300
 )
+```
+
+```{r}
+pdf(paste0(res_dir, "figure_4_MALDER.pdf"), width = 7, height = 4, useDingbats = FALSE)
+plt
+dev.off()
 ```
 
 ------------------------------------------------------------------------

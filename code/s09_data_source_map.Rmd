@@ -239,6 +239,11 @@ p3
 ggsave(paste0(res_dir, "madagascar_map_pca_symbols_slimer_single_site.jpg"),
   width = 5, height = 5, dpi = 300
 )
+
+pdf(paste0(res_dir, "madagascar_map_pca_symbols_slimer_single_site.pdf"),
+    width = 5, height = 5, useDingbats = FALSE)
+p3
+dev.off()
 ```
 
 

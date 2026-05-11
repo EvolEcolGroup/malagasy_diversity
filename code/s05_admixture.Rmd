@@ -168,6 +168,18 @@ ggsave(paste0(res_dir, "admixture_k2.jpg"),
 )
 ```
 
+```{r}
+pdf(paste0(res_dir, "admixture_k2_all_names_bottom.pdf"),
+    width = 7, height = 5, useDingbats = FALSE)
+autoplot(get_q_matrix(qmats, k = 2, run = 1),
+  annotate_group = TRUE,
+  arrange_by_group = TRUE,
+  arrange_by_indiv = TRUE,
+  reorder_within_groups = TRUE
+)
+dev.off()
+```
+
 # Replot with labels at the top
 
 ```{r}
@@ -253,7 +265,36 @@ plot_a <- plot_a +
   theme(
     axis.text.x.top = element_text(size = 10),
     axis.text.x.bottom = element_blank()
-  )
+  ) + coord_cartesian(clip = "off")
+```
+
+```{r}
+pdf(paste0(res_dir, "admixture_k2_all_names_top.pdf"),
+    width = 7, height = 5, useDingbats = FALSE)
+plot_a +
+  ggplot2::geom_segment(
+    data = segment_data,
+    ggplot2::aes(
+      x = .data$x,
+      y = .data$y,
+      xend = .data$xend,
+      yend = .data$yend
+    ),
+    inherit.aes = FALSE
+  ) +
+  ggplot2::scale_x_discrete(
+    breaks = unique(q_tbl$id)[get_mid_points(c(0, group_x))],
+    labels = names(group_x),
+    position = "top"
+  ) +
+  ggplot2::theme(
+    axis.text.x = ggplot2::element_text(angle = 45, vjust = 1, hjust = 0)
+  ) +
+  theme(
+    axis.text.x.top = element_text(size = 10),
+    axis.text.x.bottom = element_blank()
+  ) + coord_cartesian(clip = "off")
+dev.off()
 ```
 
 # Add Malagasy population names
@@ -432,6 +473,19 @@ ggsave(paste0(res_dir, "admixture_k2_malagasy.jpg"),
 )
 ```
 
+```{r}
+pdf(paste0(res_dir, "admixture_k2_malagasy.pdf"),
+    width = 7, height = 5, useDingbats = FALSE)
+autoplot(get_q_matrix(qmats_malagasy, k = 2, run = 1),
+  annotate_group = TRUE,
+  arrange_by_group = TRUE,
+  arrange_by_indiv = TRUE,
+  reorder_within_groups = TRUE
+)
+dev.off()
+```
+
+
 
 ```{r}
 grid.arrange(plot_a, plot_b, nrow = 2)
@@ -441,6 +495,11 @@ ggsave(g,
   filename = paste0(res_dir, "admixture_k2_inset.jpg"),
   width = 7, height = 6, dpi = 300
 )
+
+pdf(paste0(res_dir, "admixture_k2_inset.pdf"),
+    width = 7, height = 6, useDingbats = FALSE)
+grid.arrange(plot_a, plot_b, nrow = 2)
+dev.off()
 ```
 
 

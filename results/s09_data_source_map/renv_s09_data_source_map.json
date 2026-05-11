@@ -639,15 +639,15 @@
     },
     "bigassertr": {
       "Package": "bigassertr",
-      "Version": "0.1.6",
+      "Version": "0.1.7",
       "Source": "Repository",
       "Title": "Assertion and Message Functions",
-      "Date": "2022-12-30",
+      "Date": "2025-06-27",
       "Authors@R": "person(given = \"Florian\", family = \"Privé\", role = c(\"aut\", \"cre\"), email = \"florian.prive.21@gmail.com\")",
       "Description": "Enhanced message functions (cat() / message() / warning() / error())  using wrappers around sprintf(). Also, multiple assertion functions  (e.g. to check class, length, values, files, arguments, etc.).",
       "License": "GPL-3",
       "Encoding": "UTF-8",
-      "RoxygenNote": "7.2.2",
+      "RoxygenNote": "7.3.2",
       "Suggests": [
         "testthat",
         "covr"
@@ -729,12 +729,12 @@
     },
     "bigsnpr": {
       "Package": "bigsnpr",
-      "Version": "1.12.18",
-      "Source": "Repository",
+      "Version": "1.12.21",
+      "Source": "GitHub",
       "Encoding": "UTF-8",
       "Type": "Package",
       "Title": "Analysis of Massive SNP Arrays",
-      "Date": "2024-11-26",
+      "Date": "2025-08-21",
       "Authors@R": "c( person(\"Florian\", \"Privé\", email = \"florian.prive.21@gmail.com\", role = c(\"aut\", \"cre\")), person(\"Michael\", \"Blum\", role = \"ths\"), person(\"Hugues\", \"Aschard\", email = \"hugues.aschard@pasteur.fr\", role = \"ths\"), person(\"Bjarni Jóhann\", \"Vilhjálmsson\", email = \"bjv@econ.au.dk\", role = \"ths\"))",
       "Description": "Easy-to-use, efficient, flexible and scalable tools for analyzing  massive SNP arrays. Privé et al. (2018) <doi:10.1093/bioinformatics/bty185>.",
       "License": "GPL-3",
@@ -744,10 +744,10 @@
       "SystemRequirements": "A few functions from package 'bigsnpr' wrap existing software such as 'PLINK' <www.cog-genomics.org/plink2>. Functions are provided to download these software. Note that these external software might not work for some operating systems (e.g. 'PLINK' might not work on Solaris).",
       "Depends": [
         "R (>= 3.4)",
-        "bigstatsr (>= 1.5.11)"
+        "bigstatsr (>= 1.6.2)"
       ],
       "Imports": [
-        "bigassertr (>= 0.1.6)",
+        "bigassertr (>= 0.1.7)",
         "bigparallelr",
         "bigsparser (>= 0.6)",
         "bigreadr",
@@ -794,12 +794,18 @@
         "xgboost"
       ],
       "RoxygenNote": "7.3.2",
+      "Roxygen": "list(markdown = TRUE)",
       "URL": "https://privefl.github.io/bigsnpr/",
       "BugReports": "https://github.com/privefl/bigsnpr/issues",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "bigsnpr",
+      "RemoteUsername": "privefl",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "467ef18eb81becd5a2ee6b4f1b02c25e62f3310b",
       "NeedsCompilation": "yes",
       "Author": "Florian Privé [aut, cre], Michael Blum [ths], Hugues Aschard [ths], Bjarni Jóhann Vilhjálmsson [ths]",
-      "Maintainer": "Florian Privé <florian.prive.21@gmail.com>",
-      "Repository": "CRAN"
+      "Maintainer": "Florian Privé <florian.prive.21@gmail.com>"
     },
     "bigsparser": {
       "Package": "bigsparser",
@@ -838,12 +844,12 @@
     },
     "bigstatsr": {
       "Package": "bigstatsr",
-      "Version": "1.6.1",
-      "Source": "Repository",
+      "Version": "1.6.3",
+      "Source": "GitHub",
       "Encoding": "UTF-8",
       "Type": "Package",
       "Title": "Statistical Tools for Filebacked Big Matrices",
-      "Date": "2024-09-10",
+      "Date": "2025-06-30",
       "Authors@R": "c( person(\"Florian\", \"Privé\", email = \"florian.prive.21@gmail.com\",  role = c(\"aut\", \"cre\")), person(\"Michael\", \"Blum\", role = \"ths\"), person(\"Hugues\", \"Aschard\", email = \"hugues.aschard@pasteur.fr\", role = \"ths\"))",
       "Description": "Easy-to-use, efficient, flexible and scalable statistical tools. Package bigstatsr provides and uses Filebacked Big Matrices via memory-mapping. It provides for instance matrix operations, Principal Component Analysis, sparse linear supervised models, utility functions and more <doi:10.1093/bioinformatics/bty185>.",
       "License": "GPL-3",
@@ -853,7 +859,7 @@
         "R (>= 3.4)"
       ],
       "Imports": [
-        "bigassertr (>= 0.1.1)",
+        "bigassertr (>= 0.1.7)",
         "bigparallelr (>= 0.2.3)",
         "cowplot",
         "foreach",
@@ -889,14 +895,20 @@
         "spelling (>= 1.2)",
         "testthat"
       ],
-      "RoxygenNote": "7.3.2",
+      "RoxygenNote": "7.3.3",
+      "Roxygen": "list(markdown = TRUE)",
       "URL": "https://privefl.github.io/bigstatsr/",
       "BugReports": "https://github.com/privefl/bigstatsr/issues",
       "Collate": "'AUC.R' 'FBM-attach.R' 'crochet.R' 'FBM.R' 'FBM-code256.R' 'FBM-copy.R' 'RcppExports.R' 'SVD.R' 'apply-parallelize.R' 'biglasso.R' 'bigstatsr-package.R' 'colstats.R' 'crossprodSelf.R' 'mult-mat.R' 'mult-vec.R' 'pcor.R' 'plot.R' 'predict.R' 'randomSVD.R' 'read-write.R' 'scaling.R' 'summary.R' 'tcrossprodSelf.R' 'transpose.R' 'univLinReg.R' 'univLogReg.R' 'utils-assert.R' 'utils.R' 'zzz.R'",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "bigstatsr",
+      "RemoteUsername": "privefl",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "b12ec3b3528e05f4859feb6352e1d6c4642c751c",
       "NeedsCompilation": "yes",
       "Author": "Florian Privé [aut, cre], Michael Blum [ths], Hugues Aschard [ths]",
-      "Maintainer": "Florian Privé <florian.prive.21@gmail.com>",
-      "Repository": "CRAN"
+      "Maintainer": "Florian Privé <florian.prive.21@gmail.com>"
     },
     "bigutilsr": {
       "Package": "bigutilsr",

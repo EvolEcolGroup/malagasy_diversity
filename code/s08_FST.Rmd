@@ -243,6 +243,18 @@ pheatmap(fst_matrix,
 )
 ```
 
+```{r}
+pdf(paste0(res_dir, "fst_dendrogram_merina_split.pdf"),
+    width = 7, height = 5, useDingbats = FALSE)
+pheatmap(fst_matrix,
+  color = viridis(256),
+  angle_col = 45
+)
+dev.off()
+```
+
+
+
 # Other heatmap versions
 
 https://stackoverflow.com/questions/38727324/adding-a-dendrogram-to-a-ggplot2-heatmap
