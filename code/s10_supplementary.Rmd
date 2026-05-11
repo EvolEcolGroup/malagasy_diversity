@@ -289,12 +289,13 @@ min_f3 <- read.table("../results/s06_b_f_stats/minimum_z-score_malagasy_pops",
 kable(min_f3, caption = "Minimum z-scores for f3 statistics across all combinations for each Malagasy population.")
 ```
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-all_f3 <- read.table("../results/s06_b_f_stats/f3_results_all_combinations",
-  header = TRUE, sep = "\t"
-)
+```{r table-excel-note, echo=FALSE, message=FALSE, warning=FALSE}
+# We create a tiny, invisible data frame
+ghost_df <- data.frame(Note = "Detailed Results (See accompanying Excel file)")
 
-kable(all_f3, caption = "Full f3 statistic results across all population combinations.")
+kable(ghost_df, 
+             caption = "Table 5 is provided in an accompanying Excel file.", 
+             col.names = NULL) # Removes the column header
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
