@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.2.25)  8 MAY 2026 11:54
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.2.25)  15 OCT 2026 13:43
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -466,72 +466,80 @@ Reading f2 data for pair 9155 out of 9316...i Reading f2 data for pair 9156 out 
  []
 
 [2] [3] [4] [5] [6] [7] [8] [9] [10] [11]
-<s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-15-1.pdf, id=67, 469.755pt x 325.215pt>
+Underfull \vbox (badness 10000) detected at line 1054
+ []
+
+
+Underfull \vbox (badness 10000) detected at line 1054
+ []
+
+[12]
+<s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-15-1.pdf, id=71, 469.755pt x 325.215pt>
 File: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-15-1.pdf Graphic file (type pdf)
 <use s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-15-1.pdf>
-Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-15-1.pdf  used on input line 1040.
+Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-15-1.pdf  used on input line 1056.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
-[12] [13 <./s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-15-1.pdf>]
+[13 <./s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-15-1.pdf>]
 <s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-16-1.pdf, id=86, 469.755pt x 325.215pt>
 File: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-16-1.pdf Graphic file (type pdf)
 <use s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-16-1.pdf>
-Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-16-1.pdf  used on input line 1087.
+Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-16-1.pdf  used on input line 1103.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
 [14 <./s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-16-1.pdf>]
 <s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-17-1.pdf, id=96, 469.755pt x 325.215pt>
 File: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-17-1.pdf Graphic file (type pdf)
 <use s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-17-1.pdf>
-Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-17-1.pdf  used on input line 1130.
+Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-17-1.pdf  used on input line 1146.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
 [15 <./s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-17-1.pdf>]
 <s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-18-1.pdf, id=106, 469.755pt x 325.215pt>
 File: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-18-1.pdf Graphic file (type pdf)
 <use s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-18-1.pdf>
-Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-18-1.pdf  used on input line 1182.
+Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-18-1.pdf  used on input line 1198.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
 [16] [17 <./s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-18-1.pdf>]
 <s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-19-1.pdf, id=121, 469.755pt x 325.215pt>
 File: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-19-1.pdf Graphic file (type pdf)
 <use s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-19-1.pdf>
-Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-19-1.pdf  used on input line 1231.
+Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-19-1.pdf  used on input line 1247.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
 [18 <./s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-19-1.pdf>] [19] [20]
-Overfull \hbox (186.49307pt too wide) in paragraph at lines 1442--1442
+Overfull \hbox (186.49307pt too wide) in paragraph at lines 1465--1465
 []\T1/lmtt/m/n/10 ## gen_tibble saved to /home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/pan_tro_liftover/chimp_ref_merged.gt[] 
  []
 
 
-Overfull \hbox (165.49313pt too wide) in paragraph at lines 1446--1446
+Overfull \hbox (165.49313pt too wide) in paragraph at lines 1469--1469
 []\T1/lmtt/m/n/10 ## using FBM RDS: /home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/pan_tro_liftover/chimp_ref_merged.rds[] 
  []
 
-
-Overfull \hbox (202.24303pt too wide) in paragraph at lines 1450--1450
+[21]
+Overfull \hbox (202.24303pt too wide) in paragraph at lines 1473--1473
 []\T1/lmtt/m/n/10 ## with FBM backing file: /home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/pan_tro_liftover/chimp_ref_merged.bk[] 
  []
 
-[21]
-Overfull \hbox (139.24321pt too wide) in paragraph at lines 1462--1462
+
+Overfull \hbox (139.24321pt too wide) in paragraph at lines 1485--1485
 []\T1/lmtt/m/n/10 ## gt_load('/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/pan_tro_liftover/chimp_ref_merged.gt')[] 
  []
 
 [22]
-Overfull \hbox (196.99304pt too wide) in paragraph at lines 1527--1527
+Overfull \hbox (196.99304pt too wide) in paragraph at lines 1550--1550
 []\T1/lmtt/m/n/10 ## gen_tibble saved to /home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/pan_tro_liftover/chimp_ref_outgroup.gt[] 
  []
 
 
-Overfull \hbox (175.9931pt too wide) in paragraph at lines 1531--1531
+Overfull \hbox (175.9931pt too wide) in paragraph at lines 1554--1554
 []\T1/lmtt/m/n/10 ## using FBM RDS: /home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/pan_tro_liftover/chimp_ref_outgroup.rds[] 
  []
 
 
-Overfull \hbox (212.743pt too wide) in paragraph at lines 1535--1535
+Overfull \hbox (212.743pt too wide) in paragraph at lines 1558--1558
 []\T1/lmtt/m/n/10 ## with FBM backing file: /home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/pan_tro_liftover/chimp_ref_outgroup.bk[] 
  []
 
 
-Overfull \hbox (149.74318pt too wide) in paragraph at lines 1547--1547
+Overfull \hbox (149.74318pt too wide) in paragraph at lines 1570--1570
 []\T1/lmtt/m/n/10 ## gt_load('/home/EJC199/Dropbox/gitdata/malagasy_diversity/data/intermediate/pan_tro_liftover/chimp_ref_outgroup.gt')[] 
  []
 
@@ -539,30 +547,31 @@ Overfull \hbox (149.74318pt too wide) in paragraph at lines 1547--1547
 <s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-36-1.pdf, id=167, 469.755pt x 325.215pt>
 File: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-36-1.pdf Graphic file (type pdf)
 <use s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-36-1.pdf>
-Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-36-1.pdf  used on input line 1716.
+Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-36-1.pdf  used on input line 1739.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
 [25]
-Overfull \vbox (1.32874pt too high) detected at line 1779
+Overfull \vbox (1.32874pt too high) detected at line 1802
  []
 
 [26 <./s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-36-1.pdf>]
 <s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-37-1.pdf, id=182, 469.755pt x 325.215pt>
 File: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-37-1.pdf Graphic file (type pdf)
 <use s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-37-1.pdf>
-Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-37-1.pdf  used on input line 1781.
+Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-37-1.pdf  used on input line 1804.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
 [27] [28 <./s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-37-1.pdf>]
 <s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-37-2.pdf, id=196, 469.755pt x 325.215pt>
 File: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-37-2.pdf Graphic file (type pdf)
 <use s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-37-2.pdf>
-Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-37-2.pdf  used on input line 1820.
+Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-37-2.pdf  used on input line 1843.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
 [29 <./s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-37-2.pdf>]
 <s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-38-1.pdf, id=206, 469.755pt x 325.215pt>
 File: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-38-1.pdf Graphic file (type pdf)
 <use s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-38-1.pdf>
-Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-38-1.pdf  used on input line 1850.
+Package pdftex.def Info: s06_b_f_stats_files/s06_b_f_stats_files/figure-latex/unnamed-chunk-38-1.pdf  used on input line 1899.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
+[30]
 
 ! LaTeX Error: Unicode character α (U+03B1)
                not set up for use with LaTeX.
@@ -571,18 +580,18 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.1868 \end{verbatim}
+l.1918 \end{verbatim}
                      
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
  
 Here is how much of TeX's memory you used:
- 11601 strings out of 469514
- 180175 string characters out of 5469758
- 2780498 words of memory out of 5000000
+ 11602 strings out of 469514
+ 180182 string characters out of 5469758
+ 2685350 words of memory out of 5000000
  40050 multiletter control sequences out of 15000+600000
  656701 words of font info for 65 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 89i,6n,93p,446497b,632s stack positions out of 10000i,1000n,20000p,3000000b,200000s
+ 89i,6n,93p,427453b,632s stack positions out of 10000i,1000n,20000p,3000000b,200000s
 !  ==> Fatal error occurred, no output PDF file produced!

@@ -14,6 +14,7 @@ library(bigsnpr)
 library(knitr)
 library(tidyr)
 library(ggrepel)
+library(stringr)
 ```
 
 ```{r set-directories, include=FALSE}
@@ -139,10 +140,26 @@ print(test)
 Admixture f3 statistics were used in the configuration f3(Malagasy; Asian, African) to examine which comparative African and Asian populations show the greatest similarity to the ‘source’ populations of the Malagasy.
 
 ```{r}
+reorder_test <- test %>%
+  # sort by Malagasy pop
+  group_by(Malagasy) %>%
+  arrange(est) %>%
+  # sort by est
+  arrange(desc(est))
+
 write.table(test,
   file = paste0(res_dir, "f3_results_all_combinations"),
   row.names = FALSE, quote = FALSE, sep = "\t"
 )
+
+# write a separate table for each of the Malagasy populations
+for (pop in unique(reorder_test$Malagasy)) {
+  pop_data <- reorder_test %>% filter(Malagasy == pop)
+  write.table(pop_data,
+    file = paste0(res_dir, "f3_results_", pop, ".txt"),
+    row.names = FALSE, quote = FALSE, sep = "\t"
+  )
+}
 ```
 
 # Examine cases where f3 value is not negative
@@ -484,15 +501,22 @@ gc()
 
 To estimate the proportion of each ancestry source within the Malagasy population, we will use an f4 ratio in the following configurations:
 
-f4(GBR,Gorilla;Malagasy,Borneo)/f4(GBR,Chimpanzee;Esan,Borneo)
+f4(GBR,Gorilla;Malagasy,Borneo)/f4(GBR,Chimpanzee;Mozambique,Borneo)
 
-f4(GBR,Gorilla;Malagasy,Esan)/f4(GBR,Chimpanzee;Borneo,Esan)
+f4(GBR,Gorilla;Malagasy,Mozambique)/f4(GBR,Chimpanzee;Borneo,Mozambique)
 
 # Load
 
 ```{r}
 mad_bor_g1000_sum <-
   gt_load("../data/intermediate/rbind_data/mad_bor_g1000_sum_neo_clean_ld.gt")
+
+# Update f4 results to use Mozambique rather than Esan
+mad_bor_g1000_sum <- mad_bor_g1000_sum %>%
+  mutate(population = case_when(
+    str_starts(population, "Mozambique") ~ "Mozambique",
+    TRUE ~ population
+  ))
 ```
 
 # Loci and sample count
@@ -562,11 +586,11 @@ mad_bor_g1000_sum$population <- ifelse(!is.na(matching_m),
 # count number of MerinaA
 cat(
   "Merina group > 0.5",
-  length(which(mad_bor_g1000_sum$population == "MerinaA"))
+  length(which(mad_bor_g1000_sum$population == "MerinaA")), "\n"
 )
 cat(
   "Merina group < 0.5",
-  length(which(mad_bor_g1000_sum$population == "MerinaB"))
+  length(which(mad_bor_g1000_sum$population == "MerinaB")), "\n"
 )
 ```
 
@@ -694,7 +718,7 @@ malagasy <- c(
 )
 
 pop_matrix <-
-  as.matrix(data.frame("GBR", "chimp_ref", malagasy, "Borneo", "ESN"))
+  as.matrix(data.frame("GBR", "chimp_ref", malagasy, "Borneo", "Mozambique"))
 
 qp4_african_p <- qpf4ratio(f2_blocks, pop_matrix)
 
@@ -863,8 +887,34 @@ qp4_african_p$upper <- qp4_african_p$alpha + qp4_african_p$se
 plt <- ggplot(qp4_african_p, aes(x = alpha, y = pop3, colour = pop3, fill = pop3)) +
   geom_point() +
   labs(
-    x = paste("Admixture proportion \u03b1"), y = NULL,
+    x = paste("African admixture proportion \u03b1"), y = NULL,
     colour = "Malagasy population", fill = "Malagasy population"
+  ) +
+  scale_colour_manual(
+    values = c(
+      "Betsileo" = "#1B9E77",
+      "Betsimisaraka" = "#D95F02",
+      "Diego Mixed" = "#7570B3",
+      "Merina A" = "#E7298A",
+      "Merina B" = "#C77CFF",
+      "Mikea" = "#66A61E",
+      "Sakalava/Tsimihety" = "#E6AB02",
+      "Temoro" = "#A6761D",
+      "Vezo" = "#666666"
+    )
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Betsileo" = "#1B9E77",
+      "Betsimisaraka" = "#D95F02",
+      "Diego Mixed" = "#7570B3",
+      "Merina A" = "#E7298A",
+      "Merina B" = "#C77CFF",
+      "Mikea" = "#66A61E",
+      "Sakalava/Tsimihety" = "#E6AB02",
+      "Temoro" = "#A6761D",
+      "Vezo" = "#666666"
+    )
   ) +
   guides(colour = "none", fill = "none") +
   theme_minimal() +
