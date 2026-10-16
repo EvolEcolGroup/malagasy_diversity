@@ -44,7 +44,18 @@ malagasy_data <- subset(
     "Betsileo"
   )
 )
+new_malagasy_data <- subset(
+  mad_bor_g1000_sum,
+  mad_bor_g1000_sum$population %in% c(
+    "Diego",
+    "Merina",
+    "Betsimisaraka",
+    "Sakalava_Tsimihety",
+    "Betsileo"
+  )
+)
 nrow(malagasy_data)
+nrow(new_malagasy_data)
 ```
 
 # Impute
@@ -452,12 +463,28 @@ p2 <- ggplot(pcs, aes(
     colour = guide_legend(override.aes = list(
       shape = c(
         16, 16, 16, 16,
-        1, 3, 7, 15, 17, 19, 21, 23
+        1, 3, 7, 15, 17, 19, 20, 18
       ),
       size = 2
     ))
   ) +
   scale_colour_manual(
+    values = c(
+      "Africa" = "#F8766D",
+      "East Asia" = "#00BA38",
+      "South Asia" = "#C77CFF",
+      "Island southeast Asia" = "#FFD8A8",
+      "Betsileo" = "#1B9E77",
+      "Betsimisaraka" = "#D95F02",
+      "Diego Mixed" = "#7570B3",
+      "Merina" = "#E7298A",
+      "Mikea" = "#66A61E",
+      "Sakalava/Tsimihety" = "#E6AB02",
+      "Temoro" = "#A6761D",
+      "Vezo" = "#666666"
+    )
+  ) +
+  scale_fill_manual(
     values = c(
       "Africa" = "#F8766D",
       "East Asia" = "#00BA38",
@@ -481,8 +508,8 @@ p2 <- ggplot(pcs, aes(
     "Merina" = 15,
     "Mikea" = 17,
     "Sakalava/Tsimihety" = 19,
-    "Temoro" = 21,
-    "Vezo" = 23
+    "Temoro" = 20,
+    "Vezo" = 18
   )) +
   theme_minimal() +
   theme(
@@ -500,6 +527,298 @@ ggsave(paste0(res_dir, "pca_subsampled_regions_together_internal_legend.jpg"),
   width = 7, height = 5, dpi = 300
 )
 ```
+
+```{r}
+ggplot(pcs, aes(
+  x = V1, y = V2,
+  colour = mad_bor_g1000_sum$Region,
+  shape = as.factor(mad_bor_g1000_sum$shape)
+)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = NULL,
+    x = paste0("PC 1 (", round(variance$percent[1], 2), "%)"),
+    y = paste0("PC 2 (", round(variance$percent[2], 2), "%)"),
+    colour = NULL, shape = "none"
+  ) +
+  theme(legend.position = "right") +
+  guides(
+    shape = "none",
+    colour = guide_legend(override.aes = list(
+      shape = c(
+        1, 1, 1, 1,
+        1, 3, 7, 15, 17, 19, 20, 18
+      ),
+      size = 2
+    ))
+  ) +
+  scale_colour_manual(
+    values = c(
+      "Africa" = "#F8766D",
+      "East Asia" = "#00BA38",
+      "South Asia" = "#C77CFF",
+      "Island southeast Asia" = "#FFD8A8",
+      "Betsileo" = "#1B9E77",
+      "Betsimisaraka" = "#D95F02",
+      "Diego Mixed" = "#7570B3",
+      "Merina" = "#E7298A",
+      "Mikea" = "#66A61E",
+      "Sakalava/Tsimihety" = "#E6AB02",
+      "Temoro" = "#A6761D",
+      "Vezo" = "#666666"
+    )
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Africa" = "#F8766D",
+      "East Asia" = "#00BA38",
+      "South Asia" = "#C77CFF",
+      "Island southeast Asia" = "#FFD8A8",
+      "Betsileo" = "#1B9E77",
+      "Betsimisaraka" = "#D95F02",
+      "Diego Mixed" = "#7570B3",
+      "Merina" = "#E7298A",
+      "Mikea" = "#66A61E",
+      "Sakalava/Tsimihety" = "#E6AB02",
+      "Temoro" = "#A6761D",
+      "Vezo" = "#666666"
+    )
+  ) +
+  scale_shape_manual(values = c(
+    "Other" = 1,
+    "Betsileo" = 1,
+    "Betsimisaraka" = 3,
+    "Diego Mixed" = 7,
+    "Merina" = 15,
+    "Mikea" = 17,
+    "Sakalava/Tsimihety" = 19,
+    "Temoro" = 21,
+    "Vezo" = 18
+  )) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16),
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white"),
+    legend.position = c(0.15, 0.37)
+  )
+
+```
+
+```{r}
+mad_pops <- c("Betsileo", "Betsimisaraka", "Diego Mixed", "Merina",
+              "Mikea", "Sakalava/Tsimihety", "Temoro", "Vezo")
+ref_regions <- c("Africa", "East Asia", "South Asia", "Island southeast Asia")
+
+# One tidy data frame; factor levels set the legend order (references first)
+plot_df <- data.frame(
+  PC1 = pcs$V1,
+  PC2 = pcs$V2,
+  Region = factor(mad_bor_g1000_sum$Region, levels = c(ref_regions, mad_pops))
+)
+plot_df$is_mad <- plot_df$Region %in% mad_pops
+
+# Single palette / shape vector keyed by Region, so one legend covers everything
+pal <- c(
+  "Africa"                = "#8B1A2B",  # black: darkest, no Dark2 colour is this dark
+  "East Asia"             = "#0072B2",  # strong mid-blue (Okabe-Ito)
+  "South Asia"            = "#000000",  # light sky blue (Okabe-Ito)
+  "Island southeast Asia" = "#56B4E9",   # deep wine/maroon
+  # Malagasy: your original colourblind-friendly Dark2 colours
+  "Betsileo"              = "#1B9E77",
+  "Betsimisaraka"         = "#D95F02",
+  "Diego Mixed"           = "#7570B3",
+  "Merina"                = "#E7298A",
+  "Mikea"                 = "#66A61E",
+  "Sakalava/Tsimihety"    = "#E6AB02",
+  "Temoro"                = "#A6761D",
+  "Vezo"                  = "#666666"
+)
+
+shp <- c(
+  # references: open shapes only
+  "Africa" = 0, "East Asia" = 1, "South Asia" = 2, "Island southeast Asia" = 5,
+  # Malagasy: solid / line-based shapes only (no hollow ones)
+  "Betsileo" = 16, "Betsimisaraka" = 3, "Diego Mixed" = 4, "Merina" = 15,
+  "Mikea" = 17, "Sakalava/Tsimihety" = 8, "Temoro" = 25, "Vezo" = 18
+)
+
+ggplot(mapping = aes(x = PC1, y = PC2,
+                     colour = Region, fill = Region, shape = Region)) +
+  # Bottom layer: references, open shapes, low alpha, slightly smaller
+  geom_point(data = subset(plot_df, !is_mad),
+             alpha = 0.3, size = 1.5, stroke = 0.5) +
+  # Top layer: Malagasy populations, solid shapes, higher alpha
+  geom_point(data = subset(plot_df, is_mad),
+             alpha = 0.8, size = 2.2) +
+  scale_colour_manual(values = pal) +
+  scale_fill_manual(values = pal) +      # only affects shape 25 (Temoro)
+  scale_shape_manual(values = shp) +
+  labs(
+    title = NULL,
+    x = paste0("PC 1 (", round(variance$percent[1], 2), "%)"),
+    y = paste0("PC 2 (", round(variance$percent[2], 2), "%)"),
+    colour = NULL, fill = NULL, shape = NULL   # identical titles => one merged legend
+  ) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2.5))) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16),
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white"),
+    legend.position = c(0.15, 0.37)
+  )
+```
+
+```{r}
+mad_pops <- c("Betsileo", "Betsimisaraka", "Diego Mixed", "Merina",
+              "Mikea", "Sakalava/Tsimihety", "Temoro", "Vezo")
+ref_regions <- c("Africa", "East Asia", "South Asia", "Island southeast Asia")
+
+# One tidy data frame; factor levels set the legend order (references first)
+plot_df <- data.frame(
+  PC1 = pcs$V1,
+  PC2 = pcs$V2,
+  Region = factor(mad_bor_g1000_sum$Region, levels = c(ref_regions, mad_pops))
+)
+plot_df$is_mad <- plot_df$Region %in% mad_pops
+
+# Single palette / shape vector keyed by Region, so one legend covers everything
+pal <- c(
+  "Africa"                = "grey",
+  "East Asia"             = "grey",
+  "South Asia"            = "grey",
+  "Island southeast Asia" = "grey",
+  # Malagasy: your original colourblind-friendly Dark2 colours
+  "Betsileo"              = "#1B9E77",
+  "Betsimisaraka"         = "#D95F02",
+  "Diego Mixed"           = "#7570B3",
+  "Merina"                = "#E7298A",
+  "Mikea"                 = "#66A61E",
+  "Sakalava/Tsimihety"    = "#E6AB02",
+  "Temoro"                = "#A6761D",
+  "Vezo"                  = "#666666"
+)
+
+shp <- c(
+  # references: open shapes only
+  "Africa" = 0, "East Asia" = 1, "South Asia" = 2, "Island southeast Asia" = 5,
+  # Malagasy: solid / line-based shapes only (no hollow ones)
+  "Betsileo" = 16, "Betsimisaraka" = 3, "Diego Mixed" = 4, "Merina" = 15,
+  "Mikea" = 17, "Sakalava/Tsimihety" = 8, "Temoro" = 25, "Vezo" = 18
+)
+
+ggplot(mapping = aes(x = PC1, y = PC2,
+                     colour = Region, fill = Region, shape = Region)) +
+  # Bottom layer: references, open shapes, low alpha, slightly smaller
+  geom_point(data = subset(plot_df, !is_mad),
+             alpha = 0.6, size = 1.5, stroke = 0.5) +
+  # Top layer: Malagasy populations, solid shapes, higher alpha
+  geom_point(data = subset(plot_df, is_mad),
+             alpha = 0.7, size = 2.2) +
+  scale_colour_manual(values = pal) +
+  scale_fill_manual(values = pal) +      # only affects shape 25 (Temoro)
+  scale_shape_manual(values = shp) +
+  labs(
+    title = NULL,
+    x = paste0("PC 1 (", round(variance$percent[1], 2), "%)"),
+    y = paste0("PC 2 (", round(variance$percent[2], 2), "%)"),
+    colour = NULL, fill = NULL, shape = NULL   # identical titles => one merged legend
+  ) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2.5))) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16),
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white"),
+    legend.position = c(0.15, 0.37)
+  )
+```
+
+```{r}
+library(ggplot2)
+
+mad_pops <- c("Betsileo", "Betsimisaraka", "Diego Mixed", "Merina",
+              "Mikea", "Sakalava/Tsimihety", "Temoro", "Vezo")
+ref_regions <- c("Africa", "East Asia", "South Asia", "Island southeast Asia")
+
+plot_df <- data.frame(
+  PC1 = pcs$V1,
+  PC2 = pcs$V2,
+  Region = factor(mad_bor_g1000_sum$Region, levels = c(ref_regions, mad_pops))
+)
+plot_df$is_mad <- plot_df$Region %in% mad_pops
+
+pal <- c(
+  # references
+  "Africa"                = "#000000",
+  "East Asia"             = "#0072B2",
+  "South Asia"            = "#56B4E9",
+  "Island southeast Asia" = "#8B1A2B",
+  # Malagasy (Dark2)
+  "Betsileo"              = "#1B9E77",
+  "Betsimisaraka"         = "#D95F02",
+  "Diego Mixed"           = "#7570B3",
+  "Merina"                = "#E7298A",
+  "Mikea"                 = "#66A61E",
+  "Sakalava/Tsimihety"    = "#E6AB02",
+  "Temoro"                = "#A6761D",
+  "Vezo"                  = "#666666"
+)
+
+shp <- c(
+  "Africa" = 0, "East Asia" = 1, "South Asia" = 2, "Island southeast Asia" = 5,
+  "Betsileo" = 16, "Betsimisaraka" = 3, "Diego Mixed" = 4, "Merina" = 15,
+  "Mikea" = 17, "Sakalava/Tsimihety" = 8, "Temoro" = 25, "Vezo" = 18
+)
+
+ggplot(mapping = aes(x = PC1, y = PC2,
+                     colour = Region, fill = Region, shape = Region)) +
+  # 1. references: bottom layer
+  geom_point(data = subset(plot_df, !is_mad),
+             alpha = 0.4, size = 1.5, stroke = 0.6) +
+  # 2. single ellipse around all Malagasy points
+  stat_ellipse(data = subset(plot_df, is_mad),
+               aes(x = PC1, y = PC2, group = 1),
+               inherit.aes = FALSE,
+               type = "norm", level = 0.9,
+               colour = "grey25", linetype = "dashed", linewidth = 0.7,
+               show.legend = FALSE) +
+  # 3. Malagasy points on top
+  geom_point(data = subset(plot_df, is_mad),
+             alpha = 0.7, size = 2.2) +
+  scale_colour_manual(values = pal) +
+  scale_fill_manual(values = pal) +
+  scale_shape_manual(values = shp) +
+  labs(
+    title = NULL,
+    x = paste0("PC 1 (", round(variance$percent[1], 2), "%)"),
+    y = paste0("PC 2 (", round(variance$percent[2], 2), "%)"),
+    colour = NULL, fill = NULL, shape = NULL
+  ) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2.5))) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16),
+    axis.line = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white"),
+    legend.position = "inside",
+    legend.position.inside = c(0.15, 0.37)
+  )
+```
+
+
+
+
+
 
 ```{r}
 pdf(paste0(res_dir, "pca_subsampled_regions_together_internal_legend.pdf"),
