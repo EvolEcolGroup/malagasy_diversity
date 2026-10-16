@@ -126,6 +126,15 @@ ggsave(paste0(res_dir, "admixture_cv_error.jpg"),
 )
 ```
 
+```{r}
+clump_obj <- qmats %>% gt_clumppling()
+# turn qmats$group into an atomic vector
+out <- clump_obj %>% autoplot(type = "all_modes", group = as.vector(qmats$group))
+out
+```
+
+
+
 Cross validation error indicates that low values of K are unsuitable to describe variation in the dataset.
 
 ```{r}
@@ -472,6 +481,14 @@ ggsave(paste0(res_dir, "admixture_k2_malagasy.jpg"),
   width = 7, height = 5, dpi = 300
 )
 ```
+
+```{r}
+clump_obj_malagasy <- qmats_malagasy %>% gt_clumppling()
+# turn qmats$group into an atomic vector
+out <- clump_obj_malagasy %>% autoplot(type = "all_modes", group = as.vector(qmats_malagasy$group))
+out
+```
+
 
 ```{r}
 pdf(paste0(res_dir, "admixture_k2_malagasy.pdf"),
