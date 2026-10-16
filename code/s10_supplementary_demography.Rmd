@@ -1,13 +1,18 @@
 ---
-title: "Cleaning and Merging Datasets"
+title: "Supplementary Figures and Tables for 'Fine-scale population structure within and among Malagasy societies'"
 knit: resrepo::knit_to_results
 output: 
   pdf_document:
     latex_engine: pdflatex
+fontsize: 11pt
 header-includes:
   - \usepackage{pdflscape}
   - \newcommand{\blandscape}{\begin{landscape}}
   - \newcommand{\elandscape}{\end{landscape}}
+  - \pagestyle{empty}
+  - \pagenumbering{gobble}
+  - \usepackage[scaled=0.92]{helvet}
+  - \renewcommand{\familydefault}{\sfdefault}
 bibliography: references.bib
 ---
 
@@ -19,7 +24,7 @@ library(writexl)
 ```
 
 ```{r set-directories, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
-res_dir <- "../results/s10_supplementary/"
+res_dir <- "../results/s10_supplementary_demography/"
 ```
 
 ```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
@@ -102,17 +107,11 @@ f4 <- gt_load("../data/intermediate/pan_tro_liftover/chimp_ref_outgroup.gt")
 
 # Supplementary 
 
-## Data cleaning
+## Generating Figures
 
-Only autosomal SNPs were analysed.  SNPs with a missingness rate above 0.05 were removed.  Individuals with a genotype call rate less than 0.9 (missingness exceeding 0.1) were removed. SNPs with minor allele frequency below 0.025 were removed. Hardy-Weinberg equilibrium p-values were calculated for each SNP within each population using the tidypopgen function qc_report_loci, which provides a Bonferroni correction given the number of populations analysed. SNPs with a p-value below 0.01 in at least one population after correction were removed. Close relatives were removed using the KING robust kinship coefficient @manichaikulRobustRelationshipInference2010, implemented in tidypopgen. One individual was removed from each pair with a kinship coefficient greater than 0.0884, equivalent to removing relatives up to the second degree. 
+All figures were produced in RStudio using ggplot2 and saved as PDF files with `pdf()`. For main text Figures 1 and 3, each plot was rendered individually and saved as a separate PDF, and these were then arranged into multi-panel layouts and exported as a final high-quality PDF using Inkscape. Figures 2 and 4 were saved directly from RStudio.
 
-## f~4~ ratio
-
-To obtain a chimpanzee reference, SNPs in our dataset were lifted to PanTro3.0 (GenBank accession GCA_000001515.5) from hg19 using liftOver overchain file <https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToPanTro5.over.chain.gz> from UCSC Genome Browser @kentHumanGenomeBrowser2002, using bigsnpr function snp_modifyBuild() @priveEfficientAnalysisLargescale2018. The chimpanzee reference for each SNP was obtained using a custom R function to query the Ensembl API (GenBank accession GCA_000001515.5, Ensembl release 115, accessed via Ensembl API <https://rest.ensembl.org/documentation/info/sequence_region> on 17-12-2025). This procedure retained 77993 SNPs for f~4~ ratio calculation. Standard errors were calculated using block-jackknife resampling (admixtools f~4~ ratio default). Supplementary Table 5 contains full f~4~ ratio output.
-
-## MALDER
-
-MALDER was run using the default -binsize of 5 \* 10-4 Morgans (describing the size of the bins that SNPs are split up into. Instead of directly calculating distance between each SNP pair, MALDER uses the distance between the bins of each SNP pair.), and the –mindis parameter (minimum genetic distance to begin LD decay curve fitting) set to 0.005 cM.
+Because the analyses were carried out over an extended period, different scripts were run under slightly different software versions, for example R 4.5.2 or 4.6.0, and ggplot2 3.5.2 or 4.0.3. To ensure that the figures are fully reproducible, each analysis script in our code repository has an accompanying .json file containing the complete `sessionInfo()` output (R version, platform, and the version of every loaded package) from the run that generated that script’s figures. This file is rewritten each time a script is run, and each run also re-saves the figures, so the session information for every script always corresponds to the figures it produced.
 
 ![Map of reference population locations for all populations where coordinates were available in metadata.](../results/s09_data_source_map/data_source_map.jpg)
 
@@ -124,7 +123,7 @@ MALDER was run using the default -binsize of 5 \* 10-4 Morgans (describing the s
 
 ![African ancestry proportion for each Malagasy population derived from supervised admixture at K = 2.](../results/s05_b_supervised/Afr_anc_violin_all_pops.jpg)
 
-![African ancestry proportion for Merina individuals derived from supervised admixture at K = 2, showing the bimodal distribution of ancestry among Merina individuals..](../results/s05_b_supervised/Afr_anc_hist_merina.jpg)
+![African ancestry proportion for Malagasy individuals derived from supervised admixture at K = 2, showing the bimodal distribution of ancestry among Merina individuals..](../results/s05_b_supervised/Afr_anc_hist_each_pop.jpg)
 
 ![A) f3 statistic values across different African references for the Betsimisaraka, showing the 15 lowest f3 estimates, with Borneo as the Asian reference. B) f3 statistic values across different African references, with Borneo as the Asian reference, plotted by location for populations where coordinates were available in metadata. Colour gradient was determined by taking the standard error of the minimum f3 value and multiplying this by 10. This scale was chosen to emphasise the very best fitting f3 values, and values outside this range are coloured dark blue.](../results/s06_c_f3_map/f3_all_african_pops_Betsimisaraka.jpg)
 
@@ -169,21 +168,38 @@ df$Population <- sub("GWD", "Mandinka, The Gambia", df$Population)
 df$Population <- sub("LWK", "Luhye, Kenya", df$Population)
 df$Population <- sub("MSL", "Mende, Sierra Leone", df$Population)
 
-df$source <- NA
-df$source <-
-  ifelse(df$Population == "Borneo", "Brucato et al., 2016", df$source)
-df$source <-
-  ifelse(df$Population %in% c("Sumba", "Timor"), "Cox et al., 2016", df$source)
-df$source <-
+df$Source <- NA
+df$Source <-
+  ifelse(df$Population == "Borneo", "Brucato et al., 2016", df$Source)
+df$Source <-
+  ifelse(df$Population %in% c("Sumba", "Timor"), "Cox et al., 2016", df$Source)
+df$Source <-
   ifelse(df$Population %in% c("Vezo", "Mikea", "Temoro"),
     "Pierron et al., 2014",
-    df$source
+    df$Source
   )
-df$source <- ifelse(df$Population %in% c("Merina", "Betsileo", "Sakalava_Tsimihety", "Betsimisaraka", "Diego"), "This study", df$source)
-df$source <- ifelse(df$Population %in% c("Esan, Nigeria", "Yoruba, Nigeria", "Mandinka, The Gambia", "Luhye, Kenya", "Mende, Sierra Leone", "Han, China", "Kinh, Vietnam", "Punjabi, Pakistan", "Bengali, Bengal"), "1000 Genomes Project Consortium, 2015", df$source)
-df$source <- ifelse(is.na(df$source), "Fortes-Lima et al., 2024", df$source)
+df$Source <- ifelse(df$Population %in% c("Merina", "Betsileo", "Sakalava_Tsimihety", "Betsimisaraka", "Diego"), "This study", df$Source)
+df$Source <- ifelse(df$Population %in% c("Esan, Nigeria", "Yoruba, Nigeria", "Mandinka, The Gambia", "Luhye, Kenya", "Mende, Sierra Leone", "Han, China", "Kinh, Vietnam", "Punjabi, Pakistan", "Bengali, Bengal"), "1000 Genomes Project Consortium, 2015", df$Source)
+df$Source <- ifelse(is.na(df$Source), "Fortes-Lima et al., 2024", df$Source)
+
+df$Continent <- NA
+df$Continent <- ifelse(df$Population %in% c("Merina", "Betsileo", "Sakalava_Tsimihety", "Betsimisaraka", "Diego", "Vezo", "Mikea", "Temoro"), "Africa - Malagasy", df$Continent)
+df$Continent <-
+  ifelse(df$Population == "Borneo", "Asia", df$Continent)
+df$Continent <-
+  ifelse(df$Population %in% c("Sumba", "Timor"), "Asia", df$Continent)
+df$Continent <- ifelse(df$Population %in% c("Esan, Nigeria", "Yoruba, Nigeria", "Mandinka, The Gambia", "Luhye, Kenya", "Mende, Sierra Leone"), "Africa", df$Continent)
+df$Continent <- ifelse(df$Population %in% c("Han, China", "Kinh, Vietnam", "Punjabi, Pakistan", "Bengali, Bengal"), "Asia", df$Continent)
+df$Continent <- ifelse(is.na(df$Continent), "Africa", df$Continent)
 
 df <- rbind(df, c("Total", sum(df$`Sample size`)))
+df <- as_tibble(df)
+df$`Sample size` <- as.integer(df$`Sample size`)
+
+# Count how many in "Han, China", "Kinh, Vietnam", "Punjabi, Pakistan", "Bengali, Bengal"
+df %>% filter(Population %in% c("Han, China", "Kinh, Vietnam", "Punjabi, Pakistan", "Bengali, Bengal")) %>% summarise(total = sum(`Sample size`))
+# Count how many in "Esan, Nigeria", "Yoruba, Nigeria", "Mandinka, The Gambia", "Luhye, Kenya", "Mende, Sierra Leone"
+df %>% filter(Population %in% c("Esan, Nigeria", "Yoruba, Nigeria", "Mandinka, The Gambia", "Luhye, Kenya", "Mende, Sierra Leone")) %>% summarise(total = sum(`Sample size`))
 
 write.csv(df,
   paste0(res_dir, "sample_sizes_global_dataset.txt"),
@@ -194,11 +210,12 @@ write.csv(df,
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-kable(df, caption = "Sample sizes for each population in the global dataset after filtering.") %>%
+kable(df, caption = "Sample sizes for each population in the comparative population dataset after filtering.") %>%
   kable_styling(
     latex_options = c("repeat_header", "longtable")
   )
 ```
+
 
 ````{=tex}
 \newgeometry{left=1cm,right=1cm,top=1cm,bottom=1cm}
@@ -219,7 +236,7 @@ df <- data.frame(
     "MALDER (version 1.0) (Pickrell et al., 2014): MALDER",
     "tidypopgen: pairwise\\_pop\\_fst - method = \"WC84\" (Weir and Cockerham, 1984)"
   ),
-  data <- c("Malagasy dataset", "Global dataset", "Global dataset", "Subset of Global dataset", "Global dataset", "Global dataset + Pan and European outgroups", "Global dataset", "Global dataset"),
+  data <- c("Malagasy dataset", "Comparative population dataset", "Comparative population dataset", "Subset of Comparative population dataset", "Comparative population dataset", "Comparative population dataset + Pan and European outgroups", "Comparative population dataset", "Comparative population dataset"),
   indiv_filter <- rep("Missingness > 0.1; KING kinship > 0.0884", 8),
   loci_filter <- c(
     rep(full_loci_fiter, 6),
@@ -249,8 +266,8 @@ df <- data.frame(
 )
 colnames(df) <- c(
   "Analysis", "Package/function", "Dataset",
-  "Individuals Removed", "n indivs",
-  "Loci filtering", "n SNPs"
+  "Individuals Removed",   "Loci filtering",
+  "n indivs", "n SNPs"
 )
 
 kable(df,
@@ -272,29 +289,11 @@ kable(df,
 \restoregeometry
 ````
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-min_f3 <- read.table("../results/s06_b_f_stats/minimum_f3_malagasy_pops",
-  header = TRUE, sep = "\t"
-)
-
-kable(min_f3, caption = "Minimum f3 statistic values across all combinations of references for each Malagasy population.
-")
-```
-
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-min_f3 <- read.table("../results/s06_b_f_stats/minimum_z-score_malagasy_pops",
-  header = TRUE, sep = "\t"
-)
-
-kable(min_f3, caption = "Minimum z-scores for f3 statistics across all combinations for each Malagasy population.")
-```
-
 ```{r table-excel-note, echo=FALSE, message=FALSE, warning=FALSE}
 # We create a tiny, invisible data frame
-ghost_df <- data.frame(Note = "Detailed Results (See accompanying Excel file)")
-
+ghost_df <- data.frame(Note = "Detailed Results (See Github repository)")
 kable(ghost_df, 
-             caption = "Table 5 is provided in an accompanying Excel file.", 
+             caption = "f3 statistic values across all combinations of references for each Malagasy population. Due to its size, this table is provided in full in the github respository, at:  https://github.com/EvolEcolGroup/malagasy_diversity/blob/main/results/s06_b_f_stats/f3_results_all_combinations", 
              col.names = NULL) # Removes the column header
 ```
 
@@ -303,9 +302,10 @@ f4_ratios <- read.table("../results/s06_b_f_stats/f4_ratio_african_admixture",
   header = TRUE, sep = "\t"
 )
 
-kable(f4_ratios, caption = "f4 ratios calculated with admixtools. f4 ratios were calculated in the configurations  f4(GBR,Chimpanzee;Malagasy,Borneo) / f4(GBR,Chimpanzee;Esan,Borneo) and f4(GBR,Chimpanzee;Malagasy,Esan) / f4(GBR,Chimpanzee;Borneo,Esan)
+kable(f4_ratios, caption = "f4 ratios calculated with admixtools. f4 ratios were calculated in the configurations  f4(GBR,Chimpanzee;Malagasy,Borneo) / f4(GBR,Chimpanzee;Mozambique,Borneo) and f4(GBR,Chimpanzee;Malagasy,Mozambique) / f4(GBR,Chimpanzee;Borneo,Mozambique)
 ")
 ```
+
 
 ```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 malder <- readRDS("../results/s07_MALDER/malder_results_all.RDS")
@@ -319,6 +319,7 @@ malder <- malder %>%
   filter(!(`ref A` %in% asian & `ref B` %in% asian)) %>%
   filter(!(`ref A` %in% african & `ref B` %in% african))
 ```
+
 
 ````{=tex}
 \newgeometry{left=1cm,right=1cm,top=1cm,bottom=1cm}
@@ -342,6 +343,7 @@ kable(fst_matrix,
   booktabs = TRUE,
   escape = FALSE,
   row.names = TRUE,
+  longtable = TRUE,
   caption = "Pairwise FST values between all Malagasy populations."
 )
 ```
@@ -350,10 +352,29 @@ kable(fst_matrix,
 \restoregeometry
 ````
 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+min_f3 <- read.table("../results/s06_b_f_stats/minimum_f3_malagasy_pops",
+  header = TRUE, sep = "\t"
+)
+
+kable(min_f3, caption = "Minimum f3 statistic values across all combinations of references for each Malagasy population.
+")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+min_f3 <- read.table("../results/s06_b_f_stats/minimum_z-score_malagasy_pops",
+  header = TRUE, sep = "\t"
+)
+
+kable(min_f3, caption = "Minimum z-scores for f3 statistics across all combinations for each Malagasy population.")
+```
+
+
 ***
 
 ```{r save-r-environment, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
-filename_rmd <- "s10_supplementary.Rmd"
+filename_rmd <- "s10_supplementary_demography.Rmd"
 filename_renv <- paste0(
   res_dir, "/renv_",
   tools::file_path_sans_ext(basename(filename_rmd)),
