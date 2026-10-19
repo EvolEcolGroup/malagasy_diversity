@@ -36,3 +36,5 @@ code/*.bib
 .Rproj.user
 .positai
 versions
+data/raw
+data/intermediate
